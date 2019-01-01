@@ -1,11 +1,11 @@
 <template>
   <div id="wrapper">
+    <taskview></taskview>
     <div id="rulesbox">
       <rule
         v-for="(ruleData, index) in rules"
         :ruleData="ruleData"
         :key="index"
-        v-on:deleteRule="deleteRule"
         class="ruleDiv"
       ></rule>
     </div>
@@ -14,10 +14,11 @@
 
 <script>
   import rule from './rule.vue'
+  import taskview from './taskview.vue'
 
   export default {
     name: 'start',
-    components: { rule },
+    components: { rule, taskview },
     data: () => ({
       rules: [[1, 2]]
     }),

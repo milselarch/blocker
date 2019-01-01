@@ -1,4 +1,4 @@
-# kill-switch
+# blocker
 
 > An electron-vue project
 
