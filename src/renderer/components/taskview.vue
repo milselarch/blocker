@@ -1,16 +1,26 @@
 <template>
   <div id="wrapper">
-    <table>
-        <tr
-          class="task"
-          v-for="(task, index) in tasks"
-          :key="index"
-        >
-            <tr>{{ task.windowTitle }}</th>
-            <tr>{{ task.imageName }}</th>
-        </tr>
+    <font-awesome-icon icon="home">
+    </font-awesome-icon>
+    <!-- <p> {{ tasks }} </p> -->
 
-    </table>
+    <b-table :data="tasks">
+      <template slot-scope="props">
+        <b-table-column field="windowTitle" label="Name" width="40" numeric>
+            {{ props.row.windowTitle }}
+        </b-table-column>
+
+        <b-table-column field="imageName" label="Application">
+            {{ props.row.imageName }}
+        </b-table-column>
+
+        <b-table-column label="Block">
+            <font-awesome-icon icon="ban" class="icon alt">
+            </font-awesome-icon>
+        </b-table-column>
+      </template>
+    </b-table>
+
   </div>
 </template>
 
@@ -37,10 +47,12 @@
           self.tasks = (
             await tasklist({verbose: true})
           ).filter(task => {
+            if (task === undefined) { return true }
             return task.windowTitle !== 'N/A'
-          })
+          }
+          )
 
-          misc.sleepAsync(1000)
+          misc.sleepAsync(0)
         }
       }, 0)
     },
@@ -58,6 +70,10 @@
 
 <style scoped>
 tr.task, tr.task * {
+  font-family: "Abel"
+}
+
+th, th * {
   font-family: "Abel"
 }
 </style>
