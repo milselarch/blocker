@@ -3,10 +3,11 @@
     <font-awesome-icon icon="home">
     </font-awesome-icon>
     <!-- <p> {{ tasks }} </p> -->
+    <p> {{ selected }} </p>
 
-    <b-table :data="tasks">
+    <b-table :data="tasks" :selected.sync="selected">
       <template slot-scope="props">
-        <b-table-column field="windowTitle" label="Name" width="40" numeric>
+        <b-table-column field="windowTitle" label="Name">
             {{ props.row.windowTitle }}
         </b-table-column>
 
@@ -14,9 +15,14 @@
             {{ props.row.imageName }}
         </b-table-column>
 
-        <b-table-column label="Block">
+        <b-table-column label="">
+          <button 
+            class="button is-danger block-button"
+          >
+            <!-- <p>Block&nbsp;</p> -->
             <font-awesome-icon icon="ban" class="icon alt">
             </font-awesome-icon>
+          </button>
         </b-table-column>
       </template>
     </b-table>
@@ -35,6 +41,7 @@
     components: { },
 
     data: () => ({
+      selected: null,
       isDestroyed: false,
       tasks: []
     }),
@@ -61,7 +68,7 @@
       open (link) {
         this.$electron.shell.openExternal(link)
       },
-      destroyed: function () {
+      destroyed () {
         this.isDestroyed = true
       }
     }
