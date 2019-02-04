@@ -7,8 +7,9 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'start',
-      component: require('@/components/tasks').default
+      components: {
+        Programs: require('@/components/taskview').default
+      }
     },
     {
       path: '*',

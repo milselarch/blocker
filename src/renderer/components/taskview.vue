@@ -8,11 +8,11 @@
     <b-table :data="tasks" :selected.sync="selected">
       <template slot-scope="props">
         <b-table-column field="windowTitle" label="Name">
-            {{ props.row.windowTitle }}
+            {{ props.row.name }}
         </b-table-column>
 
         <b-table-column field="imageName" label="Application">
-            {{ props.row.imageName }}
+            {{ props.row.program }}
         </b-table-column>
 
         <b-table-column label="">
@@ -32,9 +32,8 @@
 
 <script>
   import Misc from '../../misc.js'
+  import TaskGrabber from './TaskGrabber.js'
   const misc = new Misc()
-
-  const tasklist = require('tasklist')
 
   export default {
     name: 'taskview',
@@ -51,15 +50,8 @@
 
       setTimeout(async () => {
         while (!this.isDestroyed) {
-          self.tasks = (
-            await tasklist({verbose: true})
-          ).filter(task => {
-            if (task === undefined) { return true }
-            return task.windowTitle !== 'N/A'
-          }
-          )
-
-          misc.sleepAsync(0)
+          self.tasks = await TaskGrabber.getAll()
+          misc.sleepAsync(1000)
         }
       }, 0)
     },
