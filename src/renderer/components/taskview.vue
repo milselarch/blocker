@@ -1,12 +1,14 @@
 <template>
   <div id="wrapper">
-    <font-awesome-icon icon="home">
-    </font-awesome-icon>
-    <!-- <p> {{ tasks }} </p> -->
-    <p> {{ selected }} </p>
+   <p>{{ }}</p>
 
-    <b-table :data="tasks" :selected.sync="selected">
-      <template slot-scope="props">
+    <b-table 
+      :data="tasks"
+      :selected.sync="selected"
+      :loading="tasks.length === 0"
+      class="tasks-table"
+    >
+      <template slot-scope="props" class="table-row">
         <b-table-column field="windowTitle" label="Name">
             {{ props.row.name }}
         </b-table-column>
@@ -15,7 +17,7 @@
             {{ props.row.program }}
         </b-table-column>
 
-        <b-table-column label="">
+        <b-table-column label="Block">
           <button 
             class="button is-danger block-button"
           >
@@ -32,7 +34,7 @@
 
 <script>
   import Misc from '../../misc.js'
-  import TaskGrabber from './TaskGrabber.js'
+  import { setTimeout } from 'timers'
   const misc = new Misc()
 
   export default {
@@ -42,32 +44,43 @@
     data: () => ({
       selected: null,
       isDestroyed: false,
-      tasks: []
+      tasks: [],
+      test: false
     }),
 
-    created () {
+    mounted () {
       const self = this
-
+      console.log('STATEC', this.$store)
+      console.log('ON CREATE TASKS', `${self.tasks}`)
       setTimeout(async () => {
-        while (!this.isDestroyed) {
-          self.tasks = await TaskGrabber.getAll()
-          misc.sleepAsync(1000)
+        while (!self.isDestroyed) {
+          console.log('NEW TASKS', self.tasks)
+          console.log('m', self.$store.getters.tasks)
+          const t = await self.$store.dispatch('updater')
+          console.log('T', t)
+          self.tasks = self.$store.getters.tasks
+          self.test = true
+
+          await misc.sleepAsync(3000)
         }
       }, 0)
+    },
+
+    beforeDestroy () {
+      this.isDestroyed = true
     },
 
     methods: {
       open (link) {
         this.$electron.shell.openExternal(link)
-      },
-      destroyed () {
-        this.isDestroyed = true
       }
     }
   }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@import "@/assets/scss/vars.scss";
+
 tr.task, tr.task * {
   font-family: "Abel"
 }
@@ -75,4 +88,21 @@ tr.task, tr.task * {
 th, th * {
   font-family: "Abel"
 }
+
+div.tasks-table {
+  min-height: 10rem;
+  /* background-color: red; */
+}
+
+button.block-button {
+  background-color: transparent;
+  border-radius: 0px;
+  color: #DDD;
+
+  &:hover {
+    background-color: $danger;
+    /* #fe304a #f64a62*/
+  }
+}
+
 </style>

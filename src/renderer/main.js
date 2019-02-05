@@ -6,16 +6,16 @@ import router from './router'
 import store from './store'
 
 import Buefy from 'buefy'
-import 'buefy/dist/buefy.css'
+// import 'buefy/dist/buefy.css'
 
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 import {
-  faCoffee, faBan, faShieldAlt
+  faCoffee, faBan, faShieldAlt, faWindowRestore
 } from '@fortawesome/free-solid-svg-icons'
 library.add(
-  faCoffee, faBan, faShieldAlt
+  faCoffee, faBan, faShieldAlt, faWindowRestore
 )
 Vue.component(
   'font-awesome-icon', FontAwesomeIcon
@@ -34,6 +34,6 @@ Vue.config.productionTip = false
 new Vue({
   components: { App },
   router,
-  store,
+  store: store,
   template: '<App/>'
 }).$mount('#app')

@@ -1,23 +1,28 @@
+import TaskGrabber from '@/components/TaskGrabber.js'
+
 const state = {
-  tasks: {}
+  tasks: []
 }
 
 const mutations = {
   // mutations must be synchronous
-  updateTasks (state, newTasks) {
+  setNewTasks: (state, newTasks) => {
     state.tasks = newTasks
   }
 }
 
 const actions = {
-  async updateTasks (context) {
+  updater: async (context) => {
     const newTasks = await TaskGrabber.getAll()
-    context.commit("updateTasks", newTasks)
+    console.log('GRABBED TASKS', newTasks)
+    context.commit('setNewTasks', newTasks)
+    return 44
   }
 }
 
 const getters = {
-  grabTasks: state => state.tasks
+  test: () => 234,
+  tasks: (state) => { return state.tasks }
 }
 
 export default {

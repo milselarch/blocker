@@ -1,0 +1,11 @@
+// Set your colors
+$danger: #f44034;
+$primary: #3d71ff;
+$primary-invert: findColorInvert($primary);
+$twitter: #4099FF;
+$twitter-invert: findColorInvert($twitter);
+
+// Links
+$link: $primary;
+$link-invert: $primary-invert;
+$link-focus-border: $primary;

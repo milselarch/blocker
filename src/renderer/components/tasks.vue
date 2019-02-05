@@ -31,25 +31,4 @@
 </script>
 
 <style>
-  @font-face {
-  font-family: "Abel";
-  src:
-    url("/static/fonts/Abel-Regular.ttf") format("truetype");
-    /* Add other formats as you see fit */
-  }
-
-  @font-face {
-    font-family: "Staatliches";
-    src:
-      url("/static/fonts/Staatliches-Regular.ttf") format("truetype");
-      /* Add other formats as you see fit */
-  }
-
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
-
-  body { font-family: 'Staatliches', sans-serif; }
 </style>
