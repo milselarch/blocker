@@ -1,5 +1,6 @@
 features:
+  - setup app timers for rules
   - add time block rule
   - have fixed headers for task listing
   - use pro font awesome icons
-  - support for emojis on program names
+  - support for emojis on program name

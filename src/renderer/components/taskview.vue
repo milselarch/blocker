@@ -11,18 +11,10 @@
       class="tasks-table"
       @select="onRowSelect"
     >
-      <template slot-scope="props" class="table-row">
-        <b-table-column
-          field="CPU" label="CPU" :visible="false"
-          class="table-column"
-          sortable numeric
-        >
-          {{ Number(props.row.CPU) }}
-        </b-table-column>
-        
+      <template slot-scope="props" class="table-row">  
         <b-table-column
           field="windowTitle" label="Name"
-          class="table-column"
+          class="table-column column-name"
         >
           {{ props.row.name }}
         </b-table-column>
@@ -35,11 +27,20 @@
         </b-table-column>
 
         <b-table-column
+          field="CPU" label="CPU" :visible="true"
+          class="table-column"
+          sortable numeric
+        >
+          {{ Number(props.row.CPU) }}
+        </b-table-column>
+
+        <b-table-column
           label="Block"
           class="table-column"
         >
           <button
             class="button is-danger block-button"
+            v-on:click="makeNewRule(props.row)"
           >
             <!-- <p>Block&nbsp;</p> -->
             <font-awesome-icon icon="ban" class="icon alt">
@@ -53,9 +54,8 @@
 </template>
 
 <script>
-  import Misc from '../../misc.js'
+  import Misc from '@/misc.js'
   import { setTimeout } from 'timers'
-  const misc = new Misc()
 
   export default {
     name: 'taskview',
@@ -78,7 +78,7 @@
           // console.log('m', self.$store.getters.tasks)
           self.tasks = self.$store.getters.tasks
           await self.$store.dispatch('updater')
-          await misc.sleepAsync(500)
+          await Misc.sleepAsync(500)
         }
       }, 0)
     },
@@ -94,7 +94,10 @@
       onRowSelect () {
         console.log('SELECTED')
         this.selected = []
-      }
+      },
+      makeNewRule (task) {
+        this.$store.crea
+      } 
     }
   }
 </script>
@@ -117,6 +120,11 @@ div.tasks-table {
 
 td.table-column {
   vertical-align: middle;
+
+  &.column-name {
+    width: 40vw;
+    max-width: 40vw;
+  }
 }
 
 button.block-button {

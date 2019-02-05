@@ -1,13 +1,18 @@
 import TaskGrabber from '@/components/TaskGrabber.js'
 
 const state = {
-  tasks: []
+  tasks: [],
+  rules
 }
 
 const mutations = {
   // mutations must be synchronous
   setNewTasks: (state, newTasks) => {
     state.tasks = newTasks
+  },
+
+  setNewRule: (state, task) => {
+    
   }
 }
 
