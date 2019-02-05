@@ -60,6 +60,29 @@ class TaskGrabber {
     })
   }
 
+  getUniqueTasks (tasks) {
+    const uniqueTasks = []
+
+    tasks.map(currentTask => {
+      let isUnique = true
+      for (let i = 0; i < uniqueTasks.length; i++) {
+        if (
+          (uniqueTasks[i].name === currentTask.name) &&
+          (uniqueTasks[i].program === currentTask.program)
+        ) {
+          isUnique = false
+          break
+        }
+      }
+
+      if (isUnique === true) {
+        uniqueTasks.push(currentTask)
+      }
+    })
+
+    return uniqueTasks
+  }
+
   async getAll () {
     let tasks
 
@@ -69,7 +92,8 @@ class TaskGrabber {
       tasks = await this.getUnixTasks()
     }
 
-    return tasks
+    const uniqueTasks = this.getUniqueTasks(tasks)
+    return uniqueTasks
   }
 }
 

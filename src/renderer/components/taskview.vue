@@ -4,21 +4,41 @@
 
     <b-table 
       :data="tasks"
-      :selected.sync="selected"
+      :selected="selected"
       :loading="tasks.length === 0"
+      default-sort="CPU"
+      default-sort-direction="desc"
       class="tasks-table"
+      @select="onRowSelect"
     >
       <template slot-scope="props" class="table-row">
-        <b-table-column field="windowTitle" label="Name">
-            {{ props.row.name }}
+        <b-table-column
+          field="CPU" label="CPU" :visible="false"
+          class="table-column"
+          sortable numeric
+        >
+          {{ Number(props.row.CPU) }}
+        </b-table-column>
+        
+        <b-table-column
+          field="windowTitle" label="Name"
+          class="table-column"
+        >
+          {{ props.row.name }}
         </b-table-column>
 
-        <b-table-column field="imageName" label="Application">
-            {{ props.row.program }}
+        <b-table-column
+          field="imageName" label="Application"
+          class="table-column"
+        >
+          {{ props.row.program }}
         </b-table-column>
 
-        <b-table-column label="Block">
-          <button 
+        <b-table-column
+          label="Block"
+          class="table-column"
+        >
+          <button
             class="button is-danger block-button"
           >
             <!-- <p>Block&nbsp;</p> -->
@@ -42,8 +62,8 @@
     components: { },
 
     data: () => ({
-      selected: null,
       isDestroyed: false,
+      selected: null,
       tasks: [],
       test: false
     }),
@@ -54,14 +74,11 @@
       console.log('ON CREATE TASKS', `${self.tasks}`)
       setTimeout(async () => {
         while (!self.isDestroyed) {
-          console.log('NEW TASKS', self.tasks)
-          console.log('m', self.$store.getters.tasks)
-          const t = await self.$store.dispatch('updater')
-          console.log('T', t)
+          // console.log('NEW TASKS', self.tasks)
+          // console.log('m', self.$store.getters.tasks)
           self.tasks = self.$store.getters.tasks
-          self.test = true
-
-          await misc.sleepAsync(3000)
+          await self.$store.dispatch('updater')
+          await misc.sleepAsync(500)
         }
       }, 0)
     },
@@ -73,6 +90,10 @@
     methods: {
       open (link) {
         this.$electron.shell.openExternal(link)
+      },
+      onRowSelect () {
+        console.log('SELECTED')
+        this.selected = []
       }
     }
   }
@@ -94,13 +115,22 @@ div.tasks-table {
   /* background-color: red; */
 }
 
+td.table-column {
+  vertical-align: middle;
+}
+
 button.block-button {
   background-color: transparent;
   border-radius: 0px;
   color: #DDD;
 
+  &:focus {
+    color: #DDD;
+  }
+
   &:hover {
     background-color: $danger;
+    color: white;
     /* #fe304a #f64a62*/
   }
 }

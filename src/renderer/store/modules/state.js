@@ -16,13 +16,15 @@ const actions = {
     const newTasks = await TaskGrabber.getAll()
     console.log('GRABBED TASKS', newTasks)
     context.commit('setNewTasks', newTasks)
-    return 44
+    return newTasks
   }
 }
 
 const getters = {
   test: () => 234,
-  tasks: (state) => { return state.tasks }
+  tasks: (state) => {
+    return Object.freeze(state.tasks)
+  }
 }
 
 export default {
