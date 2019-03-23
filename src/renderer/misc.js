@@ -20,7 +20,7 @@ class Misc {
 
   constructor () {
     const self = this
-  
+
     self.hasDuplicates = (array) => {
       return self.getDuplicates(array).length > 0
     }

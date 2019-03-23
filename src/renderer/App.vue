@@ -7,7 +7,7 @@
       type="is-boxed"
       :hoverable="true"
     >
-      <b-tab-item 
+      <b-tab-item
         v-for="tabName in tabNames"
         v-bind:key = "tabName"
         class="main-tab-item" 

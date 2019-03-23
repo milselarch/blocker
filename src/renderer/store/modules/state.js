@@ -1,8 +1,10 @@
 import TaskGrabber from '@/components/TaskGrabber.js'
 
 const state = {
+  // list of running system processes / tasks
   tasks: [],
-  rules
+  // list of blocking rules
+  rules: []
 }
 
 const mutations = {
@@ -12,7 +14,7 @@ const mutations = {
   },
 
   setNewRule: (state, task) => {
-    
+    state.rules.append(task)
   }
 }
 

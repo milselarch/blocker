@@ -55,6 +55,7 @@
 
 <script>
   import Misc from '@/misc.js'
+  import Rule from './rules/Rule.js'
   import { setTimeout } from 'timers'
 
   export default {
@@ -93,11 +94,12 @@
       },
       onRowSelect () {
         console.log('SELECTED')
-        this.selected = []
+        // this.selected = []
       },
       makeNewRule (task) {
-        this.$store.crea
-      } 
+        var newRule = new Rule()
+        this.$store.commit('setNewRule', newRule)
+      }
     }
   }
 </script>
