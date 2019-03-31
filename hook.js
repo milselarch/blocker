@@ -7,9 +7,6 @@ ioHook.on("mousemove", event => {
 });
 ioHook.on("keypress", event => {
   console.log(event);
-  if (event.rawcode === 65) {
-    event.preventDefault();
-  }
   // result: {keychar: 'f', keycode: 19, rawcode: 15, type: 'keypress'}
 });
 //Register and stark hook 

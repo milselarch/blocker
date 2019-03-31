@@ -2,6 +2,7 @@
   <div>
     <codemirror v-model="code" :options="cmOptions" />
   </div>
+
 </template>
 
 <script>
@@ -25,7 +26,7 @@
         tabSize: 4,
         mode: 'text/javascript',
         theme: 'base16-dark',
-        lineNumbers: true,
+        lineNumbers: false,
         line: true
         // more codemirror options, 更多 codemirror 的高级配置...
       }
