@@ -1,16 +1,25 @@
 <template>
   <div id="wrapper">
+    <div id="rule-details">
+      <RuleDetail />
+    </div>
+    <div id="rule-cards">
+    
+    </div>
   </div>
 </template>
 
 <script>
-  import Misc from '../../misc.js'
+  import Misc from '@/misc.js'
+  import RuleDetail from './rules/RuleDetail'
   import { setTimeout } from 'timers'
-  const misc = new Misc()
+
+  setTimeout(() => {
+    console.log(Misc)
+  })
 
   export default {
-    name: 'taskview',
-    components: { },
+    name: 'ruleview',
 
     data: () => ({
     }),
@@ -20,6 +29,10 @@
     },
 
     methods: {
+    },
+
+    components: {
+      RuleDetail
     }
   }
 </script>

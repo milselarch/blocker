@@ -38,12 +38,14 @@
     Rules: {icon: 'shield-alt'}
   }
 
+  const TAB_NAMES = Object.keys(TABS)
+
   export default {
     name: 'browser',
 
     data: () => ({
-      tabNames: Object.keys(TABS),
-      tabViewName: Object.keys(TABS)[0],
+      tabNames: TAB_NAMES,
+      tabViewName: TAB_NAMES[0],
       tabs: TABS
     }),
 

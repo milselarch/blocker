@@ -11,6 +11,7 @@ class Rule {
     nameType = 'text',
     programName = '',
     programType = 'text',
+    platform = 'win32',
     blockDuration = 300,
     lockTime = 300,
     saved = false
@@ -31,6 +32,9 @@ class Rule {
     }
     self.setLockTime = (lockTime) => {
       self.lockTime = lockTime
+    }
+    self.setPlatform = (platform) => {
+      self.platform = platform
     }
 
     self.save = () => {

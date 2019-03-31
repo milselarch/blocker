@@ -97,8 +97,13 @@
         // this.selected = []
       },
       makeNewRule (task) {
-        var newRule = new Rule()
+        var newRule = new Rule({
+          name: task.name,
+          programName: task.program,
+          platform: task.platform
+        })
         this.$store.commit('setNewRule', newRule)
+        // this.open("")
       }
     }
   }
