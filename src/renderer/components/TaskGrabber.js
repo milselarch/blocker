@@ -1,5 +1,5 @@
+import tasky from './tasky'
 const OS = require('os')
-const tasklist = require('tasklist')
 const psList = require('ps-list')
 
 const platform = OS.platform()
@@ -17,11 +17,20 @@ class Task {
 class TaskGrabber {
   async getWindowsTasks () {
     return (
-      await tasklist({verbose: true})
+      await tasky()
     ).filter(task => {
       if (task === undefined) { return true }
       return task.windowTitle !== 'N/A'
     }).map(task => {
+      /*
+      const keys = Object.keys(task)
+      for (let key in keys) {
+        if (typeof task[key] === 'string') {
+          task[key] = utf8.encode(task[key])
+        }
+      }
+      */
+
       return new Task(
         task.windowTitle,
         task.imageName,

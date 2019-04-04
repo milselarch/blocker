@@ -4,3 +4,6 @@ features:
   - have fixed headers for task listing
   - use pro font awesome icons
   - support for emojis on program name
+
+FOSS:
+  - update tasklist github with UTF-8
