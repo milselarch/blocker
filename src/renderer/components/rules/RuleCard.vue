@@ -39,7 +39,8 @@
 
     methods: {
       onClick () {
-        console.log('RULE CLICK')
+        this.$emit('select-rule', this.ruledata)
+        // console.log('RULE CLICK')
       }
     },
 

@@ -15,7 +15,7 @@ const mutations = {
 
   setNewRule: (state, rule) => {
     console.log('NOSTATE', state.rules)
-    state.rules.push(rule)
+    state.rules = [rule].concat(state.rules)
   }
 }
 

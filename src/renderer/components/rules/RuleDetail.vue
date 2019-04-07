@@ -13,9 +13,19 @@
     </div>
    
     <div class="mode-edit">
-      <EditInlineMode id="program" title="Program" v-model="code" />
-      <EditInlineMode id="title" title="Window Title" v-model="code" />
-      
+      <EditInlineMode 
+        id="program"
+        title="Program"
+        v-model="name"
+        ref="nameEdit"
+      />
+      <EditInlineMode
+        id="title"
+        title="Window Title"
+        v-model="programName"
+        ref="programEdit"
+      />
+
       <input 
         id="duration"
         v-model="blockDuration"
@@ -37,6 +47,7 @@
   import EditInlineMode from './EditInlineMode'
   // require styles
   import Misc from '@/misc.js'
+  // import Rule from './Rule'
   import { setTimeout } from 'timers'
 
   setTimeout(() => {
@@ -47,13 +58,14 @@
     name: 'rule-detail',
 
     data: () => ({
-      code: 'hihi',
-      blockDuration: '300'
+      name: '',
+      programName: '',
+      blockDuration: 300
     }),
 
     computed: {
       invalidDuration () {
-        return this.blockDuration.match(/^[0-9]+$/)
+        return String(this.blockDuration).match(/^[0-9]+$/)
       }
     },
 
@@ -62,10 +74,45 @@
     },
 
     methods: {
+      loadRule (rule) {
+        if (rule === null) {
+          console.log('NULL RULE')
+          return
+        }
+
+        console.log('LOAD RULE', rule)
+        this.name = rule.name
+        this.programName = rule.programName
+        this.blockDuration = rule.blockDuration
+        this.$refs.nameEdit.$forceUpdate()
+        this.$refs.programEdit.$forceUpdate()
+      }
+    },
+
+    watch: {
+      rule (newRule, oldRule) {
+        console.log('RDETAIL', newRule)
+        this.loadRule(newRule)
+      }
+    },
+
+    created () {
+      // this.loadRule(this.rule)
+    },
+
+    mounted () {
+      this.loadRule(this.rule)
     },
 
     components: {
       EditInlineMode
+    },
+
+    props: {
+      rule: {
+        type: null,
+        default: null
+      }
     }
   }
 </script>

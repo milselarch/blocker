@@ -1,6 +1,9 @@
 <template>
   <div id="rules-view">
-    <RuleDetail class="detail"/>
+    <RuleDetail
+      class="detail"
+      :rule="activerule"
+    />
 
     <div class="divider"></div>
 
@@ -9,6 +12,7 @@
         v-for="(ruleChunk, index) in rules"
         v-bind:key="index"
         :ruledata="ruleChunk"
+        v-on:select-rule="selectRule"
       />
     </div>
   </div>
@@ -28,7 +32,8 @@
     name: 'ruleview',
 
     data: () => ({
-      rules: []
+      rules: [],
+      activerule: null
     }),
 
     beforeDestroy () {
@@ -36,12 +41,28 @@
     },
 
     methods: {
-
+      selectRule (rule) {
+        this.activerule = rule
+      }
     },
 
     created () {
       this.rules = this.$store.getters.rules
-      console.log('RULES', this.rules)
+      for (let k = 0; k < this.rules.length; k++) {
+        const rule = this.rules[k]
+        if (!rule.saved) {
+          this.activerule = rule
+          break
+        }
+      }
+
+      if (this.activerule === null) {
+        if (this.rules.length > 0) {
+          this.activerule = this.rules[0]
+        }
+      }
+
+      console.log('RULES', this.rules, this.activerule)
     },
 
     components: {

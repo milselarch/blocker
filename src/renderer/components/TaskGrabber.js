@@ -84,7 +84,7 @@ class TaskGrabber {
         }
       }
 
-      if (isUnique === true) {
+      if (isUnique && currentTask.CPU > 0) {
         uniqueTasks.push(currentTask)
       }
     })
