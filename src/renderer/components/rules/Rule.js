@@ -1,6 +1,7 @@
 import Enum from '@/Enum.js'
 import assert from '@/assert.js'
 // import { program } from 'babel-types'
+const crypto = require('crypto')
 
 class Rule {
   static nameTypes = Enum('text', 'wildcard', 'regex');
@@ -14,6 +15,8 @@ class Rule {
     platform = 'win32',
     blockDuration = 300,
     lockTime = 300,
+    timestamp = null,
+    ID = null,
     saved = false
   }) {
     const self = this
@@ -35,6 +38,22 @@ class Rule {
     }
     self.setPlatform = (platform) => {
       self.platform = platform
+    }
+    self.setTimestamp = (timestamp) => {
+      if (timestamp === null) {
+        timestamp = (new Date()).getTime()
+      }
+      self.timestamp = timestamp
+    }
+    self.setID = (ID) => {
+      const rand = crypto.randomBytes(20).toString('hex')
+      if (ID === null) {
+        ID = rand + String(
+          parseInt(self.timestamp * 1000)
+        )
+      }
+
+      this.ID = ID
     }
 
     self.save = () => {

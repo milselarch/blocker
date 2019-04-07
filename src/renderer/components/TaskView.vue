@@ -3,7 +3,7 @@
     <!--
     <p>{{ JSON.stringify(tasks) }}</p>
     -->
-    <b-table 
+    <b-table
       :data="tasks"
       :selected="selected"
       :loading="tasks.length === 0"
@@ -72,13 +72,14 @@
 
     mounted () {
       const self = this
-      console.log('STATEC', this.$store)
-      console.log('ON CREATE TASKS', `${self.tasks}`)
+      // console.log('STATEC', this.$store)
+      // console.log('ON CREATE TASKS', `${self.tasks}`)
       setTimeout(async () => {
         while (!self.isDestroyed) {
           // console.log('NEW TASKS', self.tasks)
           // console.log('m', self.$store.getters.tasks)
           self.tasks = self.$store.getters.tasks
+          await Misc.sleepAsync(0)
           await self.$store.dispatch('updater')
           await Misc.sleepAsync(500)
         }
@@ -103,7 +104,8 @@
           programName: task.program,
           platform: task.platform
         })
-        this.$store.commit('setNewRule', newRule)
+
+        this.$emit('new-rule', newRule)
         // this.open("")
       }
     }

@@ -15,14 +15,15 @@
     <div class="mode-edit">
       <EditInlineMode id="program" title="Program" v-model="code" />
       <EditInlineMode id="title" title="Window Title" v-model="code" />
+      
       <input 
         id="duration"
         v-model="blockDuration"
-        placeholder="Block duration (seconds)"
         v-bind:class = "{
           invalid: !invalidDuration 
         }"
       />
+      <p id="duration-label">Block duration (seconds)</p>
     </div>
 
     <!-- <p> {{ code }} </p> -->
@@ -81,6 +82,10 @@ div.mode-edit {
     margin-bottom: 0.3rem;
   }
 
+  & p#duration-label {
+    margin-left: 0.2rem;
+  }
+
   & #duration {
     border-radius: 0px;
     margin-top: 1rem;
@@ -96,7 +101,7 @@ div.mode-edit {
     }
 
     &.invalid {
-      border-bottom: 2px solid #db9797;
+      border-bottom: 2px solid $warning;
     }
   }
 }

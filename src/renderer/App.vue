@@ -3,6 +3,7 @@
     <b-tabs 
       position="is-centered" 
       class="tabs-block"
+      v-model="tabIndex"
       v-on:change="onTabChange"
       type="is-boxed"
       :hoverable="true"
@@ -27,7 +28,11 @@
       </b-tab-item>
     </b-tabs>
 
-    <router-view class="tab-content" :name="tabViewName">
+    <router-view 
+      class="tab-content"
+      :name="tabViewName"
+      v-on:new-rule="addNewRule"
+    >
     </router-view>
   </div>
 </template>
@@ -46,6 +51,7 @@
     data: () => ({
       tabNames: TAB_NAMES,
       tabViewName: TAB_NAMES[0],
+      tabIndex: 0,
       tabs: TABS
     }),
 
@@ -53,6 +59,12 @@
       onTabChange: function (tabNo) {
         console.log(`TAB CHANGE NO ${tabNo}`)
         this.tabViewName = this.tabNames[tabNo]
+      },
+      addNewRule: async function (newRule) {
+        console.log('RULE ACQUISITION', newRule)
+        await this.$store.dispatch('addNewRule', newRule)
+        // this.$store.commit('setNewRule', newRule)
+        this.tabIndex = TAB_NAMES.indexOf('Rules')
       }
     }
   }

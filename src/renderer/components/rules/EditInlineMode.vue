@@ -20,8 +20,7 @@
   const MODES = {
     'text': 'Tt',
     'wildcard': '/*',
-    'regex': '.+',
-    'none': 'NA'
+    'regex': '.+'
   }
   
   const MODE_LIST = Object.keys(MODES)

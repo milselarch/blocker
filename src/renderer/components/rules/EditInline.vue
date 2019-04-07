@@ -2,7 +2,8 @@
   <div 
     class="editor"
     v-bind:class = "{
-      'disabled': disabled
+      disabled: disabled,
+      border: border
     }"
   >
     <codemirror 
@@ -73,6 +74,7 @@
         placeholder: 'testing',
         scrollbarStyle: null,
         lineNumbers: false,
+        readOnly: false,
         line: false
         // more codemirror options, 更多 codemirror 的高级配置...
       },
@@ -86,12 +88,20 @@
 
     watch: {
       value: function (newValue, oldValue) {
+        console.log('EDITVAL', newValue)
         this.editValue = newValue
       },
-
       mode: function (newMode, oldMode) {
         this.cmOptions.mode = newMode
+      },
+      readonly: function (readonly, old) {
+        this.cmOptions.readOnly = readonly
       }
+    },
+
+    created () {
+      this.editValue = this.value
+      this.cmOptions.readOnly = this.readonly
     },
 
     methods: {
@@ -103,17 +113,25 @@
     props: {
       value: {
         type: String,
-        default: ''
+        default: 'TEST',
+        immediate: true
       },
-
       mode: {
         type: String,
         default: DEFAULT_MODE
       },
-
       disabled: {
         type: Boolean,
         default: false
+      },
+      border: {
+        type: Boolean,
+        default: true
+      },
+      readonly: {
+        type: null,
+        default: false,
+        immediate: true
       }
     },
 
@@ -142,11 +160,14 @@ button.mode-button {
 
 .editor {
   height: fit-content;
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
-  padding-top: 0.3rem;
-  padding-bottom: 0.3rem;
-  border: 2px solid #dcdfe6;
+
+  &.border {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+    border: 2px solid #dcdfe6;
+  }
 }
 
 .CodeMirror {
