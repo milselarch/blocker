@@ -1,15 +1,39 @@
 <template>
   <div class="rule-detail">
-    <EditInline />
-    <font-awesome-icon icon="window-restore" class="icon alt">
-    </font-awesome-icon>
+    <div class="detail-icons">
+      <font-awesome-icon icon="window-restore" class="large icon alt">
+      </font-awesome-icon>
+      <div id="padding"></div>
+      <font-awesome-icon icon="save" class="icon alt">
+      </font-awesome-icon>
+      <font-awesome-icon icon="lock" class="icon alt">
+      </font-awesome-icon>
+      <font-awesome-icon icon="trash" class="icon alt">
+      </font-awesome-icon>
+    </div>
+   
+    <div class="mode-edit">
+      <EditInlineMode id="program" title="Program" v-model="code" />
+      <EditInlineMode id="title" title="Window Title" v-model="code" />
+      <input 
+        id="duration"
+        v-model="blockDuration"
+        placeholder="Block duration (seconds)"
+        v-bind:class = "{
+          invalid: !invalidDuration 
+        }"
+      />
+    </div>
+
+    <!-- <p> {{ code }} </p> -->
+    
   </div>
 
 </template>
 
 <script>
   import './modes/HighlightModes.js'
-  import EditInline from './EditInline'
+  import EditInlineMode from './EditInlineMode'
   // require styles
   import Misc from '@/misc.js'
   import { setTimeout } from 'timers'
@@ -22,8 +46,15 @@
     name: 'rule-detail',
 
     data: () => ({
-      code: 'hihi'
+      code: 'hihi',
+      blockDuration: '300'
     }),
+
+    computed: {
+      invalidDuration () {
+        return this.blockDuration.match(/^[0-9]+$/)
+      }
+    },
 
     beforeDestroy () {
       this.isDestroyed = true
@@ -33,7 +64,7 @@
     },
 
     components: {
-      EditInline
+      EditInlineMode
     }
   }
 </script>
@@ -41,104 +72,57 @@
 <style lang="scss">
 @import "@/assets/scss/vars.scss";
 
-.rule-detail {
-  & div.regex-wrapper {
-    display: flex;
-    flex-direction: column;
-    padding-right: 0.5rem;
-    & .editor {
-      height: fit-content;
-      border-bottom: 1px solid #dcdfe6;
-      padding-left: 0.5rem;
-      padding-right: 0.5rem;
+div.rule-detail {
+  max-width: 25rem;
+}
+
+div.mode-edit {
+  & #program {
+    margin-bottom: 0.3rem;
+  }
+
+  & #duration {
+    border-radius: 0px;
+    margin-top: 1rem;
+    border: 0px;
+    border-bottom: 2px solid #dcdfe6;
+    font-size: 1rem;
+    font-family: 'Abel';
+    padding: 0.2rem;
+    width: 100%;
+
+    &:focus, &:focus, &:focus{
+        outline: none;
+    }
+
+    &.invalid {
+      border-bottom: 2px solid #db9797;
+    }
+  }
+}
+
+div.detail-icons {
+  border-bottom: 2px solid grey;
+
+  display: flex;
+  padding-left: 0rem;
+  padding-right: 0rem;
+  margin-bottom: 1rem;
+  flex-direction: row;
+  align-items: center;
+
+  & .icon {
+    &:not(:last-child) {
+      margin-right: 0.4rem;
+    }
+    &.large {
+      width: 1.3rem;
     }
   }
 
-  & .CodeMirror {
-    text-align: left!important; 
-    height: auto;
-    & pre {
-      font-family: "Ubuntu Mono";
-      padding-left: 0px;
-      font-size: 1rem;
-      & > * {
-        font-family: "Ubuntu Mono";
-        font-size: 1rem;
-      }
-      & span {
-        font-family: "Ubuntu Mono";
-        font-size: 1rem;
-        & span.cm-a { background: #aad1f7; }
-        & span.cm-g0 { background: #daffa7; color: #000; }
-        & span.cm-g1 { background: #b4fa50; color: #000; }
-        & span.cm-g2 { background: #8cd400; color: #000; } 
-        & span.cm-g3 { background: #26b809; color: #fff; } 
-        & span.cm-g4 { background: #30ea60; color: #000; } 
-        & span.cm-g5 { background: #0c8d15; color: #fff; } 
-        & span.cm-b { background: #ffc080; color: #753e07; }
-        & span.cm-err {background: #e30000; color: #fff; } 
-      }
-    }
-    & .CodeMirror-lines {
-      padding: 0px;
-    }
-  }
+  div#padding {
+    width: -webkit-fill-available;
+  };
 
-  & .regex {
-    font-family: 'Ubuntu Mono';
-    overflow-x: scroll;
-    overflow-y: hidden;
-    white-space: nowrap;
-    padding-bottom: 0.5rem;
-    padding-top: 0.5rem;
-    display: flex;
-    text-align: start;
-    height: 1rem;
-  } & .regex * {
-    font-family: 'Ubuntu Mono';
-    height: 1rem;
-  }
-
-  & div.regex {
-    border-bottom: 1px solid #dcdfe6;
-  }
-
-  & div.regex::-webkit-scrollbar {
-    width: 0px;
-    height: 0px;
-  }
-
-  & .regex b     {background: #aad1f7;} 
-  /* metasequence */
-  .regex i     {background: #e3e3e3;} 
-  /* char class */
-  .regex i b   {background: #9fb6dc;} 
-  /* char class: metasequence */
-  .regex i u   {background: #c3c3c3;} 
-  /* char class: range-hyphen */
-  .regex b.g1  {background: #b4fa50; color: #000;} 
-  /* group: depth 1 */
-  .regex b.g2  {background: #8cd400; color: #000;} 
-  /* group: depth 2 */
-  .regex b.g3  {background: #26b809; color: #fff;} 
-  /* group: depth 3 */
-  .regex b.g4  {background: #30ea60; color: #000;} 
-  /* group: depth 4 */
-  .regex b.g5  {background: #0c8d15; color: #fff;} 
-  /* group: depth 5 */
-  .regex b.err {background: #e30000; color: #fff;} 
-  /* error */
-  .regex b, .regex i, .regex u {
-    font-weight: normal;
-    font-style: normal;
-    text-decoration: none;
-    display: flex;
-  }
-
-  .regex[contenteditable]:focus {
-    outline: 0px solid transparent;
-    display: flex;
-    height: 1rem;
-  }
 }
 </style>

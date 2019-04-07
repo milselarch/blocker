@@ -129,10 +129,24 @@
   }
 
   @font-face {
-  font-family: "Abel";
-  src:
-    url("/static/fonts/Abel-Regular.ttf") format("truetype");
-    /* Add other formats as you see fit */
+    font-family: "Ubuntu Mono";
+    src:
+      url("/static/fonts/UbuntuMono-R.ttf") format("truetype");
+      /* Add other formats as you see fit */
+  }
+
+  @font-face {
+    font-family: "Inconsolata";
+    src:
+      url("/static/fonts/Inconsolata-Regular.ttf") format("truetype");
+      /* Add other formats as you see fit */
+  }
+
+  @font-face {
+    font-family: "Abel";
+    src:
+      url("/static/fonts/Abel-Regular.ttf") format("truetype");
+      /* Add other formats as you see fit */
   }
 
   @font-face {

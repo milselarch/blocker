@@ -1,7 +1,8 @@
 <template>
   <div id="wrapper">
-   <p>{{ JSON.stringify(tasks) }}</p>
-
+    <!--
+    <p>{{ JSON.stringify(tasks) }}</p>
+    -->
     <b-table 
       :data="tasks"
       :selected="selected"

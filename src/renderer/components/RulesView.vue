@@ -1,8 +1,9 @@
 <template>
-  <div id="wrapper">
-    <div id="rule-details">
-      <RuleDetail />
-    </div>
+  <div id="rules-view">
+    <RuleDetail class="detail"/>
+
+    <div class="divider"></div>
+
     <div id="rule-cards">
     
     </div>
@@ -40,7 +41,22 @@
 <style lang="scss" scoped>
 @import "@/assets/scss/vars.scss";
 
-div#rule-details {
-  width: 15rem;
+div#rules-view {
+  /* min-height: max-content; */
+  flex: auto;
+  display: grid;
+  grid-template-columns: 17rem 1px 1fr;
+  grid-template-rows: 100%;
+  grid-column-gap: 3rem;
+
+  & div#detail {
+    width: 15rem;
+  }
+
+  & div.divider {
+    height: auto;
+    width: 2px;
+    background:#dcdfe6;
+  }
 }
 </style>

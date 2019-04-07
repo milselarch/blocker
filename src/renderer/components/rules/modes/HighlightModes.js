@@ -5,7 +5,21 @@ CodeMirror.defineMode('text', () => {
   // let g = 0
 
   const tokenBase = (stream) => {
-    // let ch = stream.next()
+    stream.next()
+    return 'text'
+  }
+
+  return {
+    startState: (base) => { /* g = 0 */ },
+    token: tokenBase
+  }
+})
+
+CodeMirror.defineMode('none', () => {
+  // let g = 0
+
+  const tokenBase = (stream) => {
+    stream.next()
     return 'text'
   }
 
