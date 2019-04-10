@@ -40,6 +40,10 @@
       editMode: DEFAULT_MODE
     }),
 
+    created () {
+      this.editMode = this.mode
+    },
+
     beforeDestroy () {
       this.isDestroyed = true
     },

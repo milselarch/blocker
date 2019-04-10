@@ -1,14 +1,45 @@
 <template>
   <div class="rule-detail">
+    <b-loading :is-full-page="true" :active="loading" />
+
     <div class="detail-icons">
       <font-awesome-icon icon="window-restore" class="large icon alt">
       </font-awesome-icon>
       <div id="padding"></div>
-      <font-awesome-icon icon="save" class="icon alt">
+
+      <font-awesome-icon
+        @click="unlock"
+        icon="lock" class="lock lock-close icon alt"
+        v-bind:class="{
+          disabled: !this.locked,
+          unlocking: this.unlocking
+        }"
+      >
       </font-awesome-icon>
-      <font-awesome-icon icon="lock" class="icon alt">
+      <font-awesome-icon
+        @click="lock"
+        icon="lock-open" class="lock lock-open icon alt"
+        v-bind:class="{ disabled: this.locked }"
+      >
       </font-awesome-icon>
-      <font-awesome-icon icon="trash" class="icon alt">
+
+      <font-awesome-icon 
+        icon="trash" class="delete-icon icon alt"
+        @click="deleteRule"
+        v-bind:class="{
+          deletable: !this.locked
+        }"
+      >
+      </font-awesome-icon>
+      
+      <font-awesome-icon
+        icon="save"
+        class="icon save-icon alt"
+        @click="saveRule"
+        v-bind:class="{
+          savable: savable
+        }"
+      >
       </font-awesome-icon>
     </div>
    
@@ -18,19 +49,23 @@
         title="Program"
         v-model="name"
         ref="nameEdit"
+        v-on:mode-change="changeNameMode"
+        :mode="nameMode"
       />
       <EditInlineMode
         id="title"
         title="Window Title"
         v-model="programName"
         ref="programEdit"
+        v-on:mode-change="changeProgramMode"
+        :mode="programMode"
       />
 
       <input 
         id="duration"
         v-model="blockDuration"
         v-bind:class = "{
-          invalid: !invalidDuration 
+          invalid: inputInvalid
         }"
       />
       <p id="duration-label">Block duration (seconds)</p>
@@ -47,7 +82,7 @@
   import EditInlineMode from './EditInlineMode'
   // require styles
   import Misc from '@/misc.js'
-  // import Rule from './Rule'
+  import Rule from './Rule'
   import { setTimeout } from 'timers'
 
   setTimeout(() => {
@@ -59,13 +94,21 @@
 
     data: () => ({
       name: '',
+      nameMode: Rule.nameTypes.text,
       programName: '',
-      blockDuration: 300
+      programMode: Rule.nameTypes.text,
+      unlockTime: -1,
+      unlocking: false,
+      savable: false,
+      loading: false,
+      locked: true,
+      blockDuration: 300,
+      hasChanged: false
     }),
 
     computed: {
-      invalidDuration () {
-        return String(this.blockDuration).match(/^[0-9]+$/)
+      inputInvalid () {
+        return !this.validDuration()
       }
     },
 
@@ -74,18 +117,124 @@
     },
 
     methods: {
+      deleteRule () {
+        console.log('EMIT DELETE')
+        this.$emit('delete-rule', this.rule)
+      },
+
+      validDuration () {
+        const match = String(this.blockDuration).match(/^[0-9]+$/)
+        return match !== null
+      },
+
+      unlockProgress () {
+        if (this.unlockTime === -1) {
+          return -1
+        } else {
+          const unlockWait = Misc.getTimePassed() - this.unlockTime
+          return Math.min(1, unlockWait / this.rule.lockTime)
+        }
+      },
+
+      lock () {
+        if (this.locked === false) {
+          this.unlocking = false
+          this.locked = true
+          this.unlockTime = -1
+        } else if (this.rule.locked === false) {
+          this.locked = false
+        }
+
+        this.updateSavable()
+      },
+
+      unlock () {
+        console.log('UNLOCKING')
+        if (!this.rule.locked) {
+          // rule was not locked, change icon to lock
+          this.unlocking = false
+          this.unlockTime = -1
+          this.locked = !this.locked
+        } else if (this.unlocking === true) {
+          // was unlocking, changed to locked
+          this.unlocking = false
+          this.unlockTime = -1
+        } else {
+          // was not unlocking, show unlocking in transit
+          this.unlockTime = Misc.getTimePassed()
+          this.unlocking = true
+          this.locked = true
+        }
+
+        this.updateSavable()
+      },
+
+      changeNameMode (nameMode) {
+        this.nameMode = nameMode
+        // console.log('CGNAGEMODE N', nameMode)
+        this.updateSavable()
+      },
+      changeProgramMode (programMode) {
+        this.programMode = programMode
+        // console.log('CGNAGEMODE P', programMode)
+        this.updateSavable()
+      },
+
       loadRule (rule) {
         if (rule === null) {
-          console.log('NULL RULE')
+          // console.log('NULL RULE')
           return
         }
 
-        console.log('LOAD RULE', rule)
+        // console.log('LOAD RULE', rule)
         this.name = rule.name
+        this.nameMode = rule.nameType
         this.programName = rule.programName
+        this.programMode = rule.programType
         this.blockDuration = rule.blockDuration
+        this.locked = rule.locked
         this.$refs.nameEdit.$forceUpdate()
         this.$refs.programEdit.$forceUpdate()
+      },
+
+      async saveRule () {
+        if (this.savable) {
+          this.rule.setName(this.name, this.nameMode)
+          this.rule.setProgram(this.programName, this.programMode)
+          this.rule.setBlockDuration(this.blockDuration)
+          if (this.locked) { this.rule.lock() }
+          this.rule.save()
+          this.updateSavable()
+
+          this.loading = true
+          await this.$store.dispatch('saveRule', this.rule)
+          this.loading = false
+        }
+      },
+
+      updateSavable () {
+        const self = this
+        let hasChanged = false
+
+        if (self.rule instanceof Rule) {
+          // console.log('SELFRULE', self.rule)
+          const newRuleInfo = {
+            name: self.name,
+            nameType: self.nameMode,
+            locked: self.locked,
+            programName: self.programName,
+            programType: self.programMode,
+            blockDuration: parseInt(self.blockDuration)
+          }
+
+          // console.log('RINFO', newRuleInfo)
+          hasChanged = self.rule.hasChanged(newRuleInfo)
+        }
+
+        self.savable = (
+          hasChanged &&
+          self.validDuration()
+        )
       }
     },
 
@@ -93,11 +242,41 @@
       rule (newRule, oldRule) {
         console.log('RDETAIL', newRule)
         this.loadRule(newRule)
+        this.updateSavable()
+      },
+
+      name () {
+        this.updateSavable()
+      },
+      programName () {
+        this.updateSavable()
+      },
+      blockDuration () {
+        this.updateSavable()
       }
     },
 
     created () {
       // this.loadRule(this.rule)
+      const self = this;
+      (async () => {
+        while (!self.isDestroyed) {
+          await Misc.sleepAsync(100)
+          const progress = self.unlockProgress()
+          // console.log('UPROG', progress)
+
+          if (progress < 1) {
+            self.$emit('unlock-progress', progress)
+          } else {
+            self.$emit('unlock-progress', 0)
+            self.rule.unlock()
+            self.rule.save()
+            self.locked = false
+            self.unlocking = false
+            self.unlockTime = -1
+          }
+        }
+      })()
     },
 
     mounted () {
@@ -144,12 +323,24 @@ div.mode-edit {
     width: 100%;
 
     &:focus, &:focus, &:focus{
-        outline: none;
+      outline: none;
     }
 
     &.invalid {
       border-bottom: 2px solid $warning;
     }
+  }
+}
+
+@keyframes unlocking {
+  0% {
+    color: $twitter;
+  }
+  50% {
+    color: $primary;
+  }
+  100% {
+    color: $twitter;
   }
 }
 
@@ -164,6 +355,42 @@ div.detail-icons {
   align-items: center;
 
   & .icon {
+    &.save-icon {
+      &:not(.savable) {
+        color: #dcdfe6;
+      }
+      &.savable {
+        cursor: pointer;
+        &:hover { color: $twitter; }
+        &:active { color: $primary; }
+      }
+    }
+
+    &.delete-icon {
+      cursor: pointer;
+
+      &:not(.deletable) {
+        color: $disabled;
+      }
+      &.deletable {
+        color: $warning;
+        &:hover { color: $delete-hover; }
+        &:active { color: $delete-active; }
+      }
+    }
+
+    &.lock {
+      cursor: pointer;
+      &.unlocking {
+        animation-name: unlocking;
+        animation-duration: 1s;
+        animation-iteration-count: infinite;
+      }
+
+      &:hover { color: $light-blue; }
+      &:active { color: $primary; }
+    }
+
     &:not(:last-child) {
       margin-right: 0.4rem;
     }

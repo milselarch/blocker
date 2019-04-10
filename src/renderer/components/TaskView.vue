@@ -6,7 +6,7 @@
     <b-table
       :data="tasks"
       :selected="selected"
-      :loading="tasks.length === 0"
+      :loading="(tasks.length === 0) || blocking"
       default-sort="CPU"
       default-sort-direction="desc"
       class="tasks-table"
@@ -64,6 +64,7 @@
     components: { },
 
     data: () => ({
+      blocking: false,
       isDestroyed: false,
       selected: null,
       tasks: [],
@@ -98,13 +99,17 @@
         console.log('SELECTED')
         // this.selected = []
       },
-      makeNewRule (task) {
-        var newRule = new Rule({
+      async makeNewRule (task) {
+        this.blocking = true
+        const newRule = new Rule({
           name: task.name,
           programName: task.program,
           platform: task.platform
         })
 
+        await this.$store.dispatch('addNewRule', newRule)
+        await Misc.sleepAsync(100)
+        this.blocking = false
         this.$emit('new-rule', newRule)
         // this.open("")
       }

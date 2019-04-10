@@ -1,4 +1,5 @@
 import TaskGrabber from '@/components/TaskGrabber.js'
+import Rule from '@/components/rules/Rule'
 
 const state = {
   // list of running system processes / tasks
@@ -13,9 +14,38 @@ const mutations = {
     state.tasks = newTasks
   },
 
+  removeRule: (state, targetRule) => {
+    state.rules = state.rules.filter(rule => {
+      if (rule.ID !== targetRule.ID) {
+        return true
+      }
+    })
+  },
+
   setNewRule: (state, rule) => {
     console.log('NOSTATE', state.rules)
-    state.rules = [rule].concat(state.rules)
+    const jsonRule = rule.jsonify()
+    state.rules = [jsonRule].concat(state.rules)
+  },
+
+  emptyRules: (state) => {
+    state.rules = []
+  },
+
+  saveRule: (state, rule) => {
+    let ruleExists = false
+    for (let k = 0; k < state.rules.length; k++) {
+      const jsonRule = state.rules[k]
+      if (jsonRule.ID === rule.ID) {
+        state.rules[k] = rule.jsonify()
+        ruleExists = true
+        break
+      }
+    }
+
+    if (!ruleExists) {
+      throw new Error('UNSAVABLE NONEXISTANT RULE')
+    }
   }
 }
 
@@ -27,8 +57,22 @@ const actions = {
     return newTasks
   },
 
+  deleteRule: async (context, rule) => {
+    context.commit('removeRule', rule)
+  },
+
+  reset: async (context) => {
+    context.commit('emptyRules')
+    return true
+  },
+
   addNewRule: async (context, newRule) => {
     context.commit('setNewRule', newRule)
+    return true
+  },
+
+  saveRule: async (context, rule) => {
+    context.commit('saveRule', rule)
     return true
   }
 }
@@ -39,7 +83,9 @@ const getters = {
     return Object.freeze(state.tasks)
   },
   rules: (state) => {
-    return Object.freeze(state.rules)
+    return state.rules.map(jsonRule => {
+      return new Rule(jsonRule)
+    })
   }
 }
 

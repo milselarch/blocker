@@ -1,16 +1,23 @@
 <template>
   <div class="wrapper" @click="onClick">
     <div id="status"></div>
-    <div class="names">
+    <div
+      class="names"
+      v-bind:class="{
+        active: ruledata === activerule
+      }"
+    >
       <EditInline 
         v-model="ruledata.name"
         :border="false"
         readonly='nocursor'
+        :mode="ruledata.nameType"
       />
       <EditInline 
         v-model="ruledata.programName"
         :border="false"
         readonly='nocursor'
+        :mode="ruledata.programType"
       />
     </div>
   </div>
@@ -45,7 +52,8 @@
     },
 
     props: {
-      ruledata: new Rule({})
+      ruledata: new Rule({}),
+      activerule: null
     },
 
     components: {
@@ -82,6 +90,12 @@ div.wrapper {
     &:active {
       cursor: pointer;
       border: 2px solid $primary;
+    }
+
+    &.active {
+      border: 2px solid $twitter;
+      &:hover { border: 2px solid $primary; }
+      &:active { border: 2px solid $selected-hover; }
     }
   }
 }

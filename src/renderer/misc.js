@@ -1,3 +1,9 @@
+function getCounterTime () {
+  return performance.now() / 1000
+}
+
+let START_TIME = null
+
 class Misc {
   sleepAsync (ms) {
     return new Promise((resolve, reject) => {
@@ -16,6 +22,14 @@ class Misc {
     }
 
     return results
+  }
+
+  getTimePassed () {
+    if (START_TIME === null) {
+      START_TIME = getCounterTime()
+    }
+
+    return getCounterTime() - START_TIME
   }
 
   constructor () {

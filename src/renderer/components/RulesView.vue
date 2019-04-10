@@ -1,11 +1,21 @@
 <template>
   <div id="rules-view">
+    <b-loading :is-full-page="true" :active="loading" />
+
     <RuleDetail
       class="detail"
       :rule="activerule"
+      v-on:unlock-progress="updateUnlockProgress"
+      v-on:delete-rule="deleteRule"
     />
 
-    <div class="divider"></div>
+    <div class="divider">
+      <div
+        class="progress-fill"
+        v-bind:style="{
+        'flex-basis': (100 * progress) + '%'
+      }"></div>
+    </div>
 
     <div id="rule-cards">
       <RuleCard
@@ -13,6 +23,7 @@
         v-bind:key="index"
         :ruledata="ruleChunk"
         v-on:select-rule="selectRule"
+        :activerule="activerule"
       />
     </div>
   </div>
@@ -33,7 +44,9 @@
 
     data: () => ({
       rules: [],
-      activerule: null
+      activerule: null,
+      progress: -1,
+      loading: false
     }),
 
     beforeDestroy () {
@@ -43,25 +56,42 @@
     methods: {
       selectRule (rule) {
         this.activerule = rule
+      },
+
+      async deleteRule (rule) {
+        console.log('DELETE')
+        this.loading = true
+        await this.$store.dispatch('deleteRule', rule)
+        await Misc.sleepAsync(100)
+        this.loadRules()
+        this.loading = false
+      },
+
+      updateUnlockProgress (progress) {
+        // console.log('UPRO', progress)
+        this.progress = progress
+      },
+
+      loadRules () {
+        this.rules = this.$store.getters.rules
+        for (let k = 0; k < this.rules.length; k++) {
+          const rule = this.rules[k]
+          if (!rule.saved) {
+            this.activerule = rule
+            break
+          }
+        }
+
+        if (this.activerule === null) {
+          if (this.rules.length > 0) {
+            this.activerule = this.rules[0]
+          }
+        }
       }
     },
 
     created () {
-      this.rules = this.$store.getters.rules
-      for (let k = 0; k < this.rules.length; k++) {
-        const rule = this.rules[k]
-        if (!rule.saved) {
-          this.activerule = rule
-          break
-        }
-      }
-
-      if (this.activerule === null) {
-        if (this.rules.length > 0) {
-          this.activerule = this.rules[0]
-        }
-      }
-
+      this.loadRules()
       console.log('RULES', this.rules, this.activerule)
     },
 
@@ -74,6 +104,22 @@
 
 <style lang="scss" scoped>
 @import "@/assets/scss/vars.scss";
+
+div.divider {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column-reverse;
+
+  & div.progress-fill {
+    color: red;
+    background-color: #58B7FF;
+  }
+  & div.progress-background {
+    flex-basis: auto;
+    background-color: #DDD;
+    flex-grow: 1;
+  }
+}
 
 div#rules-view {
   /* min-height: max-content; */

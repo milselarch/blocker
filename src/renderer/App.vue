@@ -1,5 +1,10 @@
 <template>
   <div id="app">
+    <BlockView
+      v-bind:class="{ disabled: blocked }"
+      id="blocked"
+    />
+
     <b-tabs 
       position="is-centered" 
       class="tabs-block"
@@ -38,6 +43,7 @@
 </template>
 
 <script>
+  import BlockView from '@/components/BlockView'
   const TABS = {
     Programs: {icon: 'window-restore'},
     Rules: {icon: 'shield-alt'}
@@ -49,11 +55,16 @@
     name: 'browser',
 
     data: () => ({
+      blocked: false,
       tabNames: TAB_NAMES,
       tabViewName: TAB_NAMES[0],
       tabIndex: 0,
       tabs: TABS
     }),
+
+    async created () {
+      // await this.$store.dispatch('reset')
+    },
 
     methods: {
       onTabChange: function (tabNo) {
@@ -62,10 +73,13 @@
       },
       addNewRule: async function (newRule) {
         console.log('RULE ACQUISITION', newRule)
-        await this.$store.dispatch('addNewRule', newRule)
         // this.$store.commit('setNewRule', newRule)
         this.tabIndex = TAB_NAMES.indexOf('Rules')
       }
+    },
+
+    components: {
+      BlockView
     }
   }
 </script>
@@ -79,6 +93,15 @@
     display: flex;
     flex-direction: column;
     height: -webkit-fill-available;
+
+    & #blocked {
+      width: 100vw;
+      height: 100vh;
+      position: absolute;
+      background-color: white;
+      opacity: 0.9;
+      z-index: 100;
+    }
   }
 
   .tabs-block {
