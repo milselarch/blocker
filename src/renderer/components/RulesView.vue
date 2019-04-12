@@ -25,8 +25,6 @@
         v-on:select-rule="selectRule"
         :activerule="activerule"
       />
-
-      {{ unlockWaits }}
     </div>
   </div>
 </template>

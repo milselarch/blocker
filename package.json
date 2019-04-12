@@ -62,7 +62,7 @@
     "axios": "^0.18.0",
     "buefy": "^0.7.1",
     "codemirror-no-newlines": "^1.0.2",
-    "iohook": "^0.4.2",
+    "iohook": "^0.4.4",
     "jquery": "^3.3.1",
     "ps-list": "^6.1.0",
     "ps-node": "^0.1.6",
@@ -146,5 +146,20 @@
   },
   "directories": {
     "test": "test"
+  },
+  "iohook": {
+    "targets": [
+      "node-59",
+      "electron-57"
+    ],
+    "platforms": [
+      "win32",
+      "darwin",
+      "linux"
+    ],
+    "arches": [
+      "x64",
+      "ia32"
+    ]
   }
 }

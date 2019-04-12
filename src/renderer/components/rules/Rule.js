@@ -1,3 +1,4 @@
+import Misc from '@/misc.js'
 import Enum from '@/Enum.js'
 import assert from '@/assert.js'
 // import Misc from '@/misc.js'
@@ -5,9 +6,11 @@ import assert from '@/assert.js'
 const crypto = require('crypto')
 const OS = require('os')
 
+const ALLOWED_TYPES = Enum('text', 'wildcard', 'regex')
+
 class Rule {
-  static nameTypes = Enum('text', 'wildcard', 'regex');
-  static programTypes = Enum('text', 'wildcard', 'regex');
+  static nameTypes = ALLOWED_TYPES;
+  static programTypes = ALLOWED_TYPES;
   static RULE_TYPE = 'RULE'
 
   constructor ({
@@ -97,9 +100,28 @@ class Rule {
       }
     }
 
-    self.test = (task) => {
+    self.testTask = (task) => {
       if (task.platform !== self.platform) {
         return false
+      }
+
+      const nameMatch = self.testValue(task.name, self.name, self.nameType)
+      const programMatch = self.testValue(task.program, self.programName, self.programType)
+      return nameMatch && programMatch
+    }
+
+    self.testValue = (value, pattern, patternType) => {
+      if (patternType === ALLOWED_TYPES.text) {
+        value = value.replace(/\?.*$/, '')
+        return value === pattern
+      } else if (patternType === ALLOWED_TYPES.wildcard) {
+        pattern = Misc.wildcardToRegExp(pattern)
+        return value.match(pattern) !== null
+      } else if (patternType === ALLOWED_TYPES.regex) {
+        pattern = new RegExp(pattern)
+        return value.match(pattern) !== null
+      } else {
+        throw new Error(`BAD PATTERN TYPE ${patternType}`)
       }
     }
 

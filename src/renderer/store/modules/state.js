@@ -109,7 +109,7 @@ const mutations = {
 const actions = {
   updater: async (context) => {
     const newTasks = await TaskGrabber.getAll()
-    console.log('GRABBED TASKS', newTasks)
+    // console.log('GRABBED TASKS', newTasks)
     context.commit('setNewTasks', newTasks)
     return newTasks
   },
@@ -182,6 +182,28 @@ const actions = {
   saveRule: async (context, rule) => {
     context.commit('saveRule', rule)
     return true
+  },
+
+  getBlockedTasks: async (context) => {
+    const state = context.state
+    let maxWait = 1
+
+    let blockedTasks = state.tasks.filter((task) => {
+      return state.rules.map(jsonRule => {
+        const rule = new Rule(jsonRule)
+        maxWait = Math.max(maxWait, rule.blockDuration)
+        if (!rule.saved) { return false }
+        return rule.testTask(task)
+      }).reduce((oldValue, currentValue) => {
+        return oldValue || currentValue
+      }, false)
+    })
+
+    if (blockedTasks === undefined) {
+      blockedTasks = []
+    }
+
+    return [maxWait, blockedTasks]
   }
 }
 
@@ -198,12 +220,6 @@ const getters = {
   unlockWaits: (state) => {
     console.log('GET UNLOCK WAITS')
     return state.unlockWaits
-  },
-
-  blockedTasks: (state) => {
-    return state.tasks.filter((task) => {
-      return true
-    })
   }
 }
 

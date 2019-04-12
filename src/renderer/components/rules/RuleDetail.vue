@@ -3,7 +3,13 @@
     <b-loading :is-full-page="true" :active="loading" />
 
     <div class="detail-icons">
-      <font-awesome-icon icon="window-restore" class="large icon alt">
+      <font-awesome-icon
+        icon="window-restore"
+        class="rule-icon large icon alt"
+        v-bind:class="{
+          muted: !this.rule.saved
+        }"
+      >
       </font-awesome-icon>
       <div id="padding"></div>
 
@@ -298,7 +304,7 @@
         self.savable = (
           hasChanged &&
           self.validDuration()
-        )
+        ) || !self.rule.saved
       }
     },
 
@@ -396,6 +402,12 @@ div.detail-icons {
   align-items: center;
 
   & .icon {
+    &.rule-icon {
+      &.muted {
+        color: #dcdfe6;
+      }
+    }
+
     &.save-icon {
       &:not(.savable) {
         color: #dcdfe6;

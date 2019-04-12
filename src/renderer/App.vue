@@ -1,8 +1,8 @@
 <template>
   <div id="app">
     <BlockView
-      v-bind:class="{ disabled: !blocked }"
-      id="blocked"
+      :allowVisible="allowBlock"
+      class="blocked"
     />
 
     <b-tabs 
@@ -57,7 +57,7 @@
     name: 'browser',
 
     data: () => ({
-      blocked: false,
+      allowBlock: true,
       tabNames: TAB_NAMES,
       tabViewName: TAB_NAMES[0],
       tabIndex: 0,
@@ -72,7 +72,7 @@
 
         while (!self.isDestroyed) {
           await self.$store.dispatch('updateUnlocks')
-          await Misc.sleepAsync(200)
+          await Misc.sleepAsync(300)
         }
       })()
     },
@@ -105,7 +105,7 @@
     flex-direction: column;
     height: -webkit-fill-available;
 
-    & #blocked {
+    & .blocked {
       width: 100vw;
       height: 100vh;
       position: absolute;

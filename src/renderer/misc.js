@@ -4,6 +4,10 @@ function getCounterTime () {
 
 let START_TIME = null
 
+function regExpEscape (s) {
+  return s.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&')
+}
+
 class Misc {
   sleepAsync (ms) {
     return new Promise((resolve, reject) => {
@@ -30,6 +34,12 @@ class Misc {
     }
 
     return getCounterTime() - START_TIME
+  }
+
+  wildcardToRegExp (s) {
+    return new RegExp(
+      '^' + s.split(/\*+/).map(regExpEscape).join('.*') + '$'
+    )
   }
 
   constructor () {

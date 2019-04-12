@@ -5,7 +5,8 @@ const psList = require('ps-list')
 const platform = OS.platform()
 
 class Task {
-  constructor (name, program, CPU) {
+  constructor (pid, name, program, CPU) {
+    this.pid = pid
     this.platform = platform
 
     this.name = name
@@ -32,6 +33,7 @@ class TaskGrabber {
       */
 
       return new Task(
+        task.pid,
         task.windowTitle,
         task.imageName,
         task.cpuTime
@@ -62,6 +64,7 @@ class TaskGrabber {
       return true
     }).map(task => {
       return new Task(
+        task.pid,
         task.name,
         task.cmd,
         task.cpu
@@ -84,7 +87,7 @@ class TaskGrabber {
         }
       }
 
-      if (isUnique && currentTask.CPU > 0) {
+      if (isUnique && currentTask.CPU >= 0) {
         uniqueTasks.push(currentTask)
       }
     })
