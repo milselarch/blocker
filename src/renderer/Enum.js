@@ -33,7 +33,7 @@ function Enum () {
   const frozenMapping = Object.freeze(mapping)
   const newEnum = new Proxy(frozenMapping, {
     get: function (target, name) {
-      console.log('INCLDES', target, name)
+      // console.log('INCLDES', target, name)
       if (name === 'ALL') {
         return allowedValues.slice(0)
       } else if (name === 'length') {

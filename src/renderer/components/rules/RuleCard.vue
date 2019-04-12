@@ -1,6 +1,12 @@
 <template>
   <div class="wrapper" @click="onClick">
-    <div id="status"></div>
+    <div id="status">
+      <div
+        class="progress-fill"
+        v-bind:style="{
+        'flex-basis': (100 * progress) + '%'
+      }"></div>
+    </div>
     <div
       class="names"
       v-bind:class="{
@@ -35,6 +41,20 @@
 
   export default {
     name: 'rule-card',
+
+    computed: {
+      progress () {
+        const unlockWaits = this.$store.getters.unlockWaits
+        if (unlockWaits.hasOwnProperty(this.ruledata.ID)) {
+          return (
+            unlockWaits[this.ruledata.ID] /
+            this.ruledata.lockTime
+          )
+        }
+
+        return 0
+      }
+    },
 
     data: () => ({
       blob: 'asdasdasd'
@@ -74,6 +94,20 @@ div.wrapper {
   & div#status {
     width: 4px;
     background-color:#dcdfe6;
+
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column-reverse;
+
+    & div.progress-fill {
+      color: red;
+      background-color: #58B7FF;
+    }
+    & div.progress-background {
+      flex-basis: auto;
+      background-color: #DDD;
+      flex-grow: 1;
+    }
   }
 
   & div.names {

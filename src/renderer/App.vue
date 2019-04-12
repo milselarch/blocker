@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <BlockView
-      v-bind:class="{ disabled: blocked }"
+      v-bind:class="{ disabled: !blocked }"
       id="blocked"
     />
 
@@ -44,6 +44,8 @@
 
 <script>
   import BlockView from '@/components/BlockView'
+  import Misc from '@/misc.js'
+  
   const TABS = {
     Programs: {icon: 'window-restore'},
     Rules: {icon: 'shield-alt'}
@@ -64,6 +66,15 @@
 
     async created () {
       // await this.$store.dispatch('reset')
+      const self = this;
+      (async () => {
+        await self.$store.dispatch('onStart')
+
+        while (!self.isDestroyed) {
+          await self.$store.dispatch('updateUnlocks')
+          await Misc.sleepAsync(200)
+        }
+      })()
     },
 
     methods: {

@@ -11,15 +11,15 @@
         @click="unlock"
         icon="lock" class="lock lock-close icon alt"
         v-bind:class="{
-          disabled: !this.locked,
-          unlocking: this.unlocking
+          disabled: !locked,
+          unlocking: unlocking
         }"
       >
       </font-awesome-icon>
       <font-awesome-icon
         @click="lock"
         icon="lock-open" class="lock lock-open icon alt"
-        v-bind:class="{ disabled: this.locked }"
+        v-bind:class="{ disabled: locked }"
       >
       </font-awesome-icon>
 
@@ -27,7 +27,7 @@
         icon="trash" class="delete-icon icon alt"
         @click="deleteRule"
         v-bind:class="{
-          deletable: !this.locked
+          deletable: !this.rule.locked
         }"
       >
       </font-awesome-icon>
@@ -37,7 +37,11 @@
         class="icon save-icon alt"
         @click="saveRule"
         v-bind:class="{
-          savable: savable
+          savable: (
+            savable &&
+            nameInputValid &&
+            programInputValid
+          )
         }"
       >
       </font-awesome-icon>
@@ -97,7 +101,6 @@
       nameMode: Rule.nameTypes.text,
       programName: '',
       programMode: Rule.nameTypes.text,
-      unlockTime: -1,
       unlocking: false,
       savable: false,
       loading: false,
@@ -109,6 +112,13 @@
     computed: {
       inputInvalid () {
         return !this.validDuration()
+      },
+
+      nameInputValid () {
+        return this.inputValid(this.name, this.nameMode)
+      },
+      programInputValid () {
+        return this.inputValid(this.programName, this.programMode)
       }
     },
 
@@ -116,10 +126,62 @@
       this.isDestroyed = true
     },
 
+    created () {
+      const self = this
+      let ID = self.rule.ID
+      const unlockWaits = self.$store.getters.unlockWaits
+      let wasUnlocking = unlockWaits.hasOwnProperty(ID);
+
+      (async () => {
+        while (!self.isDestroyed) {
+          if (self.rule.ID !== ID) {
+            ID = self.rule.ID
+            const unlockWaits = self.$store.getters.unlockWaits
+            wasUnlocking = unlockWaits.hasOwnProperty(ID)
+          }
+
+          const unlockWaits = self.$store.getters.unlockWaits
+          const isUnlocking = unlockWaits.hasOwnProperty(ID)
+
+          if (
+            !isUnlocking &&
+            wasUnlocking &&
+            self.locked
+          ) {
+            self.rule.unlock()
+            self.locked = false
+          }
+
+          await Misc.sleepAsync(200)
+        }
+      })()
+    },
+
     methods: {
       deleteRule () {
         console.log('EMIT DELETE')
-        this.$emit('delete-rule', this.rule)
+        if (!this.rule.locked) {
+          this.$emit('delete-rule', this.rule)
+        }
+      },
+
+      inputValid (value, mode) {
+        let test = true
+
+        if (mode === 'regex') {
+          try {
+            test = new RegExp(value)
+            console.log('VALUD OK REGEX')
+          } catch (err) {
+            if (err.name !== 'SyntaxError') {
+              throw err
+            } else {
+              test = false
+            }
+          }
+        }
+
+        return test
       },
 
       validDuration () {
@@ -127,20 +189,10 @@
         return match !== null
       },
 
-      unlockProgress () {
-        if (this.unlockTime === -1) {
-          return -1
-        } else {
-          const unlockWait = Misc.getTimePassed() - this.unlockTime
-          return Math.min(1, unlockWait / this.rule.lockTime)
-        }
-      },
-
-      lock () {
+      async lock () {
         if (this.locked === false) {
           this.unlocking = false
           this.locked = true
-          this.unlockTime = -1
         } else if (this.rule.locked === false) {
           this.locked = false
         }
@@ -148,20 +200,26 @@
         this.updateSavable()
       },
 
-      unlock () {
+      async unlock () {
         console.log('UNLOCKING')
         if (!this.rule.locked) {
           // rule was not locked, change icon to lock
           this.unlocking = false
-          this.unlockTime = -1
           this.locked = !this.locked
         } else if (this.unlocking === true) {
           // was unlocking, changed to locked
+          this.loading = true
+          await this.$store.dispatch('relockRule', this.rule)
+          await Misc.sleepAsync(50)
+          this.loading = false
           this.unlocking = false
-          this.unlockTime = -1
         } else {
           // was not unlocking, show unlocking in transit
-          this.unlockTime = Misc.getTimePassed()
+          console.log('UNLOCK')
+          this.loading = true
+          await this.$store.dispatch('unlockRule', this.rule)
+          await Misc.sleepAsync(50)
+          this.loading = false
           this.unlocking = true
           this.locked = true
         }
@@ -187,12 +245,18 @@
         }
 
         // console.log('LOAD RULE', rule)
+
         this.name = rule.name
         this.nameMode = rule.nameType
         this.programName = rule.programName
         this.programMode = rule.programType
         this.blockDuration = rule.blockDuration
         this.locked = rule.locked
+
+        const unlockWaits = this.$store.getters.unlockWaits
+        const unlocking = unlockWaits.hasOwnProperty(this.rule.ID)
+        this.unlocking = unlocking
+
         this.$refs.nameEdit.$forceUpdate()
         this.$refs.programEdit.$forceUpdate()
       },
@@ -254,29 +318,6 @@
       blockDuration () {
         this.updateSavable()
       }
-    },
-
-    created () {
-      // this.loadRule(this.rule)
-      const self = this;
-      (async () => {
-        while (!self.isDestroyed) {
-          await Misc.sleepAsync(100)
-          const progress = self.unlockProgress()
-          // console.log('UPROG', progress)
-
-          if (progress < 1) {
-            self.$emit('unlock-progress', progress)
-          } else {
-            self.$emit('unlock-progress', 0)
-            self.rule.unlock()
-            self.rule.save()
-            self.locked = false
-            self.unlocking = false
-            self.unlockTime = -1
-          }
-        }
-      })()
     },
 
     mounted () {
@@ -373,7 +414,6 @@ div.detail-icons {
         color: $disabled;
       }
       &.deletable {
-        color: $warning;
         &:hover { color: $delete-hover; }
         &:active { color: $delete-active; }
       }

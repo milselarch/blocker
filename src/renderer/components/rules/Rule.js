@@ -21,6 +21,7 @@ class Rule {
     lockTime = 300,
     locked = false,
     timestamp = null,
+
     ID = null,
     saved = false
   }) {
@@ -68,9 +69,8 @@ class Rule {
     self.setID = (ID) => {
       const rand = crypto.randomBytes(20).toString('hex')
       if (ID === null) {
-        ID = rand + String(
-          parseInt(self.timestamp * 1000)
-        )
+        const stamp = String(parseInt(self.timestamp * 1000))
+        ID = stamp + '-' + rand
       }
 
       this.ID = ID
@@ -91,8 +91,15 @@ class Rule {
         blockDuration: self.blockDuration,
         lockTime: self.lockTime,
         timestamp: self.timestamp,
+        locked: self.locked,
         ID: self.ID,
         saved: self.saved
+      }
+    }
+
+    self.test = (task) => {
+      if (task.platform !== self.platform) {
+        return false
       }
     }
 

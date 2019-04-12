@@ -25,6 +25,8 @@
         v-on:select-rule="selectRule"
         :activerule="activerule"
       />
+
+      {{ unlockWaits }}
     </div>
   </div>
 </template>
@@ -44,10 +46,30 @@
 
     data: () => ({
       rules: [],
+      unlockWaits: {},
       activerule: null,
-      progress: -1,
       loading: false
     }),
+
+    computed: {
+      progress () {
+        if (this.activerule === null) {
+          return 0
+        }
+
+        const unlockWaits = this.$store.getters.unlockWaits
+        for (let unlockID in unlockWaits) {
+          if (this.activerule.ID === unlockID) {
+            return Math.min((
+              unlockWaits[unlockID] /
+              this.activerule.lockTime
+            ), 1)
+          }
+        }
+
+        return 0
+      }
+    },
 
     beforeDestroy () {
       this.isDestroyed = true
@@ -93,6 +115,14 @@
     created () {
       this.loadRules()
       console.log('RULES', this.rules, this.activerule)
+      const self = this;
+      (async () => {
+        while (!self.isDestroyed) {
+          self.unlockWaits = self.$store.getters.unlockWaits
+          // console.log('UWAITS', self.unlockWaits)
+          await Misc.sleepAsync(200)
+        }
+      })()
     },
 
     components: {

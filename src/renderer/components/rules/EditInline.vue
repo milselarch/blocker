@@ -6,7 +6,7 @@
       border: border
     }"
   >
-    <codemirror 
+    <codemirror
       v-model="editValue" 
       :options="cmOptions"
       @input="onCmCodeChange"
@@ -69,6 +69,7 @@
       cmOptions: {
         // codemirror options
         tabSize: 4,
+        correctSyntax: false,
         mode: DEFAULT_MODE,
         theme: 'base16-dark',
         placeholder: 'testing',
@@ -88,11 +89,12 @@
 
     watch: {
       value: function (newValue, oldValue) {
-        console.log('EDITVAL', newValue)
         this.editValue = newValue
+        this.checkValueValidity()
       },
       mode: function (newMode, oldMode) {
         this.cmOptions.mode = newMode
+        this.checkValueValidity()
       },
       readonly: function (readonly, old) {
         this.cmOptions.readOnly = readonly
@@ -105,8 +107,31 @@
     },
 
     methods: {
+      checkValueValidity () {
+        console.log('EDITVAL', [this.mode], this.value)
+        this.correctSyntax = true
+        let test
+
+        if (this.mode === 'regex') {
+          try {
+            test = new RegExp(this.value)
+            console.log('VALUD OK REGEX')
+          } catch (err) {
+            if (err.name === 'SyntaxError') {
+              this.correctSyntax = false
+            }
+          }
+        }
+
+        if (test !== undefined) {
+          this.correctSyntax = true
+        }
+
+        this.$emit('correctSyntax', this.correctSyntax)
+      },
       onCmCodeChange (newCode) {
         this.$emit('input', newCode)
+        this.checkValueValidity()
       }
     },
 

@@ -7,6 +7,7 @@
     <EditInline 
       :value="editValue"
       @input="changeVal"
+      v-on:correctSyntax="onSyntaxValidity"
       :mode="editMode"
       :disabled="editMode === 'none'"
     />
@@ -37,7 +38,8 @@
 
     data: () => ({
       editValue: '',
-      editMode: DEFAULT_MODE
+      editMode: DEFAULT_MODE,
+      validtiy: false
     }),
 
     created () {
@@ -68,6 +70,12 @@
     },
 
     methods: {
+      onSyntaxValidity (validtiy) {
+        this.validtiy = validtiy
+        console.log('VALIDITY', this.validtiy)
+        this.$emit('syntaxValidity', validtiy)
+      },
+
       changeMode (newVal, oldVal) {
         const currentIndex = MODE_LIST.indexOf(this.editMode)
         const newModeIndex = (currentIndex + 1) % MODE_LIST.length
