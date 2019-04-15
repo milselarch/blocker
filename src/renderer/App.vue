@@ -5,40 +5,55 @@
       class="blocked"
     />
 
-    <b-tabs 
-      position="is-centered" 
-      class="tabs-block"
-      v-model="tabIndex"
-      v-on:change="onTabChange"
-      type="is-boxed"
-      :hoverable="true"
-    >
-      <b-tab-item
-        v-for="tabName in tabNames"
-        v-bind:key = "tabName"
-        class="main-tab-item" 
-        :label="tabName"
+    <div id="content">
+      <b-tabs 
+        position="is-centered" 
+        class="tabs-block"
+        v-model="tabIndex"
+        v-on:change="onTabChange"
+        type="is-boxed"
+        :hoverable="true"
       >
-        <template slot="header" class="tab-header">
-          <div class="tab-wrapper">
-            <span class="tab-head-name"> {{ tabName }} </span>
-            <font-awesome-icon 
-              :icon="tabs[tabName].icon"
-              class="icon alt"
-            >
-            </font-awesome-icon>
-          </div>
-        </template>
+        <b-tab-item
+          v-for="tabName in tabNames"
+          v-bind:key = "tabName"
+          class="main-tab-item" 
+          :label="tabName"
+        >
+          <template slot="header" class="tab-header">
+            <div class="tab-wrapper">
+              <span class="tab-head-name"> {{ tabName }} </span>
+              <font-awesome-icon 
+                :icon="tabs[tabName].icon"
+                class="icon alt"
+              >
+              </font-awesome-icon>
+            </div>
+          </template>
 
-      </b-tab-item>
-    </b-tabs>
+        </b-tab-item>
+      </b-tabs>
 
-    <router-view 
-      class="tab-content"
-      :name="tabViewName"
-      v-on:new-rule="addNewRule"
-    >
-    </router-view>
+      <router-view 
+        class="tab-content"
+        :name="tabViewName"
+        v-on:new-rule="addNewRule"
+      >
+      </router-view>
+    </div>
+
+    <div id="progress">
+      <div
+        class="progress-fill"
+        v-bind:style="{
+          'flex-basis': (100 * blockProgress) + '%'
+        }"
+        v-bind:class="{
+          depleting: isDepleting /*blockMultiplier < 0*/
+        }"
+      ></div>
+    </div>
+
   </div>
 </template>
 
@@ -54,9 +69,12 @@
   const TAB_NAMES = Object.keys(TABS)
 
   export default {
-    name: 'browser',
+    name: 'blocker-app',
 
     data: () => ({
+      blockProgress: 0,
+      isDepleting: false,
+
       allowBlock: true,
       tabNames: TAB_NAMES,
       tabViewName: TAB_NAMES[0],
@@ -96,22 +114,76 @@
 </script>
 
 <style lang="scss">
+  // Import Bulma's core
+  @import "~bulma/sass/utilities/_all";
+  @import "@/assets/scss/vars.scss";
+  // Setup $colors to use as bulsma classes (e.g. 'is-twitter')
+  $colors: (
+      "white": ($white, $black),
+      "black": ($black, $white),
+      "light": ($light, $light-invert),
+      "dark": ($dark, $dark-invert),
+      "primary": ($primary, $primary-invert),
+      "info": ($info, $info-invert),
+      "success": ($success, $success-invert),
+      "warning": ($warning, $warning-invert),
+      "danger": ($danger, $danger-invert),
+      "twitter": ($twitter, $twitter-invert)
+  );
+
+  // Import Bulma and Buefy styles
+  @import "~bulma";
+  @import "~buefy/src/scss/buefy";
+
+  $progBarHeight: 8px;
+
   html {
     overflow-y: auto !important;
   }
 
   div#app {
-    display: flex;
-    flex-direction: column;
-    height: -webkit-fill-available;
-
-    & .blocked {
-      width: 100vw;
+    & > div#content {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
       height: 100vh;
+      padding-bottom: $progBarHeight;
+
+      & .blocked {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        background-color: white;
+        opacity: 0.9;
+        z-index: 100;
+      }
+    }
+
+    & > div#progress {
+      height: $progBarHeight;
+      background-color:#dcdfe6;
       position: absolute;
-      background-color: white;
-      opacity: 0.9;
-      z-index: 100;
+      bottom: 0px;
+      float: bottom;
+
+      z-index: 300;
+      width: -webkit-fill-available;
+      display: flex;
+      justify-content: space-between;
+      flex-direction: row;
+
+      & div.progress-fill {
+        color: red;
+        background-color: #58B7FF;
+        &.depleting {
+          background-color: $warning;
+        }
+      }
+      & div.progress-background {
+        flex-basis: auto;
+        background-color: #DDD;
+        flex-grow: 1;
+      }
     }
   }
 
@@ -207,25 +279,4 @@
     margin: 0;
     padding: 0;
   }
-
-  // Import Bulma's core
-  @import "~bulma/sass/utilities/_all";
-  @import "@/assets/scss/vars.scss";
-  // Setup $colors to use as bulsma classes (e.g. 'is-twitter')
-  $colors: (
-      "white": ($white, $black),
-      "black": ($black, $white),
-      "light": ($light, $light-invert),
-      "dark": ($dark, $dark-invert),
-      "primary": ($primary, $primary-invert),
-      "info": ($info, $info-invert),
-      "success": ($success, $success-invert),
-      "warning": ($warning, $warning-invert),
-      "danger": ($danger, $danger-invert),
-      "twitter": ($twitter, $twitter-invert)
-  );
-
-  // Import Bulma and Buefy styles
-  @import "~bulma";
-  @import "~buefy/src/scss/buefy";
 </style>

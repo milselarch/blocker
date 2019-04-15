@@ -55,17 +55,6 @@
       </div>
     </div>
 
-    <div id="progress">
-      <div
-        class="progress-fill"
-        v-bind:style="{
-          'flex-basis': (100 * progress) + '%'
-        }"
-        v-bind:class="{
-          depleting: multiplier < 0
-        }"
-      ></div>
-    </div>
   </div>
 </template>
 
@@ -77,6 +66,8 @@
   const ioHook = require('iohook')
   // const sys = require('sys')
   const OS = require('os')
+
+  const __LIVE__ = false
 
   setTimeout(() => {
     console.log(Misc)
@@ -152,7 +143,9 @@
         // console.log(event)
       })
 
-      ioHook.start()
+      if (__LIVE__) {
+        ioHook.start()
+      }
     },
 
     mounted () {
@@ -173,9 +166,11 @@
             self.lastUpdate = -1
           } else {
             // console.log('FILLESCREEN')
-            window.setFullScreen(true)
-            window.webContents.focus()
-            window.focus()
+            if (__LIVE__) {
+              window.setFullScreen(true)
+              window.webContents.focus()
+              window.focus()
+            }
           }
 
           if (self.lastUpdate !== -1) {
@@ -224,7 +219,12 @@ div#wrapper {
   flex-direction: column;
   height: 100vh;
   width: 100vw;
-  background-color: red;
+  background-color: white;
+
+  position: absolute;
+  z-index: 200;
+  background-color: white;
+  opacity: 0.95;
 
   & section.buttons {
     & button {
@@ -237,28 +237,6 @@ div#wrapper {
     font-family: "Staatliches";
     margin-top: 2rem;
     font-size: 5rem;
-  }
-
-  & div#progress {
-    height: 8px;
-    background-color:#dcdfe6;
-
-    display: flex;
-    justify-content: space-between;
-    flex-direction: row;
-
-    & div.progress-fill {
-      color: red;
-      background-color: #58B7FF;
-      &.depleting {
-        background-color: $warning;
-      }
-    }
-    & div.progress-background {
-      flex-basis: auto;
-      background-color: #DDD;
-      flex-grow: 1;
-    }
   }
 
   &.hidden {
