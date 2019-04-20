@@ -13,15 +13,21 @@
       -->
 
       <h2 id="title">Blocked</h2>
+
+      {{ state }}
+
       <template>
         <section class='buttons'>
           <button v-on:click="removeTasks" class="button is-info">Remove programs</button>
           <button
-            :disabled="lastUpdate !== -1"
-            v-on:click="giveAllowance"
-            class="button is-warning"
+            v-on:click="clickAllow"
+            class="button wait-button is-warning"
+            :disabled="!(
+              (state === BLOCK_STATES.blocked) ||
+              (state === BLOCK_STATES.waited)
+            )"
           >
-            Gimme 5 minutes
+            {{ allowText }}
           </button>
         </section>
       </template>
@@ -59,6 +65,7 @@
 </template>
 
 <script>
+  import BLOCK_STATES from './blockStates'
   import Misc from '@/misc.js'
   import { setTimeout } from 'timers'
   const { remote } = require('electron')
@@ -68,11 +75,13 @@
   const OS = require('os')
 
   const __LIVE__ = false
+  let IOHOOKED = false
 
   setTimeout(() => {
     console.log(Misc)
   })
 
+  console.log('BLOCS', BLOCK_STATES.unblocked)
   const exec = require('child_process').exec
 
   export default {
@@ -81,7 +90,8 @@
     data: () => ({
       loading: false,
       drainMultiplier: 1,
-      multiplier: 1,
+      BLOCK_STATES: BLOCK_STATES,
+      state: BLOCK_STATES.unblocked,
       timeWaited: 0,
       lastUpdate: -1,
       maxWait: 1,
@@ -96,6 +106,22 @@
     },
 
     computed: {
+      allowText () {
+        if (
+          (this.state === BLOCK_STATES.blocked) ||
+          (this.state === BLOCK_STATES.waiting)
+        ) {
+          return 'Wait a while'
+        } else if (
+          (this.state === BLOCK_STATES.waited) ||
+          (this.state === BLOCK_STATES.allowing)
+        ) {
+          return 'Gimme a while'
+        } else {
+          return 'Meh'
+        }
+      },
+
       progress () {
         const progress = this.timeWaited / this.maxWait
         return Math.min(Math.max(progress, 0), 1)
@@ -103,8 +129,17 @@
     },
 
     methods: {
-      giveAllowance () {
+      clickAllow () {
         this.lastUpdate = Misc.getTimePassed()
+        if (this.state === BLOCK_STATES.blocked) {
+          this.state = BLOCK_STATES.waiting
+          this.lastUpdate = Misc.getTimePassed()
+        } else if (this.state === BLOCK_STATES.waited) {
+          this.state = BLOCK_STATES.allowing
+          this.lastUpdate = Misc.getTimePassed()
+        } else {
+          throw new Error(`INVALID STATE ${this.state}`)
+        }
       },
 
       async removeTasks () {
@@ -130,20 +165,30 @@
 
     created () {
       const self = this
-      ioHook.on('keydown', event => {
-        if (self.multiplier > 0 && self.blockedTasks.length > 0) {
-          const platform = OS.platform()
-          if (platform === 'win32') {
-            exec('rundll32.exe user32.dll,LockWorkStation')
-          } else {
-            exec('gnome-screensaver-command --lock')
+      console.log('BLOCKERVIEW INITIALISED')
+
+      if (!IOHOOKED) {
+        IOHOOKED = true
+        ioHook.on('keydown', event => {
+          if (!(
+            (self.state === BLOCK_STATES.unblocked) ||
+            (self.state === BLOCK_STATES.allowing)
+          )) {
+            const platform = OS.platform()
+
+            if (__LIVE__ === false) {
+              console.log('LOCK')
+              return true
+            } else if (platform === 'win32') {
+              exec('rundll32.exe user32.dll,LockWorkStation')
+            } else {
+              exec('gnome-screensaver-command --lock')
+            }
           }
-        }
 
-        // console.log(event)
-      })
+          // console.log(event)
+        })
 
-      if (__LIVE__) {
         ioHook.start()
       }
     },
@@ -153,17 +198,23 @@
       const self = this;
 
       (async () => {
-        while (true) {
+        while (!this.isDestroyed) {
           [self.maxWait, self.blockedTasks] = (
             await self.$store.dispatch('getBlockedTasks')
           )
 
-          if (self.blockedTasks.length === 0) {
+          if (self.state === BLOCK_STATES.unblocked) {
             window.setFullScreen(false)
             self.drainMultiplier = 1
             self.timeWaited = 0
-            self.multiplier = 1
+
             self.lastUpdate = -1
+
+            if (self.blockedTasks.length > 0) {
+              self.state = BLOCK_STATES.blocked
+            }
+          } else if (self.state === BLOCK_STATES.allowing) {
+            window.setFullScreen(false)
           } else {
             // console.log('FILLESCREEN')
             if (__LIVE__) {
@@ -174,25 +225,28 @@
           }
 
           if (self.lastUpdate !== -1) {
-            let multiplier = self.multiplier
-            if (multiplier < 0) {
-              multiplier *= self.drainMultiplier
-            }
-
-            self.timeWaited += (
-              Misc.getTimePassed() - self.lastUpdate
-            ) * multiplier
+            const wait = Misc.getTimePassed() - self.lastUpdate
             self.lastUpdate = Misc.getTimePassed()
 
-            if (
-              self.timeWaited < 0 ||
-              self.timeWaited >= self.maxWait
-            ) {
-              self.drainMultiplier *= 1.2
-              self.multiplier *= -1
-              self.lastUpdate = -1
+            if (self.state === BLOCK_STATES.waiting) {
+              self.timeWaited += wait
+              // console.log('WAIT', self.state)
+              if (self.timeWaited >= self.maxWait) {
+                self.lastUpdate = -1
+                self.state = BLOCK_STATES.waited
+              }
+            } else if (self.state === BLOCK_STATES.allowing) {
+              self.timeWaited -= wait * self.drainMultiplier
+              if (self.timeWaited < 0) {
+                self.lastUpdate = -1
+                self.state = BLOCK_STATES.blocked
+                self.drainMultiplier *= 1.2
+              }
             }
           }
+
+          this.$emit('on-state', self.state)
+          this.$emit('block-progress', self.progress)
           await Misc.sleepAsync(250)
         }
       })()

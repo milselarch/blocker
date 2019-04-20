@@ -1,4 +1,5 @@
 import misc from './misc.js'
+// import _ from 'lodash'
 const assert = require('./assert.js')
 
 function isMethod (variable, attr) {
@@ -29,6 +30,7 @@ function Enum () {
     mapping[item] = item
   })
 
+  let enumOut = null
   const allowedValues = args.slice(0)
   const frozenMapping = Object.freeze(mapping)
   const newEnum = new Proxy(frozenMapping, {
@@ -36,14 +38,17 @@ function Enum () {
       // console.log('INCLDES', target, name)
       if (name === 'ALL') {
         return allowedValues.slice(0)
+      } else if (name === 'ALLMAP') {
+        return frozenMapping
       } else if (name === 'length') {
         return allowedValues.length
       } else if (name === 'includes') {
         return value => allowedValues.includes(value)
       } else if (isMethod(allowedValues, name)) {
         return allowedValues.slice(0)[name]
+      } else if (name === Symbol.toStringTag) {
+        return 'Enum'
       } else if (!(name in frozenMapping)) {
-        console.log('NAME EXISTS NOYT', frozenMapping)
         throw new Error(`ENUM PROP DOES NOT EXIST ${name}`)
       }
 
@@ -55,7 +60,8 @@ function Enum () {
     }
   })
 
-  return Object.freeze(newEnum)
+  enumOut = Object.freeze(newEnum)
+  return enumOut
 }
 
 export default Enum

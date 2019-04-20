@@ -1,13 +1,20 @@
 <template>
   <div id="app">
     <BlockView
+      v-on:on-state="onStateChange"
+      v-on:block-progress="onBlockProgress"
       :allowVisible="allowBlock"
       class="blocked"
     />
 
-    <div id="content">
+    <div
+      id="content"
+      v-bind:class="{
+        padded: blockState !== BLOCK_STATES.unblocked
+      }"
+    >
       <b-tabs 
-        position="is-centered" 
+        position="is-centered"
         class="tabs-block"
         v-model="tabIndex"
         v-on:change="onTabChange"
@@ -42,14 +49,19 @@
       </router-view>
     </div>
 
-    <div id="progress">
+    <div
+      id="progress"
+      v-bind:class="{
+        invisible: blockState === BLOCK_STATES.unblocked
+      }"
+    >
       <div
         class="progress-fill"
         v-bind:style="{
           'flex-basis': (100 * blockProgress) + '%'
         }"
         v-bind:class="{
-          depleting: isDepleting /*blockMultiplier < 0*/
+          depleting: blockState === BLOCK_STATES.allowing
         }"
       ></div>
     </div>
@@ -60,6 +72,7 @@
 <script>
   import BlockView from '@/components/BlockView'
   import Misc from '@/misc.js'
+  import BLOCK_STATES from '@/components/blockStates'
   
   const TABS = {
     Programs: {icon: 'window-restore'},
@@ -67,13 +80,15 @@
   }
 
   const TAB_NAMES = Object.keys(TABS)
+  console.log('STATESR')
 
   export default {
     name: 'blocker-app',
 
     data: () => ({
       blockProgress: 0,
-      isDepleting: false,
+      BLOCK_STATES: BLOCK_STATES,
+      blockState: BLOCK_STATES.unblocked,
 
       allowBlock: true,
       tabNames: TAB_NAMES,
@@ -83,7 +98,7 @@
     }),
 
     async created () {
-      // await this.$store.dispatch('reset')
+      // await tshis.$store.dispatch('reset')
       const self = this;
       (async () => {
         await self.$store.dispatch('onStart')
@@ -96,6 +111,13 @@
     },
 
     methods: {
+      onBlockProgress: function (blockProgress) {
+        this.blockProgress = blockProgress
+      },
+      onStateChange: function (blockState) {
+        this.blockState = blockState
+      },
+
       onTabChange: function (tabNo) {
         console.log(`TAB CHANGE NO ${tabNo}`)
         this.tabViewName = this.tabNames[tabNo]
@@ -147,7 +169,12 @@
       display: flex;
       flex-direction: column;
       height: 100vh;
-      padding-bottom: $progBarHeight;
+
+      &.padded {
+        padding-bottom: 0px;
+      } &:not(.padded) {
+        padding-bottom: $progBarHeight;
+      }
 
       & .blocked {
         width: 100%;
@@ -168,13 +195,19 @@
 
       z-index: 300;
       width: -webkit-fill-available;
-      display: flex;
       justify-content: space-between;
-      flex-direction: row;
+
+      &.invisible {
+        display: none
+      } &:not(.invisible) {
+        display: flex;
+        flex-direction: row;
+      }
 
       & div.progress-fill {
         color: red;
         background-color: #58B7FF;
+        transition: all 0.3s ease-out;
         &.depleting {
           background-color: $warning;
         }

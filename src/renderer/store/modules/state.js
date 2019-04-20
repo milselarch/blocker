@@ -203,7 +203,7 @@ const actions = {
       blockedTasks = []
     }
 
-    return [maxWait, blockedTasks]
+    return [maxWait / 10, blockedTasks]
   }
 }
 
