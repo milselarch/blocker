@@ -3,6 +3,8 @@ import Rule from '@/components/rules/Rule'
 import Misc from '@/misc.js'
 import Vue from 'vue'
 
+const WAIT_DISCOUNT = 10
+
 const state = {
   // list of running system processes / tasks
   tasks: [],
@@ -203,7 +205,7 @@ const actions = {
       blockedTasks = []
     }
 
-    return [maxWait / 10, blockedTasks]
+    return [maxWait / WAIT_DISCOUNT, blockedTasks]
   }
 }
 

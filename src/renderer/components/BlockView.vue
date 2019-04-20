@@ -2,7 +2,7 @@
   <div
     id="wrapper"
     v-bind:class="{
-      hidden: (blockedTasks.length === 0) || !allowVisible
+      hidden: (state === BLOCK_STATES.unblocked) || !allowVisible
     }"
   >
     <b-loading :is-full-page="true" :active="loading" />
@@ -74,7 +74,7 @@
   // const sys = require('sys')
   const OS = require('os')
 
-  const __LIVE__ = false
+  const __LIVE__ = true
   let IOHOOKED = false
 
   setTimeout(() => {
@@ -195,7 +195,8 @@
 
     mounted () {
       const window = remote.getCurrentWindow()
-      const self = this;
+      const self = this
+      let fullscreen = false;
 
       (async () => {
         while (!this.isDestroyed) {
@@ -203,7 +204,13 @@
             await self.$store.dispatch('getBlockedTasks')
           )
 
+          if (self.blockedTasks.length === 0) {
+            self.state = BLOCK_STATES.unblocked
+          }
+
           if (self.state === BLOCK_STATES.unblocked) {
+            fullscreen = false
+            window.setAlwaysOnTop(false)
             window.setFullScreen(false)
             self.drainMultiplier = 1
             self.timeWaited = 0
@@ -214,10 +221,19 @@
               self.state = BLOCK_STATES.blocked
             }
           } else if (self.state === BLOCK_STATES.allowing) {
+            fullscreen = false
+            window.setAlwaysOnTop(false)
             window.setFullScreen(false)
           } else {
             // console.log('FILLESCREEN')
+            if (fullscreen === false) {
+              fullscreen = true
+              window.minimize()
+              window.focus()
+            }
+
             if (__LIVE__) {
+              window.setAlwaysOnTop(true)
               window.setFullScreen(true)
               window.webContents.focus()
               window.focus()
