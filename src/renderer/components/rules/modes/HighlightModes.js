@@ -61,7 +61,18 @@ CodeMirror.defineMode('regex', () => {
     let ch = stream.next()
 
     if (ch === '\\' && stream.match(/./, false)) {
-      if (stream.match(/u\w{4}/)) { return 'a' } else if (stream.match(/u/)) { return 'err' } else if (stream.match(/x\w{2}/)) { return 'a' } else if (stream.match(/x/)) { return 'err' } else if (stream.match(/./)) { return 'a' }
+      if (stream.match(/u\w{4}/)) {
+        return 'a'
+      } else if (stream.match(/u/)) {
+        return 'err'
+      } else if (stream.match(/x\w{2}/)) {
+        return 'a'
+      } else if (stream.match(/x/)) {
+        return 'err'
+      } else if (stream.match(/./)) {
+        return 'a'
+      }
+
       return 'a'
     }
 

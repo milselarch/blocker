@@ -135,6 +135,7 @@ div.tasks-table {
 
 td.table-column {
   vertical-align: middle;
+  word-break: break-all;
 
   &.column-name {
     width: 40vw;
