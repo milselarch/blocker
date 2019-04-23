@@ -14,7 +14,7 @@
 
       <h2 id="title">Blocked</h2>
 
-      {{ state }}
+      <!-- {{ state }} -->
 
       <template>
         <section class='buttons'>

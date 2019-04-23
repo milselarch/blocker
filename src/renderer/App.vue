@@ -13,7 +13,7 @@
         padded: blockState !== BLOCK_STATES.unblocked
       }"
     >
-      {{ blockState }}
+      <!-- {{ blockState }} -->
 
       <b-tabs 
         position="is-centered"
