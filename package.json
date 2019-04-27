@@ -22,13 +22,15 @@
     "postinstall": "npm run lint:fix"
   },
   "build": {
-    "productName": "kill-switch",
-    "appId": "com.example.yourapp",
+    "productName": "blockerator",
+    "appId": "com.milselarch.blockerator",
     "directories": {
       "output": "build"
     },
     "files": [
-      "dist/electron/**/*"
+      "dist/electron",
+      "node_modules/",
+      "package.json"
     ],
     "dmg": {
       "contents": [
@@ -98,7 +100,7 @@
     "del": "^3.0.0",
     "devtron": "^1.4.0",
     "electron": "^2.0.4",
-    "electron-builder": "^20.19.2",
+    "electron-builder": "^20.39.0",
     "electron-debug": "^1.5.0",
     "electron-devtools-installer": "^2.2.4",
     "eslint": "^4.19.1",
