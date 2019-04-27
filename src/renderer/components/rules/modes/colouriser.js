@@ -18,8 +18,8 @@ const RegexColorizer = (function () {
   'use strict'
 
   /* --------------------------------------
- *  Private variables
- *------------------------------------ */
+  *  Private variables
+  *------------------------------------ */
 
   const self = {},
     regexToken = /\[\^?]?(?:[^\\\]]+|\\[\S\s]?)*]?|\\(?:0(?:[0-3][0-7]{0,2}|[4-7][0-7]?)?|[1-9][0-9]*|x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|c[A-Za-z]|[\S\s]?)|\((?:\?[:=!]?)?|(?:[?*+]|\{[0-9]+(?:,[0-9]*)?\})\??|[^.?*+^${[()|\\]+|./g,
@@ -53,8 +53,8 @@ const RegexColorizer = (function () {
   }
 
   /* --------------------------------------
- *  Private helper functions
- *------------------------------------ */
+  *  Private helper functions
+  *------------------------------------ */
 
   class HighlightArray extends Array {
     replaceItem (oldItem, newItem) {
@@ -283,16 +283,16 @@ const RegexColorizer = (function () {
       // Escape
       if (m.charAt(0) === '\\') {
         /* Inside character classes, browsers differ on how they handle the following:
-                 * - Any representation of character index zero (\0, \00, \000, \x00, \u0000).
-                 * - "\c", when not followed by A-Z or a-z.
-                 * - "\x", when not followed by two hex characters.
-                 * - "\u", when not followed by four hex characters.
-                 * However, although representations of character index zero within character
-                 * classes don't work on their own in Firefox, they don't throw an error, they work
-                 * when used with ranges, and it's highly unlikely that the user will actually have
-                 * such a character in their test data, so such tokens are highlighted normally.
-                 * The remaining metasequences are flagged as errors.
-                 */
+                  * - Any representation of character index zero (\0, \00, \000, \x00, \u0000).
+                  * - "\c", when not followed by A-Z or a-z.
+                  * - "\x", when not followed by two hex characters.
+                  * - "\u", when not followed by four hex characters.
+                  * However, although representations of character index zero within character
+                  * classes don't work on their own in Firefox, they don't throw an error, they work
+                  * when used with ranges, and it's highly unlikely that the user will actually have
+                  * such a character in their test data, so such tokens are highlighted normally.
+                  * The remaining metasequences are flagged as errors.
+                  */
         if (/^\\[cux]$/.test(m)) {
           output += errorize(m, error.INCOMPLETE_TOKEN)
           lastToken = {rangeable: lastToken.type !== type.RANGE_HYPHEN}
@@ -300,10 +300,10 @@ const RegexColorizer = (function () {
         } else if (/^\\[dsw]$/i.test(m)) {
           output += '<b>' + m + '</b>'
           /* Traditional regex behavior is that a shorthand class should be unrangeable.
-                     * Hence, [-\dz], [\d-z], and [z-\d] should all be equivalent. However, at
-                     * least some browsers handle this inconsistently. E.g., Firefox 2 throws an
-                     * invalid range error for [z-\d] and [\d--].
-                     */
+                      * Hence, [-\dz], [\d-z], and [z-\d] should all be equivalent. However, at
+                      * least some browsers handle this inconsistently. E.g., Firefox 2 throws an
+                      * invalid range error for [z-\d] and [\d--].
+                      */
           lastToken = {
             rangeable: lastToken.type !== type.RANGE_HYPHEN,
             type: type.SHORT_CLASS
@@ -375,8 +375,8 @@ const RegexColorizer = (function () {
   }
 
   /* --------------------------------------
- *  Public methods
- *------------------------------------ */
+  *  Public methods
+  *------------------------------------ */
 
   /**
  * Applies regex syntax highlighting to the provided regex pattern string.
@@ -423,10 +423,10 @@ const RegexColorizer = (function () {
           }
           groupStyleDepth = groupStyleDepth === 5 ? 1 : groupStyleDepth + 1
           /* Record the group opening's position and character sequence so we can later
-                     * mark it as invalid if it turns out to be unclosed in the remainder of the
-                     * regex. The value of index is the position plus the length of the opening <b>
-                     * element with group-depth class.
-                     */
+                      * mark it as invalid if it turns out to be unclosed in the remainder of the
+                      * regex. The value of index is the position plus the length of the opening <b>
+                      * element with group-depth class.
+                      */
 
           const group = new Group(m, groupStyleDepth)
           openGroups.push({
@@ -451,10 +451,10 @@ const RegexColorizer = (function () {
           outputs.push(new Group(')', groupStyleDepth))
           output += groupize(')', groupStyleDepth)
           /* Although at least in some browsers it is possible to quantify lookaheads,
-                     * this adds no value, doesn't work as you'd expect in JavaScript, and is an
-                     * error with some regex flavors such as PCRE (also ES5?), so flag them as
-                     * unquantifiable.
-                     */
+                      * this adds no value, doesn't work as you'd expect in JavaScript, and is an
+                      * error with some regex flavors such as PCRE (also ES5?), so flag them as
+                      * unquantifiable.
+                      */
           lastToken = {
             quantifiable: !/^[=!]/.test(openGroups[openGroups.length - 1].opening.charAt(2)),
             style: 'g' + groupStyleDepth
@@ -468,18 +468,18 @@ const RegexColorizer = (function () {
         // Backreference or octal character code without a leading zero
         if (/^[1-9]/.test(char1)) {
           /* What does "\10" mean?
-                     * - Backref 10, if 10 or more capturing groups opened before this point.
-                     * - Backref 1 followed by "0", if 1-9 capturing groups opened before this point.
-                     * - Otherwise, it's octal character index 10 (since 10 is in octal range 0-377).
-                     * In the case of \8 or \9 when as many capturing groups weren't opened before
-                     * this point, they're highlighted as special tokens. However, they should
-                     * probably be marked as errors since the handling is browser-specific. E.g.,
-                     * in Firefox 2 they seem to be equivalent to "(?!)", while in IE 7 they match
-                     * the literal characters "8" and "9", which is correct handling. I don't mark
-                     * them as errors because it would seem inconsistent to users who don't
-                     * understand the highlighting rules for octals, etc. In fact, octals are not
-                     * included in ECMA-262v3, but all the big browsers support them.
-                     */
+                      * - Backref 10, if 10 or more capturing groups opened before this point.
+                      * - Backref 1 followed by "0", if 1-9 capturing groups opened before this point.
+                      * - Otherwise, it's octal character index 10 (since 10 is in octal range 0-377).
+                      * In the case of \8 or \9 when as many capturing groups weren't opened before
+                      * this point, they're highlighted as special tokens. However, they should
+                      * probably be marked as errors since the handling is browser-specific. E.g.,
+                      * in Firefox 2 they seem to be equivalent to "(?!)", while in IE 7 they match
+                      * the literal characters "8" and "9", which is correct handling. I don't mark
+                      * them as errors because it would seem inconsistent to users who don't
+                      * understand the highlighting rules for octals, etc. In fact, octals are not
+                      * included in ECMA-262v3, but all the big browsers support them.
+                      */
           var nonBackrefDigits = '',
             num = +m.slice(1)
           while (num > capturingGroupCount) {
@@ -498,11 +498,11 @@ const RegexColorizer = (function () {
           // Metasequence
         } else if (/^[0bBcdDfnrsStuvwWx]/.test(char1)) {
           /* Browsers differ on how they handle:
-                     * - "\c", when not followed by A-Z or a-z.
-                     * - "\x", when not followed by two hex characters.
-                     * - "\u", when not followed by four hex characters.
-                     * Hence, such metasequences are flagged as errors.
-                     */
+                      * - "\c", when not followed by A-Z or a-z.
+                      * - "\x", when not followed by two hex characters.
+                      * - "\u", when not followed by four hex characters.
+                      * Hence, such metasequences are flagged as errors.
+                      */
           if (/^\\[cux]$/.test(m)) {
             outputs.push(m, error.INCOMPLETE_TOKEN)
             output += errorize(m, error.INCOMPLETE_TOKEN)
@@ -555,9 +555,9 @@ const RegexColorizer = (function () {
         // Vertical bar (alternator)
       } else if (m === '|') {
         /* If there is a vertical bar at the very start of the regex, flag it as an error
-                 * since it effectively truncates the regex at that point. If two top-level
-                 * vertical bars are next to each other, flag it as an error for similar reasons.
-                 */
+                  * since it effectively truncates the regex at that point. If two top-level
+                  * vertical bars are next to each other, flag it as an error for similar reasons.
+                  */
         if (lastToken.type === type.NONE || (lastToken.type === type.ALTERNATOR && !openGroups.length)) {
           outputs.push(new ErrorGroup(m, error.IMPROPER_EMPTY_ALTERNATIVE))
           output += errorize(m, error.IMPROPER_EMPTY_ALTERNATIVE)

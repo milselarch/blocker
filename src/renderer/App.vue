@@ -13,6 +13,8 @@
         padded: blockState !== BLOCK_STATES.unblocked
       }"
     >
+      <!-- {{ blockState }} -->
+
       <b-tabs 
         position="is-centered"
         class="tabs-block"
@@ -171,9 +173,9 @@
       height: 100vh;
 
       &.padded {
-        padding-bottom: 0px;
-      } &:not(.padded) {
         padding-bottom: $progBarHeight;
+      } &:not(.padded) {
+        padding-bottom: 0px;
       }
 
       & .blocked {
@@ -198,7 +200,8 @@
       justify-content: space-between;
 
       &.invisible {
-        display: none
+        display: none;
+        height: 0px;
       } &:not(.invisible) {
         display: flex;
         flex-direction: row;
