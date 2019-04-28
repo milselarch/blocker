@@ -1,9 +1,20 @@
 features:
+  - __LIVE__ based on process isDev or production mode
+    - Time out 5 minutes vs 30 seconds on dev / prod
+    - Closing app shuts down computer on prod mode
+    - alwaysOnTop + lock screen in prod mode
+  - Ignore self renderer + self blocker process IDs
+  - configure electron-pacakger builds to directory
+
   - setup app timers for rules
   - add time block rule
+  
+  - add monodoro timer
+  - add TimeTracker
+
   - have fixed headers for task listing
   - use pro font awesome icons
   - support for emojis on program name
 
 FOSS:
-  - update tasklist github with UTF-8
+  - / update tasklist github with UTF-8
