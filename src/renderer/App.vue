@@ -75,6 +75,11 @@
   import BlockView from '@/components/BlockView'
   import Misc from '@/misc.js'
   import BLOCK_STATES from '@/components/blockStates'
+  const { remote } = require('electron')
+  console.log('REMOTE', remote)
+  
+  // enable dev tools
+  // remote.BrowserWindow.getFocusedWindow().webContents.openDevTools()
   
   const TABS = {
     Programs: {icon: 'window-restore'},
@@ -285,28 +290,28 @@
   @font-face {
     font-family: "Ubuntu Mono";
     src:
-      url("/static/fonts/UbuntuMono-R.ttf") format("truetype");
+      url("./assets/fonts/UbuntuMono-R.ttf") format("truetype");
       /* Add other formats as you see fit */
   }
 
   @font-face {
     font-family: "Inconsolata";
     src:
-      url("/static/fonts/Inconsolata-Regular.ttf") format("truetype");
+      url("./assets/fonts/Inconsolata-Regular.ttf") format("truetype");
       /* Add other formats as you see fit */
   }
 
   @font-face {
     font-family: "Abel";
     src:
-      url("/static/fonts/Abel-Regular.ttf") format("truetype");
+      url("./assets/fonts/Abel-Regular.ttf") format("truetype");
       /* Add other formats as you see fit */
   }
 
   @font-face {
     font-family: "Staatliches";
     src:
-      url("/static/fonts/Staatliches-Regular.ttf") format("truetype");
+      url("./assets/fonts/Staatliches-Regular.ttf") format("truetype");
       /* Add other formats as you see fit */
   }
 

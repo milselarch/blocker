@@ -11,3 +11,7 @@ package-lock.json
 thumbs.db
 !.gitkeep
 .vscode/
+blocker-darwin-*
+blocker-linux-*
+blocker-mas-*
+blocker-win32-*

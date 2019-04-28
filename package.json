@@ -6,6 +6,9 @@
   "license": "MIT",
   "main": "./dist/electron/main.js",
   "scripts": {
+    "package": "node .electron-vue/build.js && electron-packager ./ --overwrite",
+    "package-all": "node .electron-vue/build.js && electron-packager ./ --all",
+    
     "build": "node .electron-vue/build.js && electron-builder",
     "build:dir": "node .electron-vue/build.js && electron-builder --dir",
     "build:clean": "cross-env BUILD_TARGET=clean node .electron-vue/build.js",

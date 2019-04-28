@@ -77,6 +77,9 @@
   const __LIVE__ = true
   let IOHOOKED = false
 
+  const window = remote.getCurrentWindow()
+  window.setMenuBarVisibility(true)
+
   setTimeout(() => {
     console.log(Misc)
   })
@@ -194,7 +197,6 @@
     },
 
     mounted () {
-      const window = remote.getCurrentWindow()
       const self = this
       let fullscreen = false;
 
@@ -263,6 +265,7 @@
 
           this.$emit('on-state', self.state)
           this.$emit('block-progress', self.progress)
+          window.setMenuBarVisibility(true)
           await Misc.sleepAsync(250)
         }
       })()
