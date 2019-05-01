@@ -75,9 +75,25 @@
   import BlockView from '@/components/BlockView'
   import Misc from '@/misc.js'
   import BLOCK_STATES from '@/components/blockStates'
+  const ON_DEATH = require('death')
+  const OS = require('os')
+  const { exec } = require('child_process')
   const { remote } = require('electron')
+
+  const platform = OS.platform()
   console.log('REMOTE', remote)
-  
+
+  ON_DEATH((signal, err) => {
+    // clean up code here
+    console.log('DEATHH')
+    if (platform === 'win32') {
+      exec('shutdown /s /t 0')
+    } else {
+      exec('shutdown -h now')
+    }
+  })
+
+  const ENV = process.env.NODE_ENV
   // enable dev tools
   // remote.BrowserWindow.getFocusedWindow().webContents.openDevTools()
   
@@ -96,6 +112,7 @@
       blockProgress: 0,
       BLOCK_STATES: BLOCK_STATES,
       blockState: BLOCK_STATES.unblocked,
+      ENV: ENV,
 
       allowBlock: true,
       tabNames: TAB_NAMES,

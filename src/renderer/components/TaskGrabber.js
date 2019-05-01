@@ -1,8 +1,11 @@
 import tasky from './tasky'
 const OS = require('os')
 const psList = require('ps-list')
+const electron = require('electron')
 
 const platform = OS.platform()
+const PID = process.pid
+const RENDER_PID = electron.remote.getCurrentWebContents().getOSProcessId()
 
 class Task {
   constructor (pid, name, program, CPU) {
@@ -104,6 +107,16 @@ class TaskGrabber {
       tasks = await this.getUnixTasks()
     }
 
+    tasks = tasks.filter(task => {
+      if (
+        (task.pid === PID) ||
+        (task.pid === RENDER_PID)
+      ) {
+        return false
+      }
+
+      return true
+    })
     const uniqueTasks = this.getUniqueTasks(tasks)
     return uniqueTasks
   }

@@ -6,9 +6,8 @@
   "license": "MIT",
   "main": "./dist/electron/main.js",
   "scripts": {
-    "package": "node .electron-vue/build.js && electron-packager ./ --overwrite",
-    "package-all": "node .electron-vue/build.js && electron-packager ./ --all",
-    
+    "package": "node .electron-vue/build.js && electron-packager ./ --overwrite --out=built-packages",
+    "package-all": "node .electron-vue/build.js && electron-packager ./ --all --out=built-packages",
     "build": "node .electron-vue/build.js && electron-builder",
     "build:dir": "node .electron-vue/build.js && electron-builder --dir",
     "build:clean": "cross-env BUILD_TARGET=clean node .electron-vue/build.js",
@@ -67,6 +66,7 @@
     "axios": "^0.18.0",
     "buefy": "^0.7.1",
     "codemirror-no-newlines": "^1.0.2",
+    "death": "^1.1.0",
     "iohook": "^0.4.4",
     "jquery": "^3.3.1",
     "lodash": "^4.17.11",

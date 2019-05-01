@@ -26,6 +26,16 @@ function createWindow () {
     width: 1000
   })
 
+  mainWindow.on('close', (e) => {
+    // mainWindow.hide()
+    if (process.env.NODE_ENV !== 'development') {
+      e.preventDefault()
+      mainWindow.minimize()
+      console.log('Window hiddnen')
+      return false
+    }
+  })
+
   mainWindow.loadURL(winURL)
 
   mainWindow.on('closed', () => {
