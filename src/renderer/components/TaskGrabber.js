@@ -137,7 +137,9 @@ class TaskGrabber {
     tasks = tasks.filter(task => {
       if (BLOCKED_PIDS.indexOf(task.pid) !== -1) {
         return false
-      } else if (task.name === process.env.TITLE) {
+      }
+      
+      if (task.name === process.env.TITLE) {
         return false
       }
 

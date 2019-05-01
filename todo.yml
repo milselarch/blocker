@@ -1,6 +1,8 @@
-features:
-  - prevent blocking of own child PIDs
+bugs:
+  - programs with same name blocked even if they are unrelated
+  - no preventing of blocking of own child PIDs
 
+features:
   - setup app timers for rules
   - add time block rule
   
@@ -11,7 +13,7 @@ features:
   - use pro font awesome icons
   - support for emojis on program name
 
-done:
+features done:
   - __LIVE__ based on process isDev or production mode
     - Time out 5 minutes vs 30 seconds on dev / prod
     - Closing app shuts down computer on prod mode
