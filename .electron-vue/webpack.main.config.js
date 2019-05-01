@@ -2,6 +2,7 @@
 
 process.env.BABEL_ENV = 'main'
 process.env.TITLE = 'blocker'
+process.env.LIVE = true
 
 const path = require('path')
 const { dependencies } = require('../package.json')

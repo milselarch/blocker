@@ -66,6 +66,15 @@
   import Misc from '@/misc.js'
   import Rule from './rules/Rule.js'
   import { setTimeout } from 'timers'
+  import { Toast } from 'buefy/dist/components/toast'
+  const getPpid = require('parent-process-pid')
+
+  console.log('RULE', Rule)
+
+  const BLOCKED_PIDS = [
+    require('electron').remote.getCurrentWebContents().getOSProcessId(),
+    require('electron').remote.process.pid
+  ]
 
   export default {
     name: 'taskview',
@@ -109,17 +118,36 @@
       },
       async makeNewRule (task) {
         this.blocking = true
-        const newRule = new Rule({
-          name: task.name,
-          programName: task.program,
-          platform: task.platform
-        })
+        const pidList = []
+        let ppid = task.pid
+        while (ppid !== null) {
+          pidList.push(ppid)
+          ppid = await getPpid(ppid)
+        }
 
-        await this.$store.dispatch('addNewRule', newRule)
-        await Misc.sleepAsync(100)
+        const taskPartOfBlocker = pidList.reduce((acc, pid) => {
+          return acc || (BLOCKED_PIDS.indexOf(pid) !== -1)
+        }, false)
+
+        if (taskPartOfBlocker) {
+          Toast.open({
+            message: "I ain't gonna block myself! Owo",
+            type: 'is-danger'
+          })
+        } else {
+          const newRule = new Rule({
+            name: task.name,
+            programName: task.program,
+            platform: task.platform
+          })
+
+          await this.$store.dispatch('addNewRule', newRule)
+          await Misc.sleepAsync(100)
+          this.$emit('new-rule', newRule)
+          // this.open("")
+        }
+
         this.blocking = false
-        this.$emit('new-rule', newRule)
-        // this.open("")
       }
     }
   }

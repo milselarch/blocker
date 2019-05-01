@@ -84,7 +84,10 @@
   console.log('REMOTE', remote)
 
   ON_DEATH((signal, err) => {
-    if (process.env.NODE_ENV === 'production') {
+    if (
+      (process.env.NODE_ENV === 'production') &&
+      process.env.LIVE
+    ) {
       // clean up code here
       console.log('DEATHH')
       if (platform === 'win32') {

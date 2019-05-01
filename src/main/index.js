@@ -1,20 +1,25 @@
 'use strict'
 
 import { app, BrowserWindow } from 'electron'
+const path = require('path')
 // import '../renderer/store'
 
+let iconPath = './icon-border.png'
 /**
  * Set `__static` path to static files in production
  * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-static-assets.html
  */
 if (process.env.NODE_ENV !== 'development') {
-  global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
+  global.__static = path.join(__dirname, '/static').replace(/\\/g, '\\\\')
+  iconPath = path.join(__dirname, '/static/images/icon-border.png').replace(/\\/g, '\\\\')
 }
 
 let mainWindow
 const winURL = process.env.NODE_ENV === 'development'
   ? `http://localhost:9080`
   : `file://${__dirname}/index.html`
+
+console.log('DIRNAME', __dirname)
 
 function createWindow () {
   /**
@@ -23,12 +28,16 @@ function createWindow () {
   mainWindow = new BrowserWindow({
     height: 563,
     useContentSize: true,
-    width: 1000
+    width: 1000,
+    icon: iconPath
   })
 
   mainWindow.on('close', (e) => {
     // mainWindow.hide()
-    if (process.env.NODE_ENV !== 'development') {
+    if (
+      (process.env.NODE_ENV === 'production') &&
+      process.env.LIVE
+    ) {
       e.preventDefault()
       mainWindow.minimize()
       console.log('Window hiddnen')
