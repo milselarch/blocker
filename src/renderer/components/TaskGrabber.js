@@ -138,7 +138,7 @@ class TaskGrabber {
       if (BLOCKED_PIDS.indexOf(task.pid) !== -1) {
         return false
       }
-      
+
       if (task.name === process.env.TITLE) {
         return false
       }
