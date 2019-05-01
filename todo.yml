@@ -1,4 +1,6 @@
 features:
+  - prevent blocking of own child PIDs
+
   - setup app timers for rules
   - add time block rule
   

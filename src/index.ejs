@@ -3,7 +3,7 @@
   
   <head>
     <meta charset="iso-8859-1">
-    <title>Blocker</title>
+    <title> <%= process.env.TITLE %> </title>
     <% if (htmlWebpackPlugin.options.nodeModules) { %>
       <!-- Add `node_modules/` to global paths so `require` works properly in development -->
       <script>

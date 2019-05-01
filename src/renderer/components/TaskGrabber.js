@@ -1,11 +1,16 @@
 import tasky from './tasky'
 const OS = require('os')
 const psList = require('ps-list')
-const electron = require('electron')
+// const getPpid = require('parent-process-pid')
+// const electron = require('electron')
 
 const platform = OS.platform()
-const PID = process.pid
-const RENDER_PID = electron.remote.getCurrentWebContents().getOSProcessId()
+const BLOCKED_PIDS = [
+  require('electron').remote.getCurrentWebContents().getOSProcessId(),
+  require('electron').remote.process.pid
+]
+
+console.log(`BLOCKED_PIDS ${BLOCKED_PIDS}`)
 
 class Task {
   constructor (pid, name, program, CPU) {
@@ -107,11 +112,32 @@ class TaskGrabber {
       tasks = await this.getUnixTasks()
     }
 
+    /*
+    for (let k = 0; k < tasks.length; k++) {
+      const task = tasks[k]
+
+      if (BLOCKED_PIDS.indexOf(task.pid) !== -1) {
+        continue
+      }
+
+      let ppid = task.pid
+      while (ppid !== null) {
+        ppid = await getPpid(ppid)
+        if (ppid !== null) { ppid = Number(ppid) }
+
+        console.log(`PPID ${[ppid, BLOCKED_PIDS]}`)
+        if (BLOCKED_PIDS.indexOf(ppid) !== -1) {
+          BLOCKED_PIDS.push(task.pid)
+          console.log('BLOCKED_PIDS', BLOCKED_PIDS)
+        }
+      }
+    }
+    */
+
     tasks = tasks.filter(task => {
-      if (
-        (task.pid === PID) ||
-        (task.pid === RENDER_PID)
-      ) {
+      if (BLOCKED_PIDS.indexOf(task.pid) !== -1) {
+        return false
+      } else if (task.name === process.env.TITLE) {
         return false
       }
 

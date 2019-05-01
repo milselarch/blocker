@@ -74,7 +74,7 @@
   // const sys = require('sys')
   const OS = require('os')
 
-  const __LIVE__ = process.env.NODE_ENV !== 'development'
+  const __LIVE__ = process.env.NODE_ENV === 'production'
   let IOHOOKED = false
 
   const window = remote.getCurrentWindow()

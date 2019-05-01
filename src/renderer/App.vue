@@ -84,12 +84,14 @@
   console.log('REMOTE', remote)
 
   ON_DEATH((signal, err) => {
-    // clean up code here
-    console.log('DEATHH')
-    if (platform === 'win32') {
-      exec('shutdown /s /t 0')
-    } else {
-      exec('shutdown -h now')
+    if (process.env.NODE_ENV === 'production') {
+      // clean up code here
+      console.log('DEATHH')
+      if (platform === 'win32') {
+        exec('shutdown /s /t 0')
+      } else {
+        exec('shutdown -h now')
+      }
     }
   })
 

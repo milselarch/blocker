@@ -12,7 +12,7 @@
       class="tasks-table"
       @select="onRowSelect"
     >
-      <template slot-scope="props" class="table-row">  
+      <template slot-scope="props" class="table-row">
         <b-table-column
           field="windowTitle" label="Name"
           class="table-column column-name"
@@ -48,9 +48,17 @@
             </font-awesome-icon>
           </button>
         </b-table-column>
+
+        <!--
+        <b-table-column
+          field="pid" label="PID"
+          class="table-column"
+        >
+          {{ props.row.pid }}
+        </b-table-column>
+        -->
       </template>
     </b-table>
-
   </div>
 </template>
 
