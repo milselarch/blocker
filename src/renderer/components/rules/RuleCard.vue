@@ -88,7 +88,6 @@
 div.wrapper {
   display: flex;
   flex-direction: row;
-  margin: 0.2rem;
   align-items: stretch;
   
   & div#status {

@@ -24,7 +24,14 @@
         :ruledata="ruleChunk"
         v-on:select-rule="selectRule"
         :activerule="activerule"
+        class="rule-card"
       />
+
+      <div id="options">
+        <section>
+          <button id="add-button">🞣</button>
+        </section>
+      </div>
     </div>
 
     <!--
@@ -161,7 +168,7 @@ div#rules-view {
   /* min-height: max-content; */
   flex: auto;
   display: grid;
-  grid-template-columns: 17rem 1px 1fr 2rem;
+  grid-template-columns: 17rem 1px 1fr;
   grid-template-rows: 100%;
   grid-column-gap: 2rem;
 
@@ -182,10 +189,16 @@ div#rules-view {
     justify-content: flex-start;
     align-content: flex-start;
     align-items: flex-start;
+
+    & .rule-card {
+      margin: 0.2rem;
+    }
   }
 
   & div#options {
     & button#add-button {
+      cursor: pointer;
+      margin: 0.2rem;
       border-radius: 0;
       padding-left: 0.6rem;
       padding-right: 0.6rem;

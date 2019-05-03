@@ -56,7 +56,7 @@
     <div
       id="progress"
       v-bind:class="{
-        invisible: blockState === BLOCK_STATES.unblocked
+        invisible: this.blockState === BLOCK_STATES.unblocked
       }"
     >
       <div

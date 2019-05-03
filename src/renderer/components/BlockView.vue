@@ -2,7 +2,10 @@
   <div
     id="wrapper"
     v-bind:class="{
-      hidden: (state === BLOCK_STATES.unblocked) || !allowVisible
+      hidden: (
+        (state === BLOCK_STATES.unblocked) ||
+        (state === BLOCK_STATES.allowing)
+      ) || !allowVisible
     }"
   >
     <b-loading :is-full-page="true" :active="loading" />
