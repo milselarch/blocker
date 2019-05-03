@@ -1,13 +1,14 @@
 bugs:
-  - programs with same name blocked even if they are unrelated
-  - no preventing of blocking of own child PIDs
+
+resolved:
+  - / stop self-blocking program rules for child PIDs
 
 features:
-  - setup app timers for rules
-  - add time block rule
-  
   - add monodoro timer
   - add TimeTracker
+
+  - setup app timers for rules
+  - add time block rule
 
   - have fixed headers for task listing
   - use pro font awesome icons

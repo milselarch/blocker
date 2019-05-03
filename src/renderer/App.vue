@@ -51,6 +51,8 @@
       </router-view>
     </div>
 
+    <!-- {{ [ENV, LIVE] }} -->
+
     <div
       id="progress"
       v-bind:class="{
@@ -78,15 +80,14 @@
   const ON_DEATH = require('death')
   const OS = require('os')
   const { exec } = require('child_process')
-  const { remote } = require('electron')
+  // const { remote } = require('electron')
 
   const platform = OS.platform()
-  console.log('REMOTE', remote)
 
   ON_DEATH((signal, err) => {
     if (
-      (process.env.NODE_ENV === 'production') &&
-      process.env.LIVE
+      (process.env.NODE_ENV === 'production') ||
+      (process.env.LIVE === 'true')
     ) {
       // clean up code here
       console.log('DEATHH')
@@ -98,7 +99,9 @@
     }
   })
 
+  const PROC = process
   const ENV = process.env.NODE_ENV
+  const LIVE = process.env.LIVE
   // enable dev tools
   // remote.BrowserWindow.getFocusedWindow().webContents.openDevTools()
   
@@ -114,10 +117,13 @@
     name: 'blocker-app',
 
     data: () => ({
+      proc: PROC,
+      ENV: ENV,
+      LIVE: LIVE,
+
       blockProgress: 0,
       BLOCK_STATES: BLOCK_STATES,
       blockState: BLOCK_STATES.unblocked,
-      ENV: ENV,
 
       allowBlock: true,
       tabNames: TAB_NAMES,
@@ -134,7 +140,8 @@
 
         while (!self.isDestroyed) {
           await self.$store.dispatch('updateUnlocks')
-          await Misc.sleepAsync(300)
+          await self.$store.dispatch('updater')
+          await Misc.sleepAsync(250)
         }
       })()
     },

@@ -35,8 +35,8 @@ function createWindow () {
   mainWindow.on('close', (e) => {
     // mainWindow.hide()
     if (
-      (process.env.NODE_ENV === 'production') &&
-      process.env.LIVE
+      (process.env.NODE_ENV === 'production') ||
+      (process.env.LIVE === 'true')
     ) {
       e.preventDefault()
       mainWindow.minimize()

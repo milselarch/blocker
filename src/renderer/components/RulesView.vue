@@ -26,6 +26,14 @@
         :activerule="activerule"
       />
     </div>
+
+    <!--
+    <div id="options">
+      <section>
+        <button id="add-button">🞣</button>
+      </section>
+    </div>
+    -->
   </div>
 </template>
 
@@ -153,9 +161,9 @@ div#rules-view {
   /* min-height: max-content; */
   flex: auto;
   display: grid;
-  grid-template-columns: 17rem 1px 1fr;
+  grid-template-columns: 17rem 1px 1fr 2rem;
   grid-template-rows: 100%;
-  grid-column-gap: 3rem;
+  grid-column-gap: 2rem;
 
   & div#detail {
     width: 15rem;
@@ -174,6 +182,30 @@ div#rules-view {
     justify-content: flex-start;
     align-content: flex-start;
     align-items: flex-start;
+  }
+
+  & div#options {
+    & button#add-button {
+      border-radius: 0;
+      padding-left: 0.6rem;
+      padding-right: 0.6rem;
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+      outline: none;
+      background: transparent;
+      border: 2px solid #dcdfe6;
+      font-family: 'Staatliches';
+      font-size: 1rem;
+
+      &:hover {
+        border: 2px solid $light-blue;
+        color: $light-blue;
+      }
+      &:active {
+        border: 2px solid $primary; 
+        color: $primary;
+      }
+    }
   }
 }
 </style>

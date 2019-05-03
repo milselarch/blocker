@@ -97,9 +97,7 @@
           // console.log('NEW TASKS', self.tasks)
           // console.log('m', self.$store.getters.tasks)
           self.tasks = self.$store.getters.tasks
-          await Misc.sleepAsync(0)
-          await self.$store.dispatch('updater')
-          await Misc.sleepAsync(500)
+          await Misc.sleepAsync(300)
         }
       }, 0)
     },
