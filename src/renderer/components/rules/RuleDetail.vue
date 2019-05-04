@@ -7,7 +7,7 @@
         icon="window-restore"
         class="rule-icon large icon alt"
         v-bind:class="{
-          muted: !this.rule.saved
+          muted: !saved
         }"
       >
       </font-awesome-icon>
@@ -33,7 +33,7 @@
         icon="trash" class="delete-icon icon alt"
         @click="deleteRule"
         v-bind:class="{
-          deletable: !this.rule.locked
+          deletable: !this.isLocked
         }"
       >
       </font-awesome-icon>
@@ -116,6 +116,14 @@
     }),
 
     computed: {
+      saved () {
+        if (this.rule === null) { return false }
+        return this.rule.saved
+      },
+      isLocked () {
+        return this.getRuleLocked()
+      },
+
       inputInvalid () {
         return !this.validDuration()
       },
@@ -134,14 +142,15 @@
 
     created () {
       const self = this
-      let ID = self.rule.ID
+      let ID = self.getRuleID()
       const unlockWaits = self.$store.getters.unlockWaits
       let wasUnlocking = unlockWaits.hasOwnProperty(ID);
 
       (async () => {
         while (!self.isDestroyed) {
-          if (self.rule.ID !== ID) {
-            ID = self.rule.ID
+          const currentID = self.getRuleID()
+          if (currentID !== ID) {
+            ID = currentID
             const unlockWaits = self.$store.getters.unlockWaits
             wasUnlocking = unlockWaits.hasOwnProperty(ID)
           }
@@ -164,6 +173,15 @@
     },
 
     methods: {
+      getRuleID () {
+        if (this.rule === null) { return null }
+        return this.rule.ID
+      },
+      getRuleLocked () {
+        if (this.rule === null) { return null }
+        return this.rule.locked
+      },
+
       deleteRule () {
         console.log('EMIT DELETE')
         if (!this.rule.locked) {
@@ -199,7 +217,7 @@
         if (this.locked === false) {
           this.unlocking = false
           this.locked = true
-        } else if (this.rule.locked === false) {
+        } else if (this.getRuleLocked() === false) {
           this.locked = false
         }
 
@@ -347,7 +365,8 @@
 @import "@/assets/scss/vars.scss";
 
 div.rule-detail {
-  max-width: 25rem;
+  width: 17rem;
+  max-width: 17rem;
 }
 
 div.mode-edit {

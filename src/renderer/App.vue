@@ -133,7 +133,7 @@
     }),
 
     async created () {
-      // await tshis.$store.dispatch('reset')
+      await this.$store.dispatch('reset')
       const self = this;
       (async () => {
         await self.$store.dispatch('onStart')

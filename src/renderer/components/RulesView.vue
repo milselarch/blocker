@@ -17,6 +17,8 @@
       }"></div>
     </div>
 
+    {{ addRuleType }}
+
     <div id="rule-cards">
       <RuleCard
         v-for="(ruleChunk, index) in rules"
@@ -27,11 +29,15 @@
         class="rule-card"
       />
 
-      <div id="options">
-        <section>
-          <button id="add-button">🞣</button>
-        </section>
-      </div>
+      <b-dropdown
+        id="options" aria-role="list"
+        v-model="addRuleType" v-on:change="addRule"
+      >
+        <button class="button is-primary" slot="trigger" id="add-button">🞣</button>
+        <b-dropdown-item value="PROGRAM" class="dropdown-option" aria-role="listitem">Block Program</b-dropdown-item>
+        <b-dropdown-item value="TIME-OF-DAY" class="dropdown-option" aria-role="listitem">Time-of-day access</b-dropdown-item>
+        <b-dropdown-item value="POMODORO" class="dropdown-option" aria-role="listitem">Pomodoro</b-dropdown-item>
+      </b-dropdown>
     </div>
 
     <!--
@@ -61,7 +67,9 @@
       rules: [],
       unlockWaits: {},
       activerule: null,
-      loading: false
+      addRuleType: null,
+      loading: false,
+      ruleModalActive: true
     }),
 
     computed: {
@@ -89,6 +97,11 @@
     },
 
     methods: {
+      addRule (ruleType) {
+        console.log('RULETYPE', ruleType)
+        // if (ruleType === )
+      },
+
       selectRule (rule) {
         this.activerule = rule
       },
@@ -179,6 +192,7 @@ div#rules-view {
   & div.divider {
     height: auto;
     width: 2px;
+    margin-left: auto;
     background:#dcdfe6;
   }
 
@@ -195,19 +209,18 @@ div#rules-view {
     }
   }
 
-  & div#options {
+  & #options {
     & button#add-button {
       cursor: pointer;
       margin: 0.2rem;
       border-radius: 0;
       padding-left: 0.6rem;
       padding-right: 0.6rem;
-      padding-top: 0.5rem;
-      padding-bottom: 0.5rem;
       outline: none;
       background: transparent;
       border: 2px solid #dcdfe6;
       font-family: 'Staatliches';
+      color: #555;
       font-size: 1rem;
 
       &:hover {
@@ -218,6 +231,15 @@ div#rules-view {
         border: 2px solid $primary; 
         color: $primary;
       }
+      &:focus {
+        outline: none;
+        border: 2px solid $primary; 
+        color: $primary !important;
+      }
+    }
+
+    & .dropdown-option {
+      font-size: 1rem !important;
     }
   }
 }
