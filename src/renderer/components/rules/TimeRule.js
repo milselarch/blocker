@@ -1,176 +1,104 @@
 import Misc from '@/misc.js'
 import Enum from '@/Enum.js'
 import assert from '@/assert.js'
+import BaseRule from './BaseRule'
+import moment from 'moment'
 // import Misc from '@/misc.js'
 // import { program } from 'babel-types'
 const crypto = require('crypto')
 const OS = require('os')
 
-const ALLOWED_TYPES = Enum('text', 'wildcard', 'regex')
-
-class Rule {
+class TimeRule extends BaseRule {
   static nameTypes = ALLOWED_TYPES;
   static programTypes = ALLOWED_TYPES;
-  static RULE_TYPE = 'PROGRAM'
+  static RULE_TYPE = 'TIME-OF-DAY'
 
   constructor ({
     ruleType = Rule.RULE_TYPE,
-    name = '',
-    nameType = 'text',
-    programName = '',
-    programType = 'text',
     platform = null,
     blockDuration = 300,
     lockTime = 300,
     locked = false,
     timestamp = null,
-
     ID = null,
-    saved = false
+    saved = false,
+
+    startTime=moment.duration({hours: 22}),
+    endTime=moment.duration({hours: 6}),
+    startWait=moment.duration({hours: 0})
   }) {
+    super({
+      ruleType,
+      platform,
+      blockDuration,
+      lockTime,
+      locked,
+      timestamp,
+      ID,
+      saved
+    })
+
     const self = this
-    assert(ruleType === Rule.RULE_TYPE)
-    self.saved = saved
 
-    self.setName = (name, nameType) => {
-      assert(Rule.nameTypes.includes(nameType))
-      self.name = name
-      self.nameType = nameType
-    }
-    self.setProgram = (programName, programType) => {
-      assert(Rule.programTypes.includes(programType))
-      self.programName = programName
-      self.programType = programType
-    }
-    self.setBlockDuration = (blockDuration) => {
-      self.blockDuration = blockDuration
-    }
-    self.setLockTime = (lockTime) => {
-      self.lockTime = lockTime
-    }
-    self.setPlatform = (platform) => {
-      if (platform === null) {
-        platform = OS.platform()
-      }
-      self.platform = platform
-    }
-    self.setLockStatus = (lockStatus) => {
-      self.locked = lockStatus
-    }
-    self.lock = () => {
-      self.locked = true
-    }
-    self.unlock = () => {
-      self.locked = false
-    }
-    self.setTimestamp = (timestamp) => {
-      if (timestamp === null) {
-        timestamp = (new Date()).getTime()
-      }
-      self.timestamp = timestamp
-    }
-    self.setID = (ID) => {
-      const rand = crypto.randomBytes(20).toString('hex')
-      if (ID === null) {
-        const stamp = String(parseInt(self.timestamp * 1000))
-        ID = stamp + '-' + rand
-      }
+    self.setStartTime(startTime)
+    self.setEndTime(endTime)
+    self.setStartWait(startWait)
+  }
 
-      this.ID = ID
-    }
+  setStartTime = (startTime) => this._setStartTime(startTime)
+  _setStartTime (startTime) {
+    this.startTime = startTime
+  }
+  setEndTime = (endTime) => this._setEndTime(endTime)
+  _setEndTime(endTime) {
+    this.endTime = endTime
+  }
+  setStartWait = (startWait) => this._setStartWait(startWait)
+  _setStartWait(startWait) {
+    this.startWait = startWait
+  }
 
-    self.save = () => {
-      self.saved = true
-    }
+  hasChanged = (data) => this._hasChanged(data)
+  _hasChanged ({
+    startTime=null,
+    endTime=null,
+    startWait=null,
 
-    self.jsonify = () => {
-      return {
-        ruleType: Rule.RULE_TYPE,
-        name: self.name,
-        nameType: self.nameType,
-        programName: self.programName,
-        programType: self.programType,
-        platform: self.platform,
-        blockDuration: self.blockDuration,
-        lockTime: self.lockTime,
-        timestamp: self.timestamp,
-        locked: self.locked,
-        ID: self.ID,
-        saved: self.saved
-      }
+    platform = null,
+    blockDuration = null,
+    lockTime = null,
+    locked = null,
+    timestamp = null,
+    saved = null
+  }) {
+    if (startTime === null) { startTime = moment.duration({hours: 22}) }
+    if (endTime === null) { endTime = moment.duration({hours: 6}) }
+    if (startWait === null) { startWait = moment.duration({hours: 0}) }
+
+    return super._hasChanged({
+      platform,
+      blockDuration,
+      lockTime,
+      locked,
+      timestamp,
+      saved
+    }) || (
+      startTime !== this.startTime ||
+      endTime !== this.endTime ||
+      startWait !== this.startWait
+    )
+  }
+
+  jsonify = () => this._jsonify()
+  _jsonify () {
+    const ruleJson = {
+      startTime: this.startTime,
+      endTime: this.endTime,
+      startWait: this.startWait
     }
 
-    self.testTask = (task) => {
-      if (task.platform !== self.platform) {
-        return false
-      }
-
-      const nameMatch = self.testValue(task.name, self.name, self.nameType)
-      const programMatch = self.testValue(task.program, self.programName, self.programType)
-      return nameMatch && programMatch
-    }
-
-    self.testValue = (value, pattern, patternType) => {
-      if (patternType === ALLOWED_TYPES.text) {
-        value = value.replace(/\?.*$/, '')
-        return value === pattern
-      } else if (patternType === ALLOWED_TYPES.wildcard) {
-        pattern = Misc.wildcardToRegExp(pattern)
-        return value.match(pattern) !== null
-      } else if (patternType === ALLOWED_TYPES.regex) {
-        pattern = new RegExp(pattern)
-        return value.match(pattern) !== null
-      } else {
-        throw new Error(`BAD PATTERN TYPE ${patternType}`)
-      }
-    }
-
-    self.hasChanged = ({
-      name = null,
-      nameType = null,
-      programName = null,
-      programType = null,
-      platform = null,
-      blockDuration = null,
-      lockTime = null,
-      locked = null,
-      timestamp = null,
-      saved = null
-    }) => {
-      if (name === null) { name = self.name }
-      if (nameType === null) { nameType = self.nameType }
-      if (programName === null) { programName = self.programName }
-      if (programType === null) { programType = self.programType }
-      if (platform === null) { platform = self.platform }
-      if (blockDuration === null) { blockDuration = self.blockDuration }
-      if (lockTime === null) { lockTime = self.lockTime }
-      if (locked === null) { locked = self.locked }
-      if (timestamp === null) { timestamp = self.timestamp }
-      if (saved === null) { saved = self.saved }
-
-      return (
-        name !== self.name ||
-        nameType !== self.nameType ||
-        programName !== self.programName ||
-        programType !== self.programType ||
-        platform !== self.platform ||
-        blockDuration !== self.blockDuration ||
-        lockTime !== self.lockTime ||
-        locked !== self.locked ||
-        timestamp !== self.timestamp ||
-        saved !== self.saved
-      )
-    }
-
-    self.setName(name, nameType)
-    self.setProgram(programName, programType)
-    self.setBlockDuration(blockDuration)
-    self.setTimestamp(timestamp)
-    self.setLockStatus(locked)
-    self.setPlatform(platform)
-    self.setLockTime(lockTime)
-    self.setID(ID)
+    return super._jsonify(ruleJson)
   }
 }
 
-export default Rule
+export default TimeRule

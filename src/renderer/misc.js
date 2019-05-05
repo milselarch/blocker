@@ -9,6 +9,11 @@ function regExpEscape (s) {
 }
 
 class Misc {
+  getVarStringName (varObject) {
+    // Misc.getVarStringName({d}) returns 'd'
+    return Object.keys(varObject)[0]
+  }
+
   sleepAsync (ms) {
     return new Promise((resolve, reject) => {
       setTimeout(resolve, ms)

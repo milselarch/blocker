@@ -43,53 +43,28 @@
         class="icon save-icon alt"
         @click="saveRule"
         v-bind:class="{
-          savable: (
-            savable &&
-            nameInputValid &&
-            programInputValid
-          )
+          savable: savable
         }"
       >
       </font-awesome-icon>
     </div>
-   
-    <div class="mode-edit">
-      <EditInlineMode 
-        id="program"
-        title="Program"
-        v-model="name"
-        ref="nameEdit"
-        v-on:mode-change="changeNameMode"
-        :mode="nameMode"
-      />
-      <EditInlineMode
-        id="title"
-        title="Window Title"
-        v-model="programName"
-        ref="programEdit"
-        v-on:mode-change="changeProgramMode"
-        :mode="programMode"
-      />
 
-      <input 
-        id="duration"
-        v-model="blockDuration"
-        v-bind:class = "{
-          invalid: inputInvalid
-        }"
-      />
-      <p id="duration-label">Block duration (seconds)</p>
-    </div>
-
-    <!-- <p> {{ code }} </p> -->
-    
+    <!-- {{ [baseSavable, ruleSavable] }} -->
+  
+    <component
+      :is="ruleContentDetail"
+      v-bind:rule="rule"
+      v-bind:baseSavable="baseSavable"
+      v-on:savableUpdate="onSavableUpdate"
+      ref="ruleContentDetail"
+      class="mode-edit"
+    ></component>
   </div>
-
 </template>
 
 <script>
   import './modes/HighlightModes.js'
-  import EditInlineMode from './EditInlineMode'
+  import TaskRuleDetail from './TaskRuleDetail.vue'
   // require styles
   import Misc from '@/misc.js'
   import Rule from './Rule'
@@ -103,12 +78,14 @@
     name: 'rule-detail',
 
     data: () => ({
+      baseSavable: false,
+      ruleSavable: false,
+
       name: '',
       nameMode: Rule.nameTypes.text,
       programName: '',
       programMode: Rule.nameTypes.text,
       unlocking: false,
-      savable: false,
       loading: false,
       locked: true,
       blockDuration: 300,
@@ -116,6 +93,31 @@
     }),
 
     computed: {
+      savable () {
+        return (
+          this.ruleSavable || this.baseSavable
+        ) && (this.rule !== null)
+      },
+
+      ruleContentDetail () {
+        console.log('RULE-CONTENT', this.rule)
+        let componentName
+
+        if (this.rule === null) {
+          return null
+        }
+
+        const ruleType = this.rule.constructor.RULE_TYPE
+
+        if (ruleType === 'PROGRAM') {
+          componentName = Misc.getVarStringName({TaskRuleDetail})
+        } else {
+          throw new Error(`RULE TYPE UNKNOWN ${ruleType}`)
+        }
+
+        return componentName
+      },
+
       saved () {
         if (this.rule === null) { return false }
         return this.rule.saved
@@ -126,13 +128,6 @@
 
       inputInvalid () {
         return !this.validDuration()
-      },
-
-      nameInputValid () {
-        return this.inputValid(this.name, this.nameMode)
-      },
-      programInputValid () {
-        return this.inputValid(this.programName, this.programMode)
       }
     },
 
@@ -173,6 +168,11 @@
     },
 
     methods: {
+      onSavableUpdate (ruleSavable) {
+        this.ruleSavable = ruleSavable
+        console.log('RULESAVE', ruleSavable)
+      },
+  
       getRuleID () {
         if (this.rule === null) { return null }
         return this.rule.ID
@@ -184,40 +184,16 @@
 
       deleteRule () {
         console.log('EMIT DELETE')
-        if (!this.rule.locked) {
+        if (!this.isLocked) {
           this.$emit('delete-rule', this.rule)
         }
-      },
-
-      inputValid (value, mode) {
-        let test = true
-
-        if (mode === 'regex') {
-          try {
-            test = new RegExp(value)
-            console.log('VALUD OK REGEX')
-          } catch (err) {
-            if (err.name !== 'SyntaxError') {
-              throw err
-            } else {
-              test = false
-            }
-          }
-        }
-
-        return test
-      },
-
-      validDuration () {
-        const match = String(this.blockDuration).match(/^[0-9]+$/)
-        return match !== null
       },
 
       async lock () {
         if (this.locked === false) {
           this.unlocking = false
           this.locked = true
-        } else if (this.getRuleLocked() === false) {
+        } else if (this.isLocked === false) {
           this.locked = false
         }
 
@@ -226,7 +202,7 @@
 
       async unlock () {
         console.log('UNLOCKING')
-        if (!this.rule.locked) {
+        if (!this.isLocked) {
           // rule was not locked, change icon to lock
           this.unlocking = false
           this.locked = !this.locked
@@ -251,50 +227,25 @@
         this.updateSavable()
       },
 
-      changeNameMode (nameMode) {
-        this.nameMode = nameMode
-        // console.log('CGNAGEMODE N', nameMode)
-        this.updateSavable()
-      },
-      changeProgramMode (programMode) {
-        this.programMode = programMode
-        // console.log('CGNAGEMODE P', programMode)
-        this.updateSavable()
-      },
-
       loadRule (rule) {
-        if (rule === null) {
-          // console.log('NULL RULE')
-          return
-        }
-
-        // console.log('LOAD RULE', rule)
-
-        this.name = rule.name
-        this.nameMode = rule.nameType
-        this.programName = rule.programName
-        this.programMode = rule.programType
-        this.blockDuration = rule.blockDuration
-        this.locked = rule.locked
+        if (rule === null) { return }
+        this.locked = this.isLocked
 
         const unlockWaits = this.$store.getters.unlockWaits
         const unlocking = unlockWaits.hasOwnProperty(this.rule.ID)
         this.unlocking = unlocking
-
-        this.$refs.nameEdit.$forceUpdate()
-        this.$refs.programEdit.$forceUpdate()
+        this.updateSavable()
       },
 
       async saveRule () {
+        if (this.rule === null) { return }
+
         if (this.savable) {
-          this.rule.setName(this.name, this.nameMode)
-          this.rule.setProgram(this.programName, this.programMode)
-          this.rule.setBlockDuration(this.blockDuration)
+          this.loading = true
+          await this.$refs.ruleContentDetail.saveRule()
           if (this.locked) { this.rule.lock() }
           this.rule.save()
           this.updateSavable()
-
-          this.loading = true
           await this.$store.dispatch('saveRule', this.rule)
           this.loading = false
         }
@@ -307,22 +258,17 @@
         if (self.rule instanceof Rule) {
           // console.log('SELFRULE', self.rule)
           const newRuleInfo = {
-            name: self.name,
-            nameType: self.nameMode,
-            locked: self.locked,
-            programName: self.programName,
-            programType: self.programMode,
-            blockDuration: parseInt(self.blockDuration)
+            locked: self.locked
           }
 
           // console.log('RINFO', newRuleInfo)
           hasChanged = self.rule.hasChanged(newRuleInfo)
         }
 
-        self.savable = (
-          hasChanged &&
-          self.validDuration()
-        ) || !self.rule.saved
+        // rule initially saved or changed
+        console.log('BASE-CHANGE', hasChanged, !self.saved)
+        self.baseSavable = hasChanged || !self.saved
+        console.log('BASE-SAVABLE', self.baseSavable)
       }
     },
 
@@ -349,7 +295,7 @@
     },
 
     components: {
-      EditInlineMode
+      TaskRuleDetail
     },
 
     props: {
@@ -473,6 +419,5 @@ div.detail-icons {
   div#padding {
     width: -webkit-fill-available;
   };
-
 }
 </style>

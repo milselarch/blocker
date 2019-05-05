@@ -17,8 +17,6 @@
       }"></div>
     </div>
 
-    {{ addRuleType }}
-
     <div id="rule-cards">
       <RuleCard
         v-for="(ruleChunk, index) in rules"
@@ -54,7 +52,10 @@
   import Misc from '@/misc.js'
   import RuleDetail from './rules/RuleDetail'
   import RuleCard from './rules/RuleCard.vue'
+  import Rule from './rules/Rule.js'
   import { setTimeout } from 'timers'
+
+  const OS = require('os')
 
   setTimeout(() => {
     console.log(Misc)
@@ -97,9 +98,22 @@
     },
 
     methods: {
-      addRule (ruleType) {
-        console.log('RULETYPE', ruleType)
-        // if (ruleType === )
+      async addRule (ruleType) {
+        console.log('RULETYPE', ruleType, Rule.RULE_TYPE)
+        if (ruleType === Rule.RULE_TYPE) {
+          const newRule = new Rule({
+            name: 'test-name',
+            programName: 'test-program',
+            platform: OS.platform()
+          })
+
+          await this.$store.dispatch('addNewRule', newRule)
+          await Misc.sleepAsync(100)
+        } else {
+          throw new Error(`RULE TYPE UNKNOWN ${ruleType}`)
+        }
+
+        this.loadRules()
       },
 
       selectRule (rule) {

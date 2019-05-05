@@ -87,6 +87,7 @@ class Rule extends BaseRule {
     nameType = null,
     programName = null,
     programType = null,
+
     platform = null,
     blockDuration = null,
     lockTime = null,
