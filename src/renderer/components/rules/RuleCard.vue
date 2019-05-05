@@ -7,31 +7,21 @@
         'flex-basis': (100 * progress) + '%'
       }"></div>
     </div>
-    <div
-      class="names"
-      v-bind:class="{
-        active: ruledata === activerule
-      }"
-    >
-      <EditInline 
-        v-model="ruledata.name"
-        :border="false"
-        readonly='nocursor'
-        :mode="ruledata.nameType"
-      />
-      <EditInline 
-        v-model="ruledata.programName"
-        :border="false"
-        readonly='nocursor'
-        :mode="ruledata.programType"
-      />
-    </div>
+
+    <component
+      :is="ruleCardDetail"
+      v-bind:ruledata="ruledata"
+      v-bind:activerule="activerule"
+      ref="ruleCardDetail"
+    ></component>
   </div>
 </template>
 
 <script>
   import Misc from '@/misc.js'
   import EditInline from './EditInline'
+  import TaskRuleCard from './TaskRuleCard'
+  import TimeRuleCard from './TimeRuleCard'
   import { setTimeout } from 'timers'
   import TaskRule from './TaskRule'
 
@@ -43,6 +33,21 @@
     name: 'rule-card',
 
     computed: {
+      ruleCardDetail () {
+        const ruleType = this.ruledata.constructor.RULE_TYPE
+        let componentName
+
+        if (ruleType === 'TASK') {
+          componentName = Misc.getVarStringName({TaskRuleCard})
+        } else if (ruleType === 'TIME-OF-DAY') {
+          componentName = Misc.getVarStringName({TimeRuleCard})
+        } else {
+          throw new Error(`RULE TYPE UNKNOWN ${ruleType}`)
+        }
+
+        return componentName
+      },
+
       progress () {
         const unlockWaits = this.$store.getters.unlockWaits
         if (unlockWaits.hasOwnProperty(this.ruledata.ID)) {
@@ -77,6 +82,8 @@
     },
 
     components: {
+      TaskRuleCard,
+      TimeRuleCard,
       EditInline
     }
   }
@@ -106,29 +113,6 @@ div.wrapper {
       flex-basis: auto;
       background-color: #DDD;
       flex-grow: 1;
-    }
-  }
-
-  & div.names {
-    width: 10rem;
-    border: 2px solid #dcdfe6;
-    padding: 0.3rem;
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-
-    &:hover {
-      cursor: pointer;
-      border: 2px solid $twitter;
-    }
-    &:active {
-      cursor: pointer;
-      border: 2px solid $primary;
-    }
-
-    &.active {
-      border: 2px solid $twitter;
-      &:hover { border: 2px solid $primary; }
-      &:active { border: 2px solid $selected-hover; }
     }
   }
 }

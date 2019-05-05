@@ -5,10 +5,6 @@ import TimeRule from '@/components/rules/TimeRule.js'
 import Misc from '@/misc.js'
 import Vue from 'vue'
 
-const WAIT_DISCOUNT = (
-  process.env.NODE_ENV === 'development' ? 10 : 1
-)
-
 const state = {
   // list of running system processes / tasks
   tasks: [],
@@ -243,7 +239,7 @@ const actions = {
     })
 
     // console.log('BLOCKTAAAAASKS', blockedTasks)
-    return [maxWait / WAIT_DISCOUNT, blockedTasks]
+    return [maxWait, blockedTasks]
   }
 }
 
