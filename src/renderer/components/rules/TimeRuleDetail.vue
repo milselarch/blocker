@@ -1,27 +1,32 @@
 <template>
-  <div class="task-edit">
-    <EditInlineMode 
-      id="program"
-      title="Program"
-      v-model="name"
-      ref="nameEdit"
-      v-on:mode-change="changeNameMode"
-      :mode="nameMode"
+  <div class="time-edit">
+    <div class="columns">
+      <div id="left-timepicker" class="timepicker column">
+        <b-field label="Start Time">
+          <b-clockpicker v-model="startTime"></b-clockpicker>
+        </b-field>
+      </div>
+      <div id="right-timepicker" class="timepicker column">
+        <b-field label="End Time">
+          <b-clockpicker v-model="endTime"></b-clockpicker>
+        </b-field>
+      </div>
+    </div>
+
+    <input
+      id="duration"
+      v-model="startWait"
+      v-bind:class = "{
+        invalid: !startWaitValid
+      }"
     />
-    <EditInlineMode
-      id="title"
-      title="Window Title"
-      v-model="programName"
-      ref="programEdit"
-      v-on:mode-change="changeProgramMode"
-      :mode="programMode"
-    />
+    <p id="duration-label">Start wait duration (seconds)</p>
 
     <input
       id="duration"
       v-model="blockDuration"
       v-bind:class = "{
-        invalid: inputInvalid
+        invalid: !blockDurationValid
       }"
     />
     <p id="duration-label">Block duration (seconds)</p>
@@ -29,11 +34,12 @@
 </template>
 
 <script>
-  import './modes/HighlightModes.js'
-  import EditInlineMode from './EditInlineMode'
   // require styles
+  import assert from '@/assert.js'
+
   import Misc from '@/misc.js'
-  import TaskRule from './TaskRule'
+  import TimeRule from './TimeRule'
+  import moment from 'moment'
   import { setTimeout } from 'timers'
 
   setTimeout(() => {
@@ -45,14 +51,13 @@
 
     data: () => ({
       ruleSavable: false,
+      hasChanged: false,
       ruleValid: false,
 
-      name: '',
-      nameMode: TaskRule.nameTypes.text,
-      programName: '',
-      programMode: TaskRule.nameTypes.text,
+      startWait: 0,
       blockDuration: 300,
-      hasChanged: false
+      startTime: moment('22:00', 'HH:mm').toDate(),
+      endTime: moment('6:00', 'HH:mm').toDate()
     }),
 
     computed: {
@@ -60,15 +65,11 @@
         return this.ruleSavable || this.baseSavable
       },
 
-      inputInvalid () {
-        return !this.validDuration()
+      startWaitValid () {
+        return this.validDuration(this.startWait)
       },
-
-      nameInputValid () {
-        return this.inputValid(this.name, this.nameMode)
-      },
-      programInputValid () {
-        return this.inputValid(this.programName, this.programMode)
+      blockDurationValid () {
+        return this.validDuration(this.blockDuration)
       }
     },
 
@@ -79,62 +80,25 @@
     created () {},
 
     methods: {
-      inputValid (value, mode) {
-        let test = true
-
-        if (mode === 'regex') {
-          try {
-            test = new RegExp(value)
-            console.log('VALUD OK REGEX')
-          } catch (err) {
-            if (err.name !== 'SyntaxError') {
-              throw err
-            } else {
-              test = false
-            }
-          }
-        }
-
-        return test
-      },
-
-      validDuration () {
-        const match = String(this.blockDuration).match(/^[0-9]+$/)
+      validDuration (string) {
+        const match = String(string).match(/^[0-9]+$/)
         return match !== null
       },
 
-      changeNameMode (nameMode) {
-        this.nameMode = nameMode
-        // console.log('CGNAGEMODE N', nameMode)
-        this.updateSavable()
-      },
-      changeProgramMode (programMode) {
-        this.programMode = programMode
-        // console.log('CGNAGEMODE P', programMode)
-        this.updateSavable()
-      },
-
       loadRule (rule) {
-        if (rule === null) {
-          // console.log('NULL RULE')
-          return
-        }
+        assert(rule instanceof TimeRule)
+        if (rule === null) { return }
 
-        // console.log('LOAD RULE', rule)
-
-        this.name = rule.name
-        this.nameMode = rule.nameType
-        this.programName = rule.programName
-        this.programMode = rule.programType
+        this.startTime = rule.getStartTime(true)
+        this.endTime = rule.getEndTime(true)
+        this.startWait = rule.startWait
         this.blockDuration = rule.blockDuration
-
-        this.$refs.nameEdit.$forceUpdate()
-        this.$refs.programEdit.$forceUpdate()
       },
 
       async saveRule () {
-        this.rule.setName(this.name, this.nameMode)
-        this.rule.setProgram(this.programName, this.programMode)
+        this.rule.setStartTime(this.startTime)
+        this.rule.setEndTime(this.endTime)
+        this.rule.setStartWait(this.startWait)
         this.rule.setBlockDuration(this.blockDuration)
         this.updateSavable()
       },
@@ -143,24 +107,19 @@
         const self = this
         let hasChanged = false
 
-        if (self.rule instanceof TaskRule) {
-          // console.log('SELFRULE', self.rule)
-          const newRuleInfo = {
-            name: self.name,
-            nameType: self.nameMode,
-            programName: self.programName,
-            programType: self.programMode,
-            blockDuration: parseInt(self.blockDuration)
-          }
-
-          // console.log('RINFO', newRuleInfo)
-          hasChanged = self.rule.hasChanged(newRuleInfo)
+        const newRuleInfo = {
+          endTime: self.endTime,
+          startTime: self.startTime,
+          startWait: parseInt(self.startWait),
+          blockDuration: parseInt(self.blockDuration)
         }
 
+        // console.log('RINFO', newRuleInfo)
+        hasChanged = self.rule.hasChanged(newRuleInfo)
+
         self.ruleValid = (
-          self.validDuration() &&
-          self.nameInputValid &&
-          self.programInputValid
+          self.startWaitValid &&
+          self.blockDurationValid
         )
 
         self.ruleSavable = hasChanged && self.ruleValid
@@ -175,10 +134,14 @@
         this.updateSavable()
       },
 
-      name () {
+      startTime (newStartTime, oldStartTime) {
         this.updateSavable()
       },
-      programName () {
+      endTime (newEndTime, oldEndTime) {
+        this.updateSavable()
+      },
+
+      startWait () {
         this.updateSavable()
       },
       blockDuration () {
@@ -188,10 +151,6 @@
 
     mounted () {
       this.loadRule(this.rule)
-    },
-
-    components: {
-      EditInlineMode
     },
 
     props: {
@@ -215,7 +174,26 @@ div.rule-detail {
   max-width: 17rem;
 }
 
-div.task-edit {
+div.time-edit {
+  & > div.columns {
+    margin: 0px;
+    width: 17rem;
+    margin-bottom: 0.5rem;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+
+    & > div.timepicker {
+      &#left-timepicker {
+        padding: 0px;
+        padding-right: 0.75rem;
+      }
+      &#right-timepicker {
+        padding: 0px;
+        padding-left: 0.75rem;
+      }
+    }
+  }
+
   & #program {
     margin-bottom: 0.3rem;
   }
@@ -226,7 +204,7 @@ div.task-edit {
 
   & #duration {
     border-radius: 0px;
-    margin-top: 1rem !important;
+    margin-top: 0rem;
     border: 0px;
     border-bottom: 2px solid #dcdfe6;
     font-size: 1rem;

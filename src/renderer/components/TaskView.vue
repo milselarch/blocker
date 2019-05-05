@@ -64,12 +64,12 @@
 
 <script>
   import Misc from '@/misc.js'
-  import Rule from './rules/Rule.js'
+  import TaskRule from './rules/TaskRule.js'
   import { setTimeout } from 'timers'
   import { Toast } from 'buefy/dist/components/toast'
   const getPpid = require('parent-process-pid')
 
-  console.log('RULE', Rule)
+  console.log('TASKRULE', TaskRule)
 
   const BLOCKED_PIDS = [
     require('electron').remote.getCurrentWebContents().getOSProcessId(),
@@ -133,7 +133,7 @@
             type: 'is-danger'
           })
         } else {
-          const newRule = new Rule({
+          const newRule = new TaskRule({
             name: task.name,
             programName: task.program,
             platform: task.platform

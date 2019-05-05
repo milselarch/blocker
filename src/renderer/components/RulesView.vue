@@ -32,7 +32,7 @@
         v-model="addRuleType" v-on:change="addRule"
       >
         <button class="button is-primary" slot="trigger" id="add-button">🞣</button>
-        <b-dropdown-item value="PROGRAM" class="dropdown-option" aria-role="listitem">Block Program</b-dropdown-item>
+        <b-dropdown-item value="TASK" class="dropdown-option" aria-role="listitem">Block Program</b-dropdown-item>
         <b-dropdown-item value="TIME-OF-DAY" class="dropdown-option" aria-role="listitem">Time-of-day access</b-dropdown-item>
         <b-dropdown-item value="POMODORO" class="dropdown-option" aria-role="listitem">Pomodoro</b-dropdown-item>
       </b-dropdown>
@@ -52,7 +52,8 @@
   import Misc from '@/misc.js'
   import RuleDetail from './rules/RuleDetail'
   import RuleCard from './rules/RuleCard.vue'
-  import Rule from './rules/Rule.js'
+  import TaskRule from './rules/TaskRule.js'
+  import TimeRule from './rules/TimeRule.js'
   import { setTimeout } from 'timers'
 
   const OS = require('os')
@@ -99,21 +100,27 @@
 
     methods: {
       async addRule (ruleType) {
-        console.log('RULETYPE', ruleType, Rule.RULE_TYPE)
-        if (ruleType === Rule.RULE_TYPE) {
-          const newRule = new Rule({
+        this.loading = true
+        console.log('RULETYPE', ruleType, TaskRule.RULE_TYPE)
+        let newRule
+
+        if (ruleType === TaskRule.RULE_TYPE) {
+          newRule = new TaskRule({
             name: 'test-name',
             programName: 'test-program',
             platform: OS.platform()
           })
-
-          await this.$store.dispatch('addNewRule', newRule)
-          await Misc.sleepAsync(100)
+        } else if (ruleType === TimeRule.RULE_TYPE) {
+          newRule = new TimeRule({})
         } else {
           throw new Error(`RULE TYPE UNKNOWN ${ruleType}`)
         }
 
+        await this.$store.dispatch('addNewRule', newRule)
+        await Misc.sleepAsync(100)
+        this.addRuleType = null
         this.loadRules()
+        this.loading = false
       },
 
       selectRule (rule) {

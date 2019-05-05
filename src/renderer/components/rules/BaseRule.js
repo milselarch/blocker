@@ -122,6 +122,11 @@ class BaseRule {
 
     return ruleJson
   }
+
+  test = (data) => this._test(data)
+  _test (data) {
+    throw new Error(`RULE TEST UNIMPLEMENTED ${data}`)
+  }
 }
 
 export default BaseRule

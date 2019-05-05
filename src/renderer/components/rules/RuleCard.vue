@@ -33,7 +33,7 @@
   import Misc from '@/misc.js'
   import EditInline from './EditInline'
   import { setTimeout } from 'timers'
-  import Rule from './Rule'
+  import TaskRule from './TaskRule'
 
   setTimeout(() => {
     console.log(Misc)
@@ -72,7 +72,7 @@
     },
 
     props: {
-      ruledata: new Rule({}),
+      ruledata: new TaskRule({}),
       activerule: null
     },
 

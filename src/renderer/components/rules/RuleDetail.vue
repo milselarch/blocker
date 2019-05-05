@@ -57,7 +57,6 @@
       v-bind:baseSavable="baseSavable"
       v-on:savableUpdate="onSavableUpdate"
       ref="ruleContentDetail"
-      class="mode-edit"
     ></component>
   </div>
 </template>
@@ -65,9 +64,11 @@
 <script>
   import './modes/HighlightModes.js'
   import TaskRuleDetail from './TaskRuleDetail.vue'
+  import TimeRuleDetail from './TimeRuleDetail.vue'
   // require styles
   import Misc from '@/misc.js'
-  import Rule from './Rule'
+  import assert from '@/assert.js'
+  import TaskRule from './TaskRule'
   import { setTimeout } from 'timers'
 
   setTimeout(() => {
@@ -80,11 +81,13 @@
     data: () => ({
       baseSavable: false,
       ruleSavable: false,
+      ruleValid: true,
+      baseValid: true,
 
       name: '',
-      nameMode: Rule.nameTypes.text,
+      nameMode: TaskRule.nameTypes.text,
       programName: '',
-      programMode: Rule.nameTypes.text,
+      programMode: TaskRule.nameTypes.text,
       unlocking: false,
       loading: false,
       locked: true,
@@ -94,9 +97,20 @@
 
     computed: {
       savable () {
+        console.log(
+          'DEATHH',
+          (this.ruleSavable || this.baseSavable),
+          (this.rule !== null),
+          this.ruleValid,
+          this.baseValid
+        )
+
         return (
-          this.ruleSavable || this.baseSavable
-        ) && (this.rule !== null)
+          (this.ruleSavable || this.baseSavable) &&
+          (this.rule !== null) &&
+          this.ruleValid &&
+          this.baseValid
+        )
       },
 
       ruleContentDetail () {
@@ -109,8 +123,10 @@
 
         const ruleType = this.rule.constructor.RULE_TYPE
 
-        if (ruleType === 'PROGRAM') {
+        if (ruleType === 'TASK') {
           componentName = Misc.getVarStringName({TaskRuleDetail})
+        } else if (ruleType === 'TIME-OF-DAY') {
+          componentName = Misc.getVarStringName({TimeRuleDetail})
         } else {
           throw new Error(`RULE TYPE UNKNOWN ${ruleType}`)
         }
@@ -168,9 +184,12 @@
     },
 
     methods: {
-      onSavableUpdate (ruleSavable) {
+      onSavableUpdate (ruleSavable, ruleValid) {
+        assert(typeof ruleSavable === 'boolean')
+        assert(typeof ruleValid === 'boolean')
         this.ruleSavable = ruleSavable
-        console.log('RULESAVE', ruleSavable)
+        this.ruleValid = ruleValid
+        // console.log('RULESAVE', ruleSavable)
       },
   
       getRuleID () {
@@ -255,7 +274,7 @@
         const self = this
         let hasChanged = false
 
-        if (self.rule instanceof Rule) {
+        if (self.rule instanceof TaskRule) {
           // console.log('SELFRULE', self.rule)
           const newRuleInfo = {
             locked: self.locked
@@ -295,7 +314,8 @@
     },
 
     components: {
-      TaskRuleDetail
+      TaskRuleDetail,
+      TimeRuleDetail
     },
 
     props: {
@@ -313,35 +333,6 @@
 div.rule-detail {
   width: 17rem;
   max-width: 17rem;
-}
-
-div.mode-edit {
-  & #program {
-    margin-bottom: 0.3rem;
-  }
-
-  & p#duration-label {
-    margin-left: 0.2rem;
-  }
-
-  & #duration {
-    border-radius: 0px;
-    margin-top: 1rem;
-    border: 0px;
-    border-bottom: 2px solid #dcdfe6;
-    font-size: 1rem;
-    font-family: 'Abel';
-    padding: 0.2rem;
-    width: 100%;
-
-    &:focus, &:focus, &:focus{
-      outline: none;
-    }
-
-    &.invalid {
-      border-bottom: 2px solid $warning;
-    }
-  }
 }
 
 @keyframes unlocking {

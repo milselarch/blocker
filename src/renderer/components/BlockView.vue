@@ -21,7 +21,14 @@
 
       <template>
         <section class='buttons'>
-          <button v-on:click="removeTasks" class="button is-info">Remove programs</button>
+          <button
+            v-on:click="removeTasks"
+            class="button is-info"
+            :disabled="blockedTasks.length === 0"
+          >
+            Remove programs
+          </button>
+
           <button
             v-on:click="clickAllow"
             class="button wait-button is-warning"
@@ -34,8 +41,42 @@
           </button>
         </section>
       </template>
+
+      <div 
+        id="blockedTimes"
+        v-if="isTimeBlocked"
+      >
+       <b-table :data="timeBlocks">
+          <template slot-scope="props" class="table-row">  
+            <b-table-column
+              field="startTime" label="Start Time"
+              class="table-column column-name"
+            >
+              {{ props.row.getMomentStart().format('hh:mm A') }}
+            </b-table-column>
+
+            <b-table-column
+              field="endTime" label="End Time"
+              class="table-column"
+            >
+              {{ props.row.getMomentEnd().format('hh:mm A') }}
+            </b-table-column>
+
+            <b-table-column
+              field="startWait" label="Start Wait" :visible="true"
+              class="table-column"
+              numeric
+            >
+              {{ Number(props.row.startWait) }}s
+            </b-table-column>
+          </template>
+        </b-table>
+      </div>
             
-      <div id="blockedTasks">
+      <div 
+        id="blockedTasks"
+        v-if="needsBlocking && !isTimeBlocked"
+      >
         <b-table :data="blockedTasks">
           <template slot-scope="props" class="table-row">  
             <b-table-column
@@ -80,6 +121,10 @@
   const __LIVE__ = process.env.NODE_ENV === 'production'
   let IOHOOKED = false
 
+  const WAIT_DISCOUNT = (
+    process.env.NODE_ENV === 'development' ? 10 : 1
+  )
+
   const window = remote.getCurrentWindow()
   window.setMenuBarVisibility(true)
 
@@ -103,6 +148,9 @@
       maxWait: 1,
       isDestroyed: false,
       blockFace: 'icon-border.svg',
+
+      isTimeBlocked: false,
+      timeBlocks: [],
       blockedTasks: [],
       excusedPids: []
     }),
@@ -112,6 +160,13 @@
     },
 
     computed: {
+      needsBlocking () {
+        return (
+          (this.blockedTasks.length > 0) ||
+          this.isTimeBlocked
+        )
+      },
+
       allowText () {
         if (
           (this.state === BLOCK_STATES.blocked) ||
@@ -205,11 +260,19 @@
 
       (async () => {
         while (!this.isDestroyed) {
-          [self.maxWait, self.blockedTasks] = (
+          const [taskMaxWait, blockedTasks] = (
             await self.$store.dispatch('getBlockedTasks')
           )
+          self.blockedTasks = blockedTasks
+          const [isTimeBlocked, timeMaxWait, timeBlocks] = (
+            await self.$store.dispatch('getTimeBlocked')
+          )
 
-          if (self.blockedTasks.length === 0) {
+          self.isTimeBlocked = isTimeBlocked
+          self.timeBlocks = timeBlocks
+          self.maxWait = Math.max(taskMaxWait, timeMaxWait)
+
+          if (!self.needsBlocking) {
             self.state = BLOCK_STATES.unblocked
           }
 
@@ -222,7 +285,7 @@
 
             self.lastUpdate = -1
 
-            if (self.blockedTasks.length > 0) {
+            if (self.needsBlocking) {
               self.state = BLOCK_STATES.blocked
             }
           } else if (self.state === BLOCK_STATES.allowing) {
@@ -250,7 +313,7 @@
             self.lastUpdate = Misc.getTimePassed()
 
             if (self.state === BLOCK_STATES.waiting) {
-              self.timeWaited += wait
+              self.timeWaited += wait * WAIT_DISCOUNT
               // console.log('WAIT', self.state)
               if (self.timeWaited >= self.maxWait) {
                 self.lastUpdate = -1

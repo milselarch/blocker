@@ -1,5 +1,7 @@
 import TaskGrabber from '@/components/TaskGrabber.js'
-import Rule from '@/components/rules/Rule'
+import RuleMaker from '@/components/rules/RuleMaker.js'
+import TaskRule from '@/components/rules/TaskRule.js'
+import TimeRule from '@/components/rules/TimeRule.js'
 import Misc from '@/misc.js'
 import Vue from 'vue'
 
@@ -143,7 +145,7 @@ const actions = {
       let unlockRuleIndex = null
       for (let k = 0; k < rules.length; k++) {
         if (rules[k].ID === unlockRuleID) {
-          unlockRule = new Rule(rules[k])
+          unlockRule = RuleMaker(rules[k])
           unlockRuleIndex = k
           break
         }
@@ -188,25 +190,59 @@ const actions = {
     return true
   },
 
+  getTimeBlocked: async (context) => {
+    const state = context.state
+    const blockingRules = []
+    let blocked = false
+    let maxWait = 1
+
+    state.rules.map(jsonRule => {
+      const rule = RuleMaker(jsonRule)
+      if (!(rule instanceof TimeRule)) { return false }
+      if (!rule.saved) { return false }
+
+      const [block, extra] = rule.test({ dateTime: new Date() })
+      if (extra === 'potato') { console.log('meh') }
+      if (block) {
+        maxWait = Math.max(maxWait, rule.blockDuration)
+      }
+
+      blocked = blocked | block
+      blockingRules.push(rule)
+    })
+
+    return [blocked, maxWait, blockingRules]
+  },
+
   getBlockedTasks: async (context) => {
     const state = context.state
     let maxWait = 1
 
-    let blockedTasks = state.tasks.filter((task) => {
-      return state.rules.map(jsonRule => {
-        const rule = new Rule(jsonRule)
+    const blockedTasks = []
+    const blockedTaskPids = []
+    state.rules.map(jsonRule => {
+      const rule = RuleMaker(jsonRule)
+      if (!(rule instanceof TaskRule)) { return false }
+      if (!rule.saved) { return false }
+
+      const [blocked, ruleBlockedTasks] = rule.test({
+        dateTime: new Date(),
+        tasks: state.tasks
+      })
+
+      if (blocked) {
         maxWait = Math.max(maxWait, rule.blockDuration)
-        if (!rule.saved) { return false }
-        return rule.testTask(task)
-      }).reduce((oldValue, currentValue) => {
-        return oldValue || currentValue
-      }, false)
+      }
+
+      ruleBlockedTasks.map(blockedTask => {
+        if (blockedTaskPids.indexOf(blockedTask.pid) === -1) {
+          blockedTaskPids.push(blockedTask.pid)
+          blockedTasks.push(blockedTask)
+        }
+      })
     })
 
-    if (blockedTasks === undefined) {
-      blockedTasks = []
-    }
-
+    // console.log('BLOCKTAAAAASKS', blockedTasks)
     return [maxWait / WAIT_DISCOUNT, blockedTasks]
   }
 }
@@ -218,7 +254,7 @@ const getters = {
   },
   rules: (state) => {
     return state.rules.map(jsonRule => {
-      return new Rule(jsonRule)
+      return RuleMaker(jsonRule)
     })
   },
   unlockWaits: (state) => {

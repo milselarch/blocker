@@ -10,7 +10,7 @@ const ALLOWED_TYPES = Enum('text', 'wildcard', 'regex')
 class Rule extends BaseRule {
   static nameTypes = ALLOWED_TYPES;
   static programTypes = ALLOWED_TYPES;
-  static RULE_TYPE = 'PROGRAM'
+  static RULE_TYPE = 'TASK'
 
   constructor ({
     ruleType = Rule.RULE_TYPE,
@@ -52,16 +52,6 @@ class Rule extends BaseRule {
       self.programType = programType
     }
 
-    self.testTask = (task) => {
-      if (task.platform !== self.platform) {
-        return false
-      }
-
-      const nameMatch = self.testValue(task.name, self.name, self.nameType)
-      const programMatch = self.testValue(task.program, self.programName, self.programType)
-      return nameMatch && programMatch
-    }
-
     self.testValue = (value, pattern, patternType) => {
       if (patternType === ALLOWED_TYPES.text) {
         value = value.replace(/\?.*$/, '')
@@ -87,9 +77,9 @@ class Rule extends BaseRule {
     nameType = null,
     programName = null,
     programType = null,
+    blockDuration = null,
 
     platform = null,
-    blockDuration = null,
     lockTime = null,
     locked = null,
     timestamp = null,
@@ -125,6 +115,30 @@ class Rule extends BaseRule {
     }
 
     return super._jsonify(ruleJson)
+  }
+
+  test = (data) => this._test(data)
+  _test ({ tasks = [] }) {
+    const self = this
+    const blockedTasks = tasks.filter(task => {
+      return self.testTask(task)
+    })
+
+    // console.log('BLOCKED-TASKS', blockedTasks)
+    const blocked = blockedTasks.length > 0
+    return [blocked, blockedTasks]
+  }
+
+  testTask = (task) => this._testTask(task)
+  _testTask (task) {
+    const self = this
+    if (task.platform !== self.platform) {
+      return false
+    }
+
+    const nameMatch = self.testValue(task.name, self.name, self.nameType)
+    const programMatch = self.testValue(task.program, self.programName, self.programType)
+    return nameMatch && programMatch
   }
 }
 
