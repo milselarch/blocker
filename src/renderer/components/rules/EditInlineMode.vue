@@ -112,7 +112,6 @@
 
 <style lang="scss" scoped>
 @import "@/assets/scss/vars.scss";
-$editor-font: 'Abel';
 
 div.texts {
   display: flex;

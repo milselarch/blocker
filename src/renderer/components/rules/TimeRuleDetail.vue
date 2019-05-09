@@ -98,8 +98,8 @@
       async saveRule () {
         this.rule.setStartTime(this.startTime)
         this.rule.setEndTime(this.endTime)
-        this.rule.setStartWait(this.startWait)
-        this.rule.setBlockDuration(this.blockDuration)
+        this.rule.setStartWait(Number(this.startWait))
+        this.rule.setBlockDuration(Number(this.blockDuration))
         this.updateSavable()
       },
 

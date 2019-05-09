@@ -134,6 +134,7 @@ class TimeRule extends BaseRule {
   }
   setStartWait = (startWait) => this._setStartWait(startWait)
   _setStartWait (startWait) {
+    assert(typeof startWait === 'number')
     assert(startWait < 24 * 3600)
     this.startWait = startWait
   }
@@ -167,13 +168,11 @@ class TimeRule extends BaseRule {
       endSeconds = endTime.asSeconds()
     }
 
-    /*
     console.log([
       [startSeconds, this.startTime.asSeconds()],
       [endSeconds, this.endTime.asSeconds()],
       [startWait, this.startWait]
     ])
-    */
 
     return super._hasChanged({
       platform,
@@ -201,13 +200,18 @@ class TimeRule extends BaseRule {
   }
 
   test = (data) => this._test(data)
-  _test ({ dateTime = new Date() }) {
+  _test ({
+    dateTime = new Date(),
+    timeSinceStart = 0
+  }) {
     const secondsNow = this.secsFromDayStart(dateTime)
     const endSeconds = this.endTime.asSeconds()
     const startSeconds = this.startTime.asSeconds()
     let blocked = false
 
-    if (startSeconds > endSeconds) {
+    if (timeSinceStart < this.startWait) {
+      blocked = true
+    } else if (startSeconds > endSeconds) {
       blocked = (
         (secondsNow > startSeconds) ||
         (secondsNow < endSeconds)

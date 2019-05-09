@@ -133,7 +133,10 @@
     }),
 
     async created () {
-      // await this.$store.dispatch('reset')
+      if (process.env.NODE_ENV === 'development') {
+        await this.$store.dispatch('reset')
+      }
+
       const self = this;
       (async () => {
         await self.$store.dispatch('onStart')

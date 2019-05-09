@@ -202,7 +202,7 @@ div#rules-view {
   /* min-height: max-content; */
   flex: auto;
   display: grid;
-  grid-template-columns: 17rem 1px 1fr;
+  grid-template-columns: 18rem 1px 1fr;
   grid-template-rows: 100%;
   grid-column-gap: 2rem;
 

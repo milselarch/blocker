@@ -9,6 +9,12 @@ function regExpEscape (s) {
 }
 
 class Misc {
+  getDayStartSecs (dateObj) {
+    const dayStartDate = new Date(dateObj)
+    dayStartDate.setHours(0, 0, 0, 0)
+    return dayStartDate.getTime() / 1000
+  }
+
   getVarStringName (varObject) {
     // Misc.getVarStringName({d}) returns 'd'
     return Object.keys(varObject)[0]

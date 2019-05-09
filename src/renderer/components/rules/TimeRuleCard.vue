@@ -63,6 +63,11 @@ div.names {
   padding-left: 0.5rem;
   padding-right: 0.5rem;
 
+  & p {
+    font-family: 'Staatliches';
+    color: #666;
+  }
+
   &:hover {
     cursor: pointer;
     border: 2px solid $twitter;

@@ -11,7 +11,8 @@ const state = {
   // list of blocking rules
   rules: [],
   unlockWaitTimes: {},
-  unlockWaits: {}
+  unlockWaits: {},
+  firstOpened: -1
 }
 
 const mutations = {
@@ -22,6 +23,18 @@ const mutations = {
 
   resetUnlockWaits: (state) => {
     state.unlockWaitTimes = {}
+  },
+  updateFirstOpened: (state) => {
+    if (state.firstOpened === null) {
+      state.firstOpened = (new Date()).getTime()
+    } else {
+      const dateNow = new Date()
+      const nowDaySecs = Misc.getDayStartSecs(dateNow)
+      const firstOpenDaySecs = Misc.getDayStartSecs(state.firstOpened)
+      if (nowDaySecs !== firstOpenDaySecs) {
+        state.firstOpened = dateNow.getTime()
+      }
+    }
   },
 
   unlock: (state, targetRule) => {
@@ -125,6 +138,7 @@ const actions = {
 
   onStart: async (context) => {
     context.commit('resetUnlockWaits')
+    context.commit('updateFirstOpened')
   },
 
   updateUnlocks: async (context) => {
@@ -186,7 +200,19 @@ const actions = {
     return true
   },
 
+  timeSinceStart: async (context) => {
+    let firstOpened = context.state.firstOpened
+    if (firstOpened === null) {
+      firstOpened = 0
+    }
+
+    return (
+      (new Date()).getTime() - firstOpened
+    ) / 1000
+  },
+
   getTimeBlocked: async (context) => {
+    const timeSinceStart = await context.dispatch('timeSinceStart')
     const state = context.state
     const blockingRules = []
     let blocked = false
@@ -197,7 +223,11 @@ const actions = {
       if (!(rule instanceof TimeRule)) { return false }
       if (!rule.saved) { return false }
 
-      const [block, extra] = rule.test({ dateTime: new Date() })
+      const [block, extra] = rule.test({
+        dateTime: new Date(),
+        timeSinceStart: timeSinceStart
+      })
+
       if (extra === 'potato') { console.log('meh') }
       if (block) {
         maxWait = Math.max(maxWait, rule.blockDuration)
@@ -211,6 +241,7 @@ const actions = {
   },
 
   getBlockedTasks: async (context) => {
+    const timeSinceStart = await context.dispatch('timeSinceStart')
     const state = context.state
     let maxWait = 1
 
@@ -223,6 +254,7 @@ const actions = {
 
       const [blocked, ruleBlockedTasks] = rule.test({
         dateTime: new Date(),
+        timeSinceStart: timeSinceStart,
         tasks: state.tasks
       })
 
@@ -245,6 +277,11 @@ const actions = {
 
 const getters = {
   test: () => 234,
+  firstOpened: (state) => {
+    let firstOpened = state.firstOpened
+    if (firstOpened === null) { firstOpened = new Date() }
+    return new Date(firstOpened)
+  },
   tasks: (state) => {
     return Object.freeze(state.tasks)
   },

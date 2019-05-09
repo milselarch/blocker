@@ -17,8 +17,6 @@
 
       <h2 id="title">Blocked</h2>
 
-      <!-- {{ state }} -->
-
       <template>
         <section class='buttons'>
           <button
@@ -67,7 +65,7 @@
               class="table-column"
               numeric
             >
-              {{ Number(props.row.startWait) }}s
+              {{ parseInt(timeSinceStart()) }} / {{ Number(props.row.startWait) }}s
             </b-table-column>
           </template>
         </b-table>
@@ -190,6 +188,13 @@
     },
 
     methods: {
+      timeSinceStart () {
+        return (
+          (new Date()).getTime() -
+          this.$store.getters.firstOpened
+        ) / 1000
+      },
+
       clickAllow () {
         this.lastUpdate = Misc.getTimePassed()
         if (this.state === BLOCK_STATES.blocked) {

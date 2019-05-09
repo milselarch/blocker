@@ -169,10 +169,12 @@
 <style lang="scss">
 @import "@/assets/scss/vars.scss";
 $editor-font: 'Abel';
+$editor-font-size: 1rem;
 
 button.mode-button {
   all: unset;
   font-family: $editor-font;
+  font-size: $editor-font-size;
   font-weight: bold;
   border: 2px solid #dcdfe6;
   padding: 0.2rem;
@@ -202,15 +204,16 @@ button.mode-button {
 
   & pre {
     font-family: $editor-font;
+    font-size: $editor-font-size;
     padding-left: 0px;
     font-size: 1rem;
     & > * {
       font-family: $editor-font;
-      font-size: 1rem;
+      font-size: $editor-font-size;
     }
     & span {
       font-family: $editor-font;
-      font-size: 1rem;
+      font-size: $editor-font-size;
       & span.cm-a { background: #aad1f7; }
       & span.cm-g0 { background: #daffa7; color: #000; }
       & span.cm-g1 { background: #b4fa50; color: #000; }
@@ -229,6 +232,7 @@ button.mode-button {
 
 .regex {
   font-family: $editor-font;
+  font-size: $editor-font-size;
   overflow-x: scroll;
   overflow-y: hidden;
   white-space: nowrap;
@@ -239,6 +243,7 @@ button.mode-button {
   height: 1rem;
 } .regex * {
   font-family: $editor-font;
+  font-size: $editor-font-size;
   height: 1rem;
 }
 
