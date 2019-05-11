@@ -1,5 +1,6 @@
 import TaskGrabber from '@/components/TaskGrabber.js'
 import RuleMaker from '@/components/rules/RuleMaker.js'
+import PomodoroRule from '@/components/rules/PomodoroRule.js'
 import TaskRule from '@/components/rules/TaskRule.js'
 import TimeRule from '@/components/rules/TimeRule.js'
 import Misc from '@/misc.js'
@@ -12,11 +13,20 @@ const state = {
   rules: [],
   unlockWaitTimes: {},
   unlockWaits: {},
-  firstOpened: -1
+  firstOpened: -1,
+  pomodoroNo: -1,
+  pomodoroStart: 0,
+  pomodoroTitle: ''
 }
 
 const mutations = {
   // mutations must be synchronous
+  startPomodoro: (state, pomodoroTitle) => {
+    state.pomodoroTitle = pomodoroTitle
+    state.pomodoroNo = (state.pomodoroNo + 1) % 4
+    state.pomodoroStart = (new Date()).getTime()
+  },
+
   setNewTasks: (state, newTasks) => {
     state.tasks = newTasks
   },
@@ -137,6 +147,7 @@ const actions = {
   },
 
   onStart: async (context) => {
+    // context.state.pomodoroStart = 0
     context.commit('resetUnlockWaits')
     context.commit('updateFirstOpened')
   },
@@ -209,6 +220,44 @@ const actions = {
     return (
       (new Date()).getTime() - firstOpened
     ) / 1000
+  },
+
+  startPomodoro: async (context, pomodoroTitle) => {
+    context.commit('startPomodoro', pomodoroTitle)
+  },
+
+  getPomodoroBlocked: async (context) => {
+    const state = context.state
+    const dateNow = new Date()
+    const blockingRules = []
+
+    let allowPrompt = true
+    let maxWait = 1
+
+    state.rules.map(jsonRule => {
+      const rule = RuleMaker(jsonRule)
+      if (!(rule instanceof PomodoroRule)) { return false }
+      if (!rule.saved) { return false }
+
+      const pomodoroState = rule.test({
+        start: state.pomodoroStart,
+        pomodoroNo: state.pomodoroNo,
+        timeNow: dateNow
+      })
+
+      if (
+        (pomodoroState === PomodoroRule.STATES.break) ||
+        (pomodoroState === PomodoroRule.STATES.prompt)
+      ) {
+        maxWait = Math.max(maxWait, rule.blockDuration)
+        blockingRules.push(rule)
+      }
+      if (pomodoroState !== PomodoroRule.STATES.prompt) {
+        allowPrompt = false
+      }
+    })
+
+    return [allowPrompt, maxWait, blockingRules]
   },
 
   getTimeBlocked: async (context) => {
@@ -293,6 +342,15 @@ const getters = {
   unlockWaits: (state) => {
     console.log('GET UNLOCK WAITS')
     return state.unlockWaits
+  },
+  pomodoroTitle: (state) => {
+    return state.pomodoroTitle
+  },
+  pomodoroStart: (state) => {
+    return state.pomodoroStart
+  },
+  pomodoroNo: (state) => {
+    return state.pomodoroNo
   }
 }
 

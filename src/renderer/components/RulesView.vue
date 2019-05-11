@@ -52,6 +52,7 @@
   import Misc from '@/misc.js'
   import RuleDetail from './rules/RuleDetail'
   import RuleCard from './rules/RuleCard.vue'
+  import PomodoroRule from './rules/PomodoroRule.js'
   import TaskRule from './rules/TaskRule.js'
   import TimeRule from './rules/TimeRule.js'
   import { setTimeout } from 'timers'
@@ -112,6 +113,8 @@
           })
         } else if (ruleType === TimeRule.RULE_TYPE) {
           newRule = new TimeRule({})
+        } else if (ruleType === PomodoroRule.RULE_TYPE) {
+          newRule = new PomodoroRule({})
         } else {
           throw new Error(`RULE TYPE UNKNOWN ${ruleType}`)
         }
@@ -204,7 +207,7 @@ div#rules-view {
   display: grid;
   grid-template-columns: 18rem 1px 1fr;
   grid-template-rows: 100%;
-  grid-column-gap: 2rem;
+  grid-column-gap: 2.5rem;
 
   & div#detail {
     width: 15rem;

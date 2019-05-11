@@ -41,7 +41,8 @@
   })
 
   export default {
-    name: 'rule-detail',
+    name: 'task-rule-detail',
+    RULE_TYPE: TaskRule.RULE_TYPE,
 
     data: () => ({
       ruleSavable: false,

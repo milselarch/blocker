@@ -111,6 +111,7 @@
   }
 
   const TAB_NAMES = Object.keys(TABS)
+  const ALLOW_RESET = false
   console.log('STATESR')
 
   export default {
@@ -133,11 +134,11 @@
     }),
 
     async created () {
-      if (process.env.NODE_ENV === 'development') {
-        await this.$store.dispatch('reset')
+      const self = this
+      if (ALLOW_RESET && (process.env.NODE_ENV === 'development')) {
+        await self.$store.dispatch('reset')
       }
 
-      const self = this;
       (async () => {
         await self.$store.dispatch('onStart')
 
@@ -180,16 +181,16 @@
   @import "@/assets/scss/vars.scss";
   // Setup $colors to use as bulsma classes (e.g. 'is-twitter')
   $colors: (
-      "white": ($white, $black),
-      "black": ($black, $white),
-      "light": ($light, $light-invert),
-      "dark": ($dark, $dark-invert),
-      "primary": ($primary, $primary-invert),
-      "info": ($info, $info-invert),
-      "success": ($success, $success-invert),
-      "warning": ($warning, $warning-invert),
-      "danger": ($danger, $danger-invert),
-      "twitter": ($twitter, $twitter-invert)
+    "white": ($white, $black),
+    "black": ($black, $white),
+    "light": ($light, $light-invert),
+    "dark": ($dark, $dark-invert),
+    "primary": ($primary, $primary-invert),
+    "info": ($info, $info-invert),
+    "success": ($success, $success-invert),
+    "warning": ($warning, $warning-invert),
+    "danger": ($danger, $danger-invert),
+    "twitter": ($twitter, $twitter-invert)
   );
 
   // Import Bulma and Buefy styles
@@ -200,6 +201,28 @@
 
   html {
     overflow-y: auto !important;
+  }
+
+  .timepicker {
+    & div.field {
+      & > label.label {
+        font-family: 'Abel';
+        /* font-weight: 300; */
+        padding-bottom: 0.5rem;
+        background-color: #555;
+        padding-left: 0.5rem !important;
+        color: white;
+        padding: 0.3rem;
+        margin-bottom: 0;
+      }
+
+      & div.dropdown-trigger > div > input {
+        border: 2px solid #555;
+        border-radius: 0px;
+        font-family: 'Staatliches';
+        color: #666;
+      }
+    }
   }
 
   div#app {

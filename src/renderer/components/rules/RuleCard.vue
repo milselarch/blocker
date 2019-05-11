@@ -20,6 +20,7 @@
 <script>
   import Misc from '@/misc.js'
   import EditInline from './EditInline'
+  import PomodoroRuleCard from './PomodoroRuleCard'
   import TaskRuleCard from './TaskRuleCard'
   import TimeRuleCard from './TimeRuleCard'
   import { setTimeout } from 'timers'
@@ -41,6 +42,8 @@
           componentName = Misc.getVarStringName({TaskRuleCard})
         } else if (ruleType === 'TIME-OF-DAY') {
           componentName = Misc.getVarStringName({TimeRuleCard})
+        } else if (ruleType === 'POMODORO') {
+          componentName = Misc.getVarStringName({PomodoroRuleCard})
         } else {
           throw new Error(`RULE TYPE UNKNOWN ${ruleType}`)
         }
@@ -82,6 +85,7 @@
     },
 
     components: {
+      PomodoroRuleCard,
       TaskRuleCard,
       TimeRuleCard,
       EditInline

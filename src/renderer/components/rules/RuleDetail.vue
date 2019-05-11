@@ -4,7 +4,7 @@
 
     <div class="detail-icons">
       <font-awesome-icon
-        icon="window-restore"
+        :icon="iconName"
         class="rule-icon large icon alt"
         v-bind:class="{
           muted: !saved
@@ -63,6 +63,7 @@
 
 <script>
   import './modes/HighlightModes.js'
+  import PomodoroRuleDetail from './PomodoroRuleDetail.vue'
   import TaskRuleDetail from './TaskRuleDetail.vue'
   import TimeRuleDetail from './TimeRuleDetail.vue'
   // require styles
@@ -96,6 +97,41 @@
     }),
 
     computed: {
+      iconName () {
+        if (this.rule === null) { return '' }
+        const ruleType = this.rule.constructor.RULE_TYPE
+
+        if (ruleType === TaskRuleDetail.RULE_TYPE) {
+          return 'window-restore'
+        } else if (ruleType === TimeRuleDetail.RULE_TYPE) {
+          return 'clock'
+        } else if (ruleType === PomodoroRuleDetail.RULE_TYPE) {
+          return 'stopwatch'
+        } else {
+          return 'question'
+        }
+      },
+
+      ruleContentDetail () {
+        console.log('RULE-CONTENT', this.rule)
+        let componentName
+
+        if (this.rule === null) { return null }
+        const ruleType = this.rule.constructor.RULE_TYPE
+
+        if (ruleType === TaskRuleDetail.RULE_TYPE) {
+          componentName = Misc.getVarStringName({TaskRuleDetail})
+        } else if (ruleType === TimeRuleDetail.RULE_TYPE) {
+          componentName = Misc.getVarStringName({TimeRuleDetail})
+        } else if (ruleType === PomodoroRuleDetail.RULE_TYPE) {
+          componentName = Misc.getVarStringName({PomodoroRuleDetail})
+        } else {
+          throw new Error(`RULE TYPE UNKNOWN ${ruleType}`)
+        }
+
+        return componentName
+      },
+
       savable () {
         console.log(
           'DEATHH',
@@ -111,27 +147,6 @@
           this.ruleValid &&
           this.baseValid
         )
-      },
-
-      ruleContentDetail () {
-        console.log('RULE-CONTENT', this.rule)
-        let componentName
-
-        if (this.rule === null) {
-          return null
-        }
-
-        const ruleType = this.rule.constructor.RULE_TYPE
-
-        if (ruleType === 'TASK') {
-          componentName = Misc.getVarStringName({TaskRuleDetail})
-        } else if (ruleType === 'TIME-OF-DAY') {
-          componentName = Misc.getVarStringName({TimeRuleDetail})
-        } else {
-          throw new Error(`RULE TYPE UNKNOWN ${ruleType}`)
-        }
-
-        return componentName
       },
 
       saved () {
@@ -314,6 +329,7 @@
     },
 
     components: {
+      PomodoroRuleDetail,
       TaskRuleDetail,
       TimeRuleDetail
     },
@@ -348,7 +364,9 @@ div.rule-detail {
 }
 
 div.detail-icons {
-  border-bottom: 2px solid grey;
+  padding-bottom: 0.5rem;
+  padding-top: 0.5rem;
+  border-bottom: 2px solid #BBB;
 
   display: flex;
   padding-left: 0rem;
@@ -403,7 +421,7 @@ div.detail-icons {
       margin-right: 0.4rem;
     }
     &.large {
-      width: 1.3rem;
+      width: 1.2rem;
     }
   }
 

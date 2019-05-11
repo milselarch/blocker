@@ -9,6 +9,26 @@ function regExpEscape (s) {
 }
 
 class Misc {
+  countWords (string) {
+    return string.trim().split(/\s+/).length
+  }
+
+  getSecondsLeft (start, duration, timeNow) {
+    if (timeNow === undefined) {
+      timeNow = (new Date()).getTime()
+    } else if (timeNow instanceof Date) {
+      timeNow = timeNow.getTime()
+    }
+
+    const timePassed = Math.floor(
+      (timeNow - start) / 1000
+    )
+
+    const secondsLeft = duration - timePassed
+    // console.log('SE-LEFT', duration, timePassed, secondsLeft)
+    return Math.max(0, secondsLeft)
+  }
+
   getDayStartSecs (dateObj) {
     const dayStartDate = new Date(dateObj)
     dayStartDate.setHours(0, 0, 0, 0)

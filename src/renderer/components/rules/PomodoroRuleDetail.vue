@@ -1,64 +1,71 @@
 <template>
-  <div class="time-edit">
+  <div class="task-edit">
     <input
-      id="duration"
-      v-model="startWait"
+      id="Duration"
+      class="num-input"
+      v-model="duration"
       v-bind:class = "{
-        invalid: !startWaitValid
+        invalid: !isValidInt(duration)
       }"
     />
-    <p id="duration-label">Start wait duration (seconds)</p>
+    <p id="duration-label">Pomodoro duration (min)</p>
+
+    <input
+      id="Short Break Duration"
+      class="num-input"
+      v-model="shortBreak"
+      v-bind:class = "{
+        invalid: !isValidInt(shortBreak)
+      }"
+    />
+    <p id="duration-label">Short break duration (min)</p>
+
+    <input
+      id="Long Break Duration"
+      class="num-input"
+      v-model="longBreak"
+      v-bind:class = "{
+        invalid: !isValidInt(longBreak)
+      }"
+    />
+    <p id="duration-label">Long break duration (min)</p>
 
     <input
       id="duration"
+      class="num-input"
       v-model="blockDuration"
       v-bind:class = "{
-        invalid: !blockDurationValid
+        invalid: !isValidInt(blockDuration)
       }"
     />
-    <p id="duration-label">Block duration (seconds)</p>
-
-    <div class="time-range columns">
-      <div id="left-timepicker" class="timepicker column">
-        <b-field label="Start Time">
-          <b-clockpicker v-model="startTime"></b-clockpicker>
-        </b-field>
-      </div>
-      <div id="right-timepicker" class="timepicker column">
-        <b-field label="End Time">
-          <b-clockpicker v-model="endTime"></b-clockpicker>
-        </b-field>
-      </div>
-    </div>
+    <p id="duration-label">Block duration (sec)</p>
   </div>
 </template>
 
 <script>
+  import './modes/HighlightModes.js'
+  import EditInlineMode from './EditInlineMode'
   // require styles
-  import assert from '@/assert.js'
-
   import Misc from '@/misc.js'
-  import TimeRule from './TimeRule'
-  import moment from 'moment'
   import { setTimeout } from 'timers'
+  import PomodoroRule from './PomodoroRule'
 
   setTimeout(() => {
     console.log(Misc)
   })
 
   export default {
-    name: 'rule-detail',
-    RULE_TYPE: TimeRule.RULE_TYPE,
+    name: 'pomodoro-rule-detail',
+    RULE_TYPE: PomodoroRule.RULE_TYPE,
 
     data: () => ({
       ruleSavable: false,
-      hasChanged: false,
       ruleValid: false,
 
-      startWait: 0,
-      blockDuration: 300,
-      startTime: moment('22:00', 'HH:mm').toDate(),
-      endTime: moment('6:00', 'HH:mm').toDate()
+      duration: 25,
+      shortBreak: 6,
+      longBreak: 15,
+      blockDuration: 300
     }),
 
     computed: {
@@ -66,11 +73,8 @@
         return this.ruleSavable || this.baseSavable
       },
 
-      startWaitValid () {
-        return this.validDuration(this.startWait)
-      },
-      blockDurationValid () {
-        return this.validDuration(this.blockDuration)
+      blockDurationInvalid () {
+        return !this.isValidInt(this.blockDuration)
       }
     },
 
@@ -81,26 +85,47 @@
     created () {},
 
     methods: {
-      validDuration (string) {
+      inputValid (value, mode) {
+        let test = true
+
+        if (mode === 'regex') {
+          try {
+            test = new RegExp(value)
+            console.log('VALUD OK REGEX')
+          } catch (err) {
+            if (err.name !== 'SyntaxError') {
+              throw err
+            } else {
+              test = false
+            }
+          }
+        }
+
+        return test
+      },
+
+      isValidInt (string) {
         const match = String(string).match(/^[0-9]+$/)
         return match !== null
       },
 
       loadRule (rule) {
-        assert(rule instanceof TimeRule)
-        if (rule === null) { return }
+        if (rule === null) {
+          // console.log('NULL RULE')
+          return
+        }
 
-        this.startTime = rule.getStartTime(true)
-        this.endTime = rule.getEndTime(true)
-        this.startWait = rule.startWait
-        this.blockDuration = rule.blockDuration
+        // console.log('LOAD RULE', rule)
+
+        this.duration = rule.duration
+        this.shortBreak = rule.shortBreak
+        this.longBreak = rule.longBreak
       },
 
       async saveRule () {
-        this.rule.setStartTime(this.startTime)
-        this.rule.setEndTime(this.endTime)
-        this.rule.setStartWait(Number(this.startWait))
-        this.rule.setBlockDuration(Number(this.blockDuration))
+        this.rule.setDuration(parseInt(this.duration))
+        this.rule.setShortBreak(parseInt(this.shortBreak))
+        this.rule.setLongBreak(parseInt(this.longBreak))
         this.updateSavable()
       },
 
@@ -108,19 +133,24 @@
         const self = this
         let hasChanged = false
 
-        const newRuleInfo = {
-          endTime: self.endTime,
-          startTime: self.startTime,
-          startWait: parseInt(self.startWait),
-          blockDuration: parseInt(self.blockDuration)
+        if (self.rule instanceof PomodoroRule) {
+          // console.log('SELFRULE', self.rule)
+          const newRuleInfo = {
+            duration: parseInt(self.duration),
+            shortBreak: parseInt(self.shortBreak),
+            longBreak: parseInt(self.longBreak),
+            blockDuration: parseInt(self.blockDuration)
+          }
+
+          // console.log('RINFO', newRuleInfo)
+          hasChanged = self.rule.hasChanged(newRuleInfo)
         }
 
-        // console.log('RINFO', newRuleInfo)
-        hasChanged = self.rule.hasChanged(newRuleInfo)
-
         self.ruleValid = (
-          self.startWaitValid &&
-          self.blockDurationValid
+          self.isValidInt(self.duration) &&
+          self.isValidInt(self.shortBreak) &&
+          self.isValidInt(self.longBreak) &&
+          self.isValidInt(self.blockDuration)
         )
 
         self.ruleSavable = hasChanged && self.ruleValid
@@ -135,14 +165,13 @@
         this.updateSavable()
       },
 
-      startTime (newStartTime, oldStartTime) {
+      duration () {
         this.updateSavable()
       },
-      endTime (newEndTime, oldEndTime) {
+      shortBreak () {
         this.updateSavable()
       },
-
-      startWait () {
+      longBreak () {
         this.updateSavable()
       },
       blockDuration () {
@@ -152,6 +181,10 @@
 
     mounted () {
       this.loadRule(this.rule)
+    },
+
+    components: {
+      EditInlineMode
     },
 
     props: {
@@ -175,41 +208,10 @@ div.rule-detail {
   max-width: 17rem;
 }
 
-div.time-range {
-  margin-top: 1rem !important;
-}
-
-div.time-edit {
-  & > div.columns {
-    margin: 0px;
-    width: 17rem;
-    margin-bottom: 0.5rem;
-    padding-left: 0.25rem;
-    padding-right: 0.25rem;
-
-    & > div.timepicker {
-      &#left-timepicker {
-        padding: 0px;
-        padding-right: 0.75rem;
-      }
-      &#right-timepicker {
-        padding: 0px;
-        padding-left: 0.75rem;
-      }
-    }
-  }
-
-  & #program {
-    margin-bottom: 0.3rem;
-  }
-
-  & p#duration-label {
-    margin-left: 0.2rem;
-  }
-
-  & #duration {
+div.task-edit {
+  & input.num-input {
     border-radius: 0px;
-    margin-top: 0rem;
+    margin-top: 0.2rem;
     border: 0px;
     border-bottom: 2px solid #dcdfe6;
     font-size: 1rem;
@@ -302,6 +304,5 @@ div.detail-icons {
   div#padding {
     width: -webkit-fill-available;
   };
-
 }
 </style>

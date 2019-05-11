@@ -154,7 +154,7 @@ class TimeRule extends BaseRule {
   }) {
     if (startTime === null) { startTime = this.startTime }
     if (endTime === null) { endTime = this.endTime }
-    if (startWait === null) { startWait = 0 }
+    if (startWait === null) { startWait = this.startWait }
 
     let startSeconds, endSeconds
     if (startTime instanceof Date) {

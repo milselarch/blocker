@@ -20,9 +20,19 @@
       <template>
         <section class='buttons'>
           <button
+            v-on:click="startPomodoro"
+            class="button is-info"
+            :disabled="!pomodoroPrompt || !pomodoroTitleValid"
+            v-show="blockingPomodoros.length > 0"
+          >
+            {{ pomodoroButtonText }}
+          </button>
+          
+          <button
             v-on:click="removeTasks"
             class="button is-info"
             :disabled="blockedTasks.length === 0"
+            v-show="blockedTasks.length > 0"
           >
             Remove programs
           </button>
@@ -41,10 +51,64 @@
       </template>
 
       <div 
+        id="blockedPomodoros"
+        v-if="blockingPomodoros.length > 0"
+      >
+        <p class="pomodoro-reason" v-if="!pomodoroPrompt">
+          {{ pomodoroTitle }}
+        </p>
+
+        <textarea
+          name="" id="pomodoro-title" cols="30" rows="2"
+          v-if="pomodoroPrompt"
+          v-model="pomodoroTitle"
+          :placeholder="pomodoroPlaceholder"
+        >
+        </textarea>
+
+        <b-table
+          class="block-table" :data="blockingPomodoros"
+          v-if="!pomodoroPrompt"
+        >
+          <template slot-scope="props" class="table-row">  
+            <b-table-column
+              field="duration" label="Duration"
+              class="table-column column-name"
+              numeric
+            >
+              {{ props.row.duration }}m
+            </b-table-column>
+
+            <b-table-column
+              field="shortBreak" label="Short Break"
+              class="table-column pomodoro-break"
+              numeric
+            >
+              {{ getTimeLeft(
+                props.row.duration, props.row.shortBreak,
+                false, dateNow
+              )}}
+            </b-table-column>
+
+            <b-table-column
+              field="longBreak" label="Long Break" :visible="true"
+              class="table-column"
+              numeric
+            >
+              {{ getTimeLeft(
+                props.row.duration, props.row.longBreak,
+                true, dateNow
+              )}}
+            </b-table-column>
+          </template>
+        </b-table>
+      </div>
+
+      <div 
         id="blockedTimes"
         v-if="isTimeBlocked"
       >
-       <b-table :data="timeBlocks">
+       <b-table class="block-table" :data="timeBlocks">
           <template slot-scope="props" class="table-row">  
             <b-table-column
               field="startTime" label="Start Time"
@@ -75,7 +139,7 @@
         id="blockedTasks"
         v-if="needsBlocking && !isTimeBlocked"
       >
-        <b-table :data="blockedTasks">
+        <b-table class="block-table" :data="blockedTasks">
           <template slot-scope="props" class="table-row">  
             <b-table-column
               field="windowTitle" label="Name"
@@ -110,6 +174,7 @@
   import BLOCK_STATES from './blockStates'
   import Misc from '@/misc.js'
   import { setTimeout } from 'timers'
+  import { Toast } from 'buefy/dist/components/toast'
   const { remote } = require('electron')
   const PS = require('ps-node')
   const ioHook = require('iohook')
@@ -147,8 +212,12 @@
       isDestroyed: false,
       blockFace: 'icon-border.svg',
 
+      dateNow: new Date(),
       isTimeBlocked: false,
       timeBlocks: [],
+      pomodoroPrompt: false,
+      pomodoroTitle: '',
+      blockingPomodoros: [],
       blockedTasks: [],
       excusedPids: []
     }),
@@ -158,9 +227,37 @@
     },
 
     computed: {
+      pomodoroTitleValid () {
+        const wordCount = Misc.countWords(this.pomodoroTitle)
+        return wordCount >= 10
+      },
+
+      pomodoroButtonText () {
+        if (this.pomodoroPrompt) {
+          if (this.pomodoroTitleValid) {
+            return 'Start pomodoro'
+          } else {
+            return 'Pomodoro needs 10-word explanation'
+          }
+        } else {
+          return 'Taking a break'
+        }
+      },
+
+      pomodoroPlaceholder () {
+        const pomodoroPlaceholder = this.$store.getters.pomodoroTitle
+        console.log('PTITLE', pomodoroPlaceholder)
+        if (String.trim(pomodoroPlaceholder) === '') {
+          return 'Type what this pomodoro is for'
+        }
+
+        return pomodoroPlaceholder
+      },
+
       needsBlocking () {
         return (
           (this.blockedTasks.length > 0) ||
+          (this.blockingPomodoros.length > 0) ||
           this.isTimeBlocked
         )
       },
@@ -188,6 +285,51 @@
     },
 
     methods: {
+      getTimeLeft (
+        pomodoroDurationMins, breakDurationMins,
+        isLongbreak, dateNow
+      ) {
+        // return 'asdasd'
+        const pomodoroDuration = pomodoroDurationMins * 60
+        const breakDuration = breakDurationMins * 60
+        const timeNow = dateNow.getTime()
+
+        if (dateNow === undefined) { dateNow = new Date() }
+        const pomodoroNo = this.$store.getters.pomodoroNo
+        if (isLongbreak !== (pomodoroNo === 3)) {
+          return `${breakDurationMins}m`
+        }
+
+        const pomodoroStart = this.$store.getters.pomodoroStart
+        const breakStart = pomodoroStart + pomodoroDuration * 1000
+        const secondsLeft = Misc.getSecondsLeft(
+          breakStart, breakDuration, timeNow
+        )
+
+        const mins = Math.floor(secondsLeft / 60)
+        const secs = secondsLeft % 60
+        return `${mins}m${secs}s / ${breakDurationMins}m`
+      },
+
+      async startPomodoro () {
+        const self = this
+        self.loading = true
+        await Misc.sleepAsync(300)
+
+        if (!self.pomodoroTitleValid) {
+          Toast.open({
+            message: 'Pomodoro requires 10-word explanation',
+            type: 'is-danger'
+          })
+        } else {
+          await self.$store.dispatch(
+            'startPomodoro', self.pomodoroTitle
+          )
+        }
+
+        self.loading = false
+      },
+
       timeSinceStart () {
         return (
           (new Date()).getTime() -
@@ -243,7 +385,7 @@
             const platform = OS.platform()
 
             if (__LIVE__ === false) {
-              console.log('LOCK')
+              // console.log('LOCK')
               return true
             } else if (platform === 'win32') {
               exec('rundll32.exe user32.dll,LockWorkStation')
@@ -265,6 +407,8 @@
 
       (async () => {
         while (!this.isDestroyed) {
+          self.dateNow = new Date()
+
           const [taskMaxWait, blockedTasks] = (
             await self.$store.dispatch('getBlockedTasks')
           )
@@ -272,10 +416,23 @@
           const [isTimeBlocked, timeMaxWait, timeBlocks] = (
             await self.$store.dispatch('getTimeBlocked')
           )
+          const [prompt, maxPomodoroWait, blockingPomodoros] = (
+            await self.$store.dispatch('getPomodoroBlocked')
+          )
+          self.blockingPomodoros = blockingPomodoros
+
+          if (prompt !== self.pomodoroPrompt) {
+            self.pomodoroPrompt = prompt
+            if (prompt === true) {
+              self.pomodoroTitle = ''
+            }
+          }
 
           self.isTimeBlocked = isTimeBlocked
           self.timeBlocks = timeBlocks
-          self.maxWait = Math.max(taskMaxWait, timeMaxWait)
+          self.maxWait = Math.max(
+            taskMaxWait, timeMaxWait, maxPomodoroWait
+          )
 
           if (!self.needsBlocking) {
             self.state = BLOCK_STATES.unblocked
@@ -356,6 +513,12 @@
 @import "~buefy/src/scss/buefy";
 @import "@/assets/scss/vars.scss";
 
+.block-table {
+  width: 20rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 div#wrapper {
   margin: auto;
   display: flex;
@@ -369,6 +532,28 @@ div#wrapper {
   z-index: 200;
   background-color: white;
   opacity: 0.95;
+
+  & div#blockedPomodoros {
+    & p.pomodoro-reason {
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    & .pomodoro-reason {
+      max-width: 40rem;
+      word-break: break-all;
+    }
+
+    & textarea#pomodoro-title {
+      outline: none;
+      border: 2px solid #dcdfe6;
+      padding: 1rem;
+      font-family: 'Abel';
+      font-size: 1.2rem;
+      resize: none;
+      width: 30rem;
+    }
+  }
 
   & section.buttons {
     & button {

@@ -4,17 +4,17 @@ resolved:
   - / stop self-blocking program rules for child PIDs
 
 features:
-  - add monodoro timer
+  - add Pomodoro rule
   - add TimeTracker
 
   - setup app timers for rules
-  - add time block rule
 
   - have fixed headers for task listing
   - use pro font awesome icons
   - support for emojis on program name
 
 features done:
+  - add time block rule
   - __LIVE__ based on process isDev or production mode
     - Time out 5 minutes vs 30 seconds on dev / prod
     - Closing app shuts down computer on prod mode
