@@ -126,7 +126,10 @@ const mutations = {
     }
 
     if (!ruleExists) {
-      throw new Error('UNSAVABLE NONEXISTANT RULE')
+      const jsonRule = rule.jsonify()
+      console.warn('NON-EXISTANT RULE', jsonRule)
+      // throw new Error('UNSAVABLE NONEXISTANT RULE')
+      state.rules = [jsonRule].concat(state.rules)
     }
   }
 }

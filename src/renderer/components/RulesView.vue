@@ -136,6 +136,7 @@
         await this.$store.dispatch('deleteRule', rule)
         await Misc.sleepAsync(100)
         this.loadRules()
+        this.activerule = null
         this.loading = false
       },
 

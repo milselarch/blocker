@@ -133,6 +133,9 @@
       },
 
       savable () {
+        if (this.rule === null) {
+          return false
+        }
         console.log(
           'DEATHH',
           (this.ruleSavable || this.baseSavable),
@@ -143,7 +146,7 @@
 
         return (
           (this.ruleSavable || this.baseSavable) &&
-          (this.rule !== null) &&
+          !this.rule.locked &&
           this.ruleValid &&
           this.baseValid
         )
@@ -287,21 +290,15 @@
 
       updateSavable () {
         const self = this
-        let hasChanged = false
+        if (self.rule === null) { return false }
 
-        if (self.rule instanceof TaskRule) {
-          // console.log('SELFRULE', self.rule)
-          const newRuleInfo = {
-            locked: self.locked
-          }
-
-          // console.log('RINFO', newRuleInfo)
-          hasChanged = self.rule.hasChanged(newRuleInfo)
-        }
+        const newRuleInfo = { locked: self.locked }
+        // console.log('RINFO', newRuleInfo)
+        const hasChanged = self.rule.hasChanged(newRuleInfo)
 
         // rule initially saved or changed
         console.log('BASE-CHANGE', hasChanged, !self.saved)
-        self.baseSavable = hasChanged || !self.saved
+        self.baseSavable = (hasChanged || !self.saved)
         console.log('BASE-SAVABLE', self.baseSavable)
       }
     },

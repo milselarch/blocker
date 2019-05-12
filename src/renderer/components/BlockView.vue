@@ -22,7 +22,7 @@
           <button
             v-on:click="startPomodoro"
             class="button is-info"
-            :disabled="!pomodoroPrompt || !pomodoroTitleValid"
+            :disabled="!alarmOn && (!pomodoroPrompt || !pomodoroTitleValid)"
             v-show="blockingPomodoros.length > 0"
           >
             {{ pomodoroButtonText }}
@@ -62,6 +62,7 @@
           name="" id="pomodoro-title" cols="30" rows="2"
           v-if="pomodoroPrompt"
           v-model="pomodoroTitle"
+          :disabled="alarmOn"
           :placeholder="pomodoroPlaceholder"
         >
         </textarea>
@@ -218,6 +219,7 @@
       isTimeBlocked: false,
       timeBlocks: [],
       pomodoroPrompt: false,
+      alarmOn: false,
       pomodoroTitle: '',
       blockingPomodoros: [],
       blockedTasks: [],
@@ -235,6 +237,10 @@
       },
 
       pomodoroButtonText () {
+        if (this.alarmOn) {
+          return 'Stop alarm'
+        }
+
         if (this.pomodoroPrompt) {
           if (this.pomodoroTitleValid) {
             return 'Start pomodoro'
@@ -318,7 +324,9 @@
         self.loading = true
         await Misc.sleepAsync(300)
 
-        if (!self.pomodoroTitleValid) {
+        if (self.alarmOn) {
+          self.alarmOn = false
+        } else if (!self.pomodoroTitleValid) {
           Toast.open({
             message: 'Pomodoro requires 10-word explanation',
             type: 'is-danger'
@@ -437,11 +445,19 @@
               self.pomodoroTitle = ''
               if (blockingPomodoros.length > 0) {
                 console.log('PLAY-NOW-POMODO', blockingPomodoros)
-                audio.play()
+                self.alarmOn = true
               }
             } else {
-              audio.pause()
+              self.alarmOn = false
             }
+          }
+
+          if (self.alarmOn) {
+            if (!audio.playing()) {
+              audio.play()
+            }
+          } else {
+            audio.pause()
           }
 
           self.isTimeBlocked = isTimeBlocked
