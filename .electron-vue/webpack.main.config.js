@@ -2,8 +2,6 @@
 
 process.env.BABEL_ENV = 'main'
 process.env.TITLE = 'blocker'
-process.env.LIVE = 'false'
-// LIVE will be now when pacakged by electron packager
 
 const path = require('path')
 const { dependencies } = require('../package.json')

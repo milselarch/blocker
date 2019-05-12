@@ -10,6 +10,7 @@ function makeRule (ruleJson) {
   } else if (ruleJson.ruleType === PomodoroRule.RULE_TYPE) {
     return new PomodoroRule(ruleJson)
   } else {
+    console.log(`RULE JSON ${JSON.stringify(ruleJson)}`)
     throw new Error(`INVALID RULEMAKER TYPE ${ruleJson.ruleType}`)
   }
 }

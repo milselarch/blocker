@@ -175,8 +175,10 @@
   import Misc from '@/misc.js'
   import { setTimeout } from 'timers'
   import { Toast } from 'buefy/dist/components/toast'
+  import { Howl } from 'howler'
   const { remote } = require('electron')
   const PS = require('ps-node')
+  // const path = require('path')
   const ioHook = require('iohook')
   // const sys = require('sys')
   const OS = require('os')
@@ -378,7 +380,7 @@
       if (!IOHOOKED) {
         IOHOOKED = true
         ioHook.on('keydown', event => {
-          if (!(
+          if (!self.pomodoroPrompt && !(
             (self.state === BLOCK_STATES.unblocked) ||
             (self.state === BLOCK_STATES.allowing)
           )) {
@@ -406,6 +408,13 @@
       let fullscreen = false;
 
       (async () => {
+        const audio = new Howl({
+          src: require('@/assets/sounds/analog-watch-alarm.mp3'),
+          autoplay: false,
+          loop: true,
+          volume: 0.5
+        })
+
         while (!this.isDestroyed) {
           self.dateNow = new Date()
 
@@ -423,8 +432,15 @@
 
           if (prompt !== self.pomodoroPrompt) {
             self.pomodoroPrompt = prompt
+
             if (prompt === true) {
               self.pomodoroTitle = ''
+              if (blockingPomodoros.length > 0) {
+                console.log('PLAY-NOW-POMODO', blockingPomodoros)
+                audio.play()
+              }
+            } else {
+              audio.pause()
             }
           }
 

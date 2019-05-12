@@ -31,7 +31,7 @@
         id="options" aria-role="list"
         v-model="addRuleType" v-on:change="addRule"
       >
-        <button class="button is-primary" slot="trigger" id="add-button">🞣</button>
+        <button class="button is-primary" slot="trigger" id="add-button">➕</button>
         <b-dropdown-item value="TASK" class="dropdown-option" aria-role="listitem">Block Program</b-dropdown-item>
         <b-dropdown-item value="TIME-OF-DAY" class="dropdown-option" aria-role="listitem">Time-of-day access</b-dropdown-item>
         <b-dropdown-item value="POMODORO" class="dropdown-option" aria-role="listitem">Pomodoro</b-dropdown-item>

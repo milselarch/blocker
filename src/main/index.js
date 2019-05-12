@@ -1,25 +1,25 @@
 'use strict'
 
 import { app, BrowserWindow } from 'electron'
+const NativeImage = require('electron').nativeImage
 const path = require('path')
+const DEBUG = true
 // import '../renderer/store'
 
-let iconPath = './icon-border.png'
 /**
  * Set `__static` path to static files in production
  * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-static-assets.html
  */
-if (process.env.NODE_ENV !== 'development') {
-  global.__static = path.join(__dirname, '/static').replace(/\\/g, '\\\\')
-  iconPath = path.join(__dirname, '/static/images/icon-border.png').replace(/\\/g, '\\\\')
-}
+global.__static = path.join(__dirname, 'static').replace(/\\/g, '\\\\')
+const iconPath = path.resolve(__static, 'images/icon-border.png')
+const iconImage = NativeImage.createFromPath(iconPath)
 
 let mainWindow
 const winURL = process.env.NODE_ENV === 'development'
   ? `http://localhost:9080`
   : `file://${__dirname}/index.html`
 
-console.log('DIRNAME', __dirname)
+console.log('DIRNAME', iconPath, iconImage)
 
 function createWindow () {
   /**
@@ -32,12 +32,16 @@ function createWindow () {
     icon: iconPath
   })
 
+  setTimeout(() => {
+    mainWindow.webContents.openDevTools({mode: 'detach'})
+  }, 1000)
+
   mainWindow.on('close', (e) => {
     // mainWindow.hide()
-    if (
+    if (!DEBUG && (
       (process.env.NODE_ENV === 'production') ||
       (process.env.LIVE === 'true')
-    ) {
+    )) {
       e.preventDefault()
       mainWindow.minimize()
       console.log('Window hiddnen')

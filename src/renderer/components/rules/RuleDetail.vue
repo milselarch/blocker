@@ -98,7 +98,7 @@
 
     computed: {
       iconName () {
-        if (this.rule === null) { return '' }
+        if (this.rule === null) { return 'question' }
         const ruleType = this.rule.constructor.RULE_TYPE
 
         if (ruleType === TaskRuleDetail.RULE_TYPE) {

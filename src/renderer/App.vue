@@ -13,8 +13,6 @@
         padded: blockState !== BLOCK_STATES.unblocked
       }"
     >
-      <!-- {{ blockState }} -->
-
       <b-tabs 
         position="is-centered"
         class="tabs-block"
@@ -81,7 +79,6 @@
   const OS = require('os')
   const { exec } = require('child_process')
   // const { remote } = require('electron')
-
   const platform = OS.platform()
 
   ON_DEATH((signal, err) => {
@@ -135,7 +132,7 @@
 
     async created () {
       const self = this
-      if (ALLOW_RESET && (process.env.NODE_ENV === 'development')) {
+      if (ALLOW_RESET) {
         await self.$store.dispatch('reset')
       }
 
