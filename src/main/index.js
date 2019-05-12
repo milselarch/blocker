@@ -3,7 +3,7 @@
 import { app, BrowserWindow } from 'electron'
 const NativeImage = require('electron').nativeImage
 const path = require('path')
-const DEBUG = true
+const DEBUG = false
 // import '../renderer/store'
 
 /**
@@ -33,7 +33,9 @@ function createWindow () {
   })
 
   setTimeout(() => {
-    mainWindow.webContents.openDevTools({mode: 'detach'})
+    if (DEBUG) {
+      mainWindow.webContents.openDevTools({mode: 'detach'})
+    }
   }, 1000)
 
   mainWindow.on('close', (e) => {

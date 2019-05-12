@@ -2,7 +2,7 @@
 
 process.env.NODE_ENV = 'production'
 process.env.LIVE = 'false'
-// LIVE will be now when pacakged by electron packager
+// LIVE will be null when pacakged by electron packager
 
 const { say } = require('cfonts')
 const chalk = require('chalk')
