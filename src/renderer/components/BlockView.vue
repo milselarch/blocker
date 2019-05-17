@@ -218,7 +218,7 @@
       dateNow: new Date(),
       isTimeBlocked: false,
       timeBlocks: [],
-      pomodoroPrompt: false,
+      pomodoroPrompt: true,
       alarmOn: false,
       pomodoroTitle: '',
       blockingPomodoros: [],

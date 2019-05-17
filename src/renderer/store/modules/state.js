@@ -16,7 +16,8 @@ const state = {
   firstOpened: -1,
   pomodoroNo: -1,
   pomodoroStart: 0,
-  pomodoroTitle: ''
+  pomodoroTitle: '',
+  version7: false
 }
 
 const mutations = {
@@ -153,6 +154,10 @@ const actions = {
     // context.state.pomodoroStart = 0
     context.commit('resetUnlockWaits')
     context.commit('updateFirstOpened')
+    if (context.state.version7 === false) {
+      context.commit('emptyRules')
+      context.state.version7 = true
+    }
   },
 
   updateUnlocks: async (context) => {
