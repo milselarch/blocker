@@ -58,11 +58,14 @@ const mutations = {
       let timePassed = 0
       if (state.unlockWaitTimes.hasOwnProperty(ID)) {
         timePassed = Misc.getTimePassed() - state.unlockWaitTimes[ID]
+        if (process.env.NODE_ENV === 'development') {
+          timePassed *= 10
+        }
       }
 
+      const newUnlockWait = state.unlockWaits[ID] + timePassed
       Vue.set(state.unlockWaitTimes, ID, Misc.getTimePassed())
-      // console.log('UNLOCKS', state.unlockWaits, ID, timePassed)
-      Vue.set(state.unlockWaits, ID, state.unlockWaits[ID] + timePassed)
+      Vue.set(state.unlockWaits, ID, newUnlockWait)
     }
   },
   removeUnlock: (state, targetRule) => {
@@ -207,6 +210,19 @@ const actions = {
   reset: async (context) => {
     context.commit('emptyRules')
     return true
+  },
+
+  getRuleByID: async (context, ID) => {
+    const state = context.state
+    const jsonRule = state.rules.filter(rule => rule.ID === ID)[0]
+    // console.log("JSONRULE", jsonRule)
+    return RuleMaker(jsonRule)
+  },
+
+  getJsonRuleByID: async (context, ID) => {
+    const state = context.state
+    const jsonRule = state.rules.filter(rule => rule.ID === ID)[0]
+    return jsonRule
   },
 
   addNewRule: async (context, newRule) => {

@@ -178,13 +178,13 @@
       (async () => {
         while (!self.isDestroyed) {
           const currentID = self.getRuleID()
+          const unlockWaits = self.$store.getters.unlockWaits
+
           if (currentID !== ID) {
             ID = currentID
-            const unlockWaits = self.$store.getters.unlockWaits
             wasUnlocking = unlockWaits.hasOwnProperty(ID)
           }
 
-          const unlockWaits = self.$store.getters.unlockWaits
           const isUnlocking = unlockWaits.hasOwnProperty(ID)
 
           if (
@@ -194,6 +194,18 @@
           ) {
             self.rule.unlock()
             self.locked = false
+          }
+
+          const rule = await self.$store.dispatch(
+            'getRuleByID', currentID
+          )
+
+          if (self.rule !== null) {
+            if (self.rule.locked && !rule.locked) {
+              self.rule.unlock()
+              self.unlocking = false
+              self.locked = false
+            }
           }
 
           await Misc.sleepAsync(200)
