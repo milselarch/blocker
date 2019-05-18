@@ -23,7 +23,7 @@
             v-on:click="startPomodoro"
             class="button is-info"
             :disabled="!alarmOn && (!pomodoroPrompt || !pomodoroTitleValid)"
-            v-show="blockingPomodoros.length > 0"
+            v-show="blockList.indexOf(true) === 2"
           >
             {{ pomodoroButtonText }}
           </button>
@@ -52,7 +52,7 @@
 
       <div 
         id="blockedPomodoros"
-        v-if="blockingPomodoros.length > 0"
+        v-show="blockList.indexOf(true) === 2"
       >
         <p class="pomodoro-reason" v-if="!pomodoroPrompt">
           {{ pomodoroTitle }}
@@ -107,7 +107,7 @@
 
       <div 
         id="blockedTimes"
-        v-if="isTimeBlocked"
+        v-show="blockList.indexOf(true) === 1"
       >
        <b-table class="block-table" :data="timeBlocks">
           <template slot-scope="props" class="table-row">  
@@ -138,7 +138,7 @@
             
       <div 
         id="blockedTasks"
-        v-if="needsBlocking && !isTimeBlocked"
+        v-show="blockList.indexOf(true) === 0"
       >
         <b-table class="block-table" :data="blockedTasks">
           <template slot-scope="props" class="table-row">  
@@ -262,12 +262,22 @@
         return pomodoroPlaceholder
       },
 
+      blockList () {
+        return [
+          this.blockedTasks.length > 0,
+          this.isTimeBlocked,
+          this.blockingPomodoros.length > 0
+        ]
+      },
+
+      blockCount () {
+        return this.blockList.filter((value) => {
+          return value === true
+        }).length
+      },
+
       needsBlocking () {
-        return (
-          (this.blockedTasks.length > 0) ||
-          (this.blockingPomodoros.length > 0) ||
-          this.isTimeBlocked
-        )
+        return this.blockList.includes(true)
       },
 
       allowText () {
