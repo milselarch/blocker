@@ -196,15 +196,17 @@
             self.locked = false
           }
 
-          const rule = await self.$store.dispatch(
-            'getRuleByID', currentID
-          )
+          if (currentID !== null) {
+            const rule = await self.$store.dispatch(
+              'getRuleByID', currentID
+            )
 
-          if (self.rule !== null) {
-            if (self.rule.locked && !rule.locked) {
-              self.rule.unlock()
-              self.unlocking = false
-              self.locked = false
+            if (self.rule !== null) {
+              if (self.rule.locked && !rule.locked) {
+                self.rule.unlock()
+                self.unlocking = false
+                self.locked = false
+              }
             }
           }
 

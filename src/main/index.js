@@ -3,7 +3,7 @@
 import { app, BrowserWindow } from 'electron'
 const NativeImage = require('electron').nativeImage
 const path = require('path')
-const DEBUG = true
+const DEBUG = false
 // import '../renderer/store'
 
 /**
