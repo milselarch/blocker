@@ -217,6 +217,8 @@ class TimeRule extends BaseRule {
         (secondsNow < endSeconds)
       )
     } else {
+      // console.log('SECNS', secondsNow, startSeconds, endSeconds)
+      // console.log(secondsNow > startSeconds, secondsNow < endSeconds)
       blocked = (
         (secondsNow > startSeconds) &&
         (secondsNow < endSeconds)

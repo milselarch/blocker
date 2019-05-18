@@ -174,6 +174,7 @@
 <script>
   import BLOCK_STATES from './blockStates'
   import Misc from '@/misc.js'
+  import assert from '@/assert.js'
   import { setTimeout } from 'timers'
   import { Toast } from 'buefy/dist/components/toast'
   import { Howl } from 'howler'
@@ -263,11 +264,18 @@
       },
 
       blockList () {
-        return [
-          this.blockedTasks.length > 0,
-          this.isTimeBlocked,
-          this.blockingPomodoros.length > 0
+        const self = this
+        const blockList = [
+          self.blockedTasks.length > 0,
+          self.isTimeBlocked,
+          self.blockingPomodoros.length > 0
         ]
+
+        blockList.map(block => {
+          assert(typeof block === 'boolean')
+        })
+
+        return blockList
       },
 
       blockCount () {
@@ -443,6 +451,7 @@
           const [isTimeBlocked, timeMaxWait, timeBlocks] = (
             await self.$store.dispatch('getTimeBlocked')
           )
+          self.isTimeBlocked = isTimeBlocked
           const [prompt, maxPomodoroWait, blockingPomodoros] = (
             await self.$store.dispatch('getPomodoroBlocked')
           )
@@ -470,7 +479,6 @@
             audio.pause()
           }
 
-          self.isTimeBlocked = isTimeBlocked
           self.timeBlocks = timeBlocks
           self.maxWait = Math.max(
             taskMaxWait, timeMaxWait, maxPomodoroWait

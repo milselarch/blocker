@@ -306,7 +306,7 @@ const actions = {
         maxWait = Math.max(maxWait, rule.blockDuration)
       }
 
-      blocked = blocked | block
+      blocked = blocked || block
       blockingRules.push(rule)
     })
 
