@@ -9,6 +9,8 @@ import Vue from 'vue'
 const state = {
   // list of running system processes / tasks
   tasks: [],
+  lastTimeUpdated: -1,
+  taskTimes: {},
   // list of blocking rules
   rules: [],
   unlockWaitTimes: {},
@@ -135,6 +137,23 @@ const mutations = {
       // throw new Error('UNSAVABLE NONEXISTANT RULE')
       state.rules = [jsonRule].concat(state.rules)
     }
+  },
+
+  updateAllowances: (state) => {
+    const curentDate = new Date()
+    const lastUpdateDate = new Date(state.lastTimeUpdated)
+    const lastDaysFromEpoch = Misc.getDaysFromEpoch(lastUpdateDate)
+    const daysFromEpoch = Misc.getDaysFromEpoch(curentDate)
+
+    if (daysFromEpoch > lastDaysFromEpoch) {
+      state.lastTimeUpdated = curentDate.getTime()
+      state.taskTimes = {}
+    } else {
+      const secondsPassed = (curentDate - lastUpdateDate) / 1000
+      state.tasks.maps(task => {
+        Vue.set(state.rules, k, rule.jsonify())
+      })
+    }
   }
 }
 
@@ -144,6 +163,10 @@ const actions = {
     // console.log('GRABBED TASKS', newTasks)
     context.commit('setNewTasks', newTasks)
     return newTasks
+  },
+
+  loopUpdate: async (context) => {
+    context.commit('updateAllowances')
   },
 
   relockRule: async (context, rule) => {

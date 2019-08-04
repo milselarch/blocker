@@ -442,6 +442,7 @@
         })
 
         while (!this.isDestroyed) {
+          await self.$store.dispatch('loopUpdate')
           self.dateNow = new Date()
 
           const [taskMaxWait, blockedTasks] = (

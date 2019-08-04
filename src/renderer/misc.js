@@ -13,6 +13,16 @@ class Misc {
     return string.trim().split(/\s+/).length
   }
 
+  getDaysFromEpoch (date) {
+    if (date === undefined) {
+      date = new Date()
+    }
+
+    // 8.64e7 is no of milliseconds per day
+    const fullDaysSinceEpoch = Math.floor(date / 8.64e7)
+    return fullDaysSinceEpoch
+  }
+
   getSecondsLeft (start, duration, timeNow) {
     if (timeNow === undefined) {
       timeNow = (new Date()).getTime()

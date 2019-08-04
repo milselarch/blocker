@@ -25,7 +25,11 @@ class Rule extends BaseRule {
     name = '',
     nameType = 'text',
     programName = '',
-    programType = 'text'
+    programType = 'text',
+
+    enableAllowance = false,
+    dailyAllowance = 1800,
+    maxAllowance = 3600
   }) {
     // console.log('R-CONSTRUCT', Object.keys(arguments[0]))
     super({
@@ -50,6 +54,16 @@ class Rule extends BaseRule {
       assert(Rule.programTypes.includes(programType))
       self.programName = programName
       self.programType = programType
+    }
+
+    self.setDailyAllowance = (dailyAllowance) => {
+      self.dailyAllowance = dailyAllowance
+    }
+    self.setMaxAllowance = (maxAllowance) => {
+      self.maxAllowance = maxAllowance
+    }
+    self.setEnableAllowance = (enable) => {
+      self.enableAllowance = enable
     }
 
     self.testValue = (value, pattern, patternType) => {
@@ -83,12 +97,19 @@ class Rule extends BaseRule {
     lockTime = null,
     locked = null,
     timestamp = null,
-    saved = null
+    saved = null,
+
+    enableAllowance = null,
+    dailyAllowance = null,
+    maxAllowance = null
   }) {
     if (name === null) { name = this.name }
     if (nameType === null) { nameType = this.nameType }
     if (programName === null) { programName = this.programName }
     if (programType === null) { programType = this.programType }
+    if (enableAllowance === null) { enableAllowance = this.enableAllowance }
+    if (dailyAllowance === null) { dailyAllowance = this.dailyAllowance }
+    if (maxAllowance === null) { maxAllowance = this.maxAllowance }
 
     return super._hasChanged({
       platform,
@@ -101,7 +122,10 @@ class Rule extends BaseRule {
       name !== this.name ||
       nameType !== this.nameType ||
       programName !== this.programName ||
-      programType !== this.programType
+      programType !== this.programType ||
+      enableAllowance !== this.enableAllowance ||
+      dailyAllowance !== this.dailyAllowance ||
+      maxAllowance !== this.maxAllowance
     )
   }
 
@@ -111,7 +135,10 @@ class Rule extends BaseRule {
       name: this.name,
       nameType: this.nameType,
       programName: this.programName,
-      programType: this.programType
+      programType: this.programType,
+      enableAllowance: this.enableAllowance,
+      dailyAllowance: this.dailyAllowance,
+      maxAllowance: this.maxAllowance
     }
 
     return super._jsonify(ruleJson)
