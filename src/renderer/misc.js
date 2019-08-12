@@ -1,3 +1,5 @@
+import assertFunc from '@/assert.js'
+
 function getCounterTime () {
   return performance.now() / 1000
 }
@@ -9,6 +11,8 @@ function regExpEscape (s) {
 }
 
 class Misc {
+  assert (cond) { return assertFunc(cond) }
+
   countWords (string) {
     return string.trim().split(/\s+/).length
   }

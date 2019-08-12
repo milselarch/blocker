@@ -6,11 +6,18 @@ import TimeRule from '@/components/rules/TimeRule.js'
 import Misc from '@/misc.js'
 import Vue from 'vue'
 
+// const _ = require('lodash');
+
 const state = {
   // list of running system processes / tasks
   tasks: [],
+  taskTimestamp: 0,
+  prevTasks: [],
+  prevTaskTimestamp: 0,
+
   lastTimeUpdated: -1,
-  taskTimes: {},
+  blockAllowances: {},
+
   // list of blocking rules
   rules: [],
   unlockWaitTimes: {},
@@ -31,7 +38,10 @@ const mutations = {
   },
 
   setNewTasks: (state, newTasks) => {
+    state.prevTasks = state.tasks
+    state.prevTaskTimestamp = state.taskTimestamp
     state.tasks = newTasks
+    state.taskTimestamp = (new Date()).getTime()
   },
 
   resetUnlockWaits: (state) => {
@@ -117,6 +127,15 @@ const mutations = {
     state.rules = []
     state.unlockWaits = {}
     state.unlockWaitTimes = {}
+
+    const timestamp = (new Date()).getTime()
+
+    state.tasks = []
+    state.prevTasks = []
+    state.taskTimestamp = timestamp
+    state.prevTaskTimestamp = timestamp
+
+    state.blockAllowances = {}
   },
 
   saveRule: (state, rule) => {
@@ -139,20 +158,65 @@ const mutations = {
     }
   },
 
-  updateAllowances: (state) => {
-    const curentDate = new Date()
-    const lastUpdateDate = new Date(state.lastTimeUpdated)
-    const lastDaysFromEpoch = Misc.getDaysFromEpoch(lastUpdateDate)
-    const daysFromEpoch = Misc.getDaysFromEpoch(curentDate)
+  updateLastTime: (state, curentDate) => {
+    state.lastTimeUpdated = curentDate.getTime()
+  },
 
-    if (daysFromEpoch > lastDaysFromEpoch) {
-      state.lastTimeUpdated = curentDate.getTime()
-      state.taskTimes = {}
-    } else {
-      const secondsPassed = (curentDate - lastUpdateDate) / 1000
-      state.tasks.maps(task => {
-        Vue.set(state.rules, k, rule.jsonify())
-      })
+  addAllowance: (state, rule) => {
+    Misc.assert(rule instanceof TaskRule)
+    const ruleID = rule.getID()
+    console.log('ADD START')
+
+    if (!state.blockAllowances.hasOwnProperty(ruleID)) {
+      Vue.set(state.blockAllowances, ruleID, 0)
+    }
+
+    Misc.assert(typeof state.blockAllowances[ruleID] === 'number')
+    Misc.assert(state.blockAllowances[ruleID] !== null)
+    Misc.assert(!Number.isNaN(state.blockAllowances[ruleID]))
+    Vue.set(state.blockAllowances, ruleID, Math.max(
+      state.blockAllowances[ruleID] + rule.dailyAllowance,
+      rule.maxAllowance
+    ))
+
+    console.log('ADD ENDS')
+    Misc.assert(typeof state.blockAllowances[ruleID] === 'number')
+    Misc.assert(state.blockAllowances[ruleID] !== null)
+    Misc.assert(!Number.isNaN(state.blockAllowances[ruleID]))
+  },
+
+  subtractAllowance: (state, payload) => {
+    const rule = payload.rule
+    const timePassed = payload.timePassed
+    Misc.assert(rule instanceof TaskRule)
+    Misc.assert(typeof timePassed === 'number')
+    const ruleID = rule.getID()
+
+    if (!state.blockAllowances.hasOwnProperty(ruleID)) {
+      Vue.set(state.blockAllowances, ruleID, 0)
+    }
+
+    Misc.assert(typeof state.blockAllowances[ruleID] === 'number')
+    Misc.assert(state.blockAllowances[ruleID] !== null)
+    Misc.assert(!Number.isNaN(state.blockAllowances[ruleID]))
+    Vue.set(state.blockAllowances, ruleID, Math.max(
+      state.blockAllowances[ruleID] - timePassed, 0
+    ))
+
+    console.log('SUB ENDS', state.blockAllowances[ruleID])
+    Misc.assert(typeof state.blockAllowances[ruleID] === 'number')
+    Misc.assert(state.blockAllowances[ruleID] !== null)
+    Misc.assert(!Number.isNaN(state.blockAllowances[ruleID]))
+  },
+
+  clearUnusedAllowances: (state) => {
+    const blockAllowances = state.blockAllowances
+    const ruleIds = state.rules.map(jsonRule => jsonRule.ID)
+
+    for (let ruleID in blockAllowances) {
+      if (ruleIds.indexOf(ruleID) === -1) {
+        Vue.delete(blockAllowances, ruleID)
+      }
     }
   }
 }
@@ -163,10 +227,6 @@ const actions = {
     // console.log('GRABBED TASKS', newTasks)
     context.commit('setNewTasks', newTasks)
     return newTasks
-  },
-
-  loopUpdate: async (context) => {
-    context.commit('updateAllowances')
   },
 
   relockRule: async (context, rule) => {
@@ -273,7 +333,7 @@ const actions = {
     context.commit('startPomodoro', pomodoroTitle)
   },
 
-  getPomodoroBlocked: async (context) => {
+  checkPomodoroBlocked: async (context) => {
     const state = context.state
     const dateNow = new Date()
     const blockingRules = []
@@ -307,7 +367,7 @@ const actions = {
     return [allowPrompt, maxWait, blockingRules]
   },
 
-  getTimeBlocked: async (context) => {
+  checkTimeBlocked: async (context) => {
     const timeSinceStart = await context.dispatch('timeSinceStart')
     const state = context.state
     const blockingRules = []
@@ -336,18 +396,45 @@ const actions = {
     return [blocked, maxWait, blockingRules]
   },
 
-  getBlockedTasks: async (context) => {
+  checkBlockedTasks: async (context) => {
+    context.commit('clearUnusedAllowances')
     const timeSinceStart = await context.dispatch('timeSinceStart')
-    const state = context.state
-    let maxWait = 1
 
+    const state = context.state
+    const curentDate = new Date()
+    const lastUpdateDate = new Date(state.lastTimeUpdated)
+    const lastDaysFromEpoch = Misc.getDaysFromEpoch(lastUpdateDate)
+    const daysFromEpoch = Misc.getDaysFromEpoch(curentDate)
+    const timePassed = Math.max((curentDate - lastUpdateDate) / 1000, 0)
+    let isNewDay = false
+
+    if (daysFromEpoch > lastDaysFromEpoch) {
+      context.commit('updateLastTime', curentDate)
+      isNewDay = true
+    }
+
+    let maxWait = 1
     const blockedTasks = []
     const blockedTaskPids = []
     state.rules.map(jsonRule => {
+      if (jsonRule === undefined) { return false }
       const rule = RuleMaker(jsonRule)
+      const ruleID = rule.getID()
+
       if (!(rule instanceof TaskRule)) { return false }
       if (!rule.saved) { return false }
 
+      console.log('TEST RULE', ruleID, timePassed)
+      Misc.assert(typeof timePassed === 'number')
+      if (!state.blockAllowances.hasOwnProperty(ruleID)) {
+        console.log(`TASK RUKE BKOCK ${ruleID}`)
+        context.commit('addAllowance', rule)
+      } else if (isNewDay) {
+        // increase allowance for program block rule
+        context.commit('addAllowance', rule)
+      }
+
+      let allowanceValid = false
       const [blocked, ruleBlockedTasks] = rule.test({
         dateTime: new Date(),
         timeSinceStart: timeSinceStart,
@@ -355,9 +442,29 @@ const actions = {
       })
 
       if (blocked) {
+        console.log(`TASK RUKE BKOCK ${ruleID}`)
+        if (rule.enableAllowance) {
+          const prevBlocked = rule.test({
+            dateTime: new Date(),
+            timeSinceStart: timeSinceStart,
+            tasks: state.tasks
+          })[0]
+
+          if (prevBlocked) {
+            console.log(`MINUS ALLOWANCE ${ruleID} ${timePassed}`)
+            context.commit('subtractAllowance', {
+              rule: rule, timePassed: timePassed
+            })
+          }
+
+          allowanceValid = state.blockAllowances[ruleID] > 0
+          console.log(`ALLOWANCE VALID ${ruleID} ${allowanceValid}`)
+        }
+
         maxWait = Math.max(maxWait, rule.blockDuration)
       }
 
+      if (allowanceValid) { return }
       ruleBlockedTasks.map(blockedTask => {
         if (blockedTaskPids.indexOf(blockedTask.pid) === -1) {
           blockedTaskPids.push(blockedTask.pid)
@@ -373,6 +480,18 @@ const actions = {
 
 const getters = {
   test: () => 234,
+  getAllowanceLeft: (state) => {
+    return (ruleID) => {
+      if (state.blockAllowances.hasOwnProperty(ruleID)) {
+        return state.blockAllowances[ruleID]
+      } else {
+        return 0
+      }
+    }
+  },
+  blockAllowances: (state) => {
+    return state.blockAllowances
+  },
   firstOpened: (state) => {
     let firstOpened = state.firstOpened
     if (firstOpened === null) { firstOpened = new Date() }

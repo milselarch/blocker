@@ -442,19 +442,18 @@
         })
 
         while (!this.isDestroyed) {
-          await self.$store.dispatch('loopUpdate')
           self.dateNow = new Date()
 
           const [taskMaxWait, blockedTasks] = (
-            await self.$store.dispatch('getBlockedTasks')
+            await self.$store.dispatch('checkBlockedTasks')
           )
           self.blockedTasks = blockedTasks
           const [isTimeBlocked, timeMaxWait, timeBlocks] = (
-            await self.$store.dispatch('getTimeBlocked')
+            await self.$store.dispatch('checkTimeBlocked')
           )
           self.isTimeBlocked = isTimeBlocked
           const [prompt, maxPomodoroWait, blockingPomodoros] = (
-            await self.$store.dispatch('getPomodoroBlocked')
+            await self.$store.dispatch('checkPomodoroBlocked')
           )
           self.blockingPomodoros = blockingPomodoros
 

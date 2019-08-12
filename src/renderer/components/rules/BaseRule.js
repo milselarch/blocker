@@ -60,6 +60,10 @@ class BaseRule {
       this.ID = ID
     }
 
+    self.getID = () => {
+      return self.ID
+    }
+
     self.save = () => {
       self.saved = true
     }

@@ -82,6 +82,9 @@ class Rule extends BaseRule {
     }
 
     self.setName(name, nameType)
+    self.setEnableAllowance(enableAllowance)
+    self.setDailyAllowance(dailyAllowance)
+    self.setMaxAllowance(maxAllowance)
     self.setProgram(programName, programType)
   }
 
@@ -163,8 +166,13 @@ class Rule extends BaseRule {
       return false
     }
 
-    const nameMatch = self.testValue(task.name, self.name, self.nameType)
-    const programMatch = self.testValue(task.program, self.programName, self.programType)
+    const nameMatch = self.testValue(
+      task.name, self.name, self.nameType
+    )
+    const programMatch = self.testValue(
+      task.program, self.programName, self.programType
+    )
+
     return nameMatch && programMatch
   }
 }

@@ -19,12 +19,59 @@
 
     <input
       id="duration"
+      class="text-input"
       v-model="blockDuration"
       v-bind:class = "{
         invalid: inputInvalid
       }"
     />
     <p id="duration-label">Block duration (seconds)</p>
+
+    <div class="allowance-wrapper">
+      <input
+        id="max-allowance-input"
+        class="text-input"
+        :disabled="!enableAllowance"
+        v-model="maxAllowance"
+        v-bind:class = "{
+          invalid: maxInvalid,
+          enabled: enableAllowance
+        }"
+      />
+      <p class="input-label">Cummulative allowance (seconds)</p>
+
+      <input
+        id="allowance-input"
+        class="text-input"
+        :disabled="!enableAllowance"
+        v-model="dailyAllowance"
+        v-bind:class = "{
+          invalid: dailyInvalid,
+          enabled: enableAllowance
+        }"
+      />
+      <p class="input-label">Daily allowance (seconds) </p>
+    </div>
+
+    <b-progress
+      id="progress" :value="progressPercentage"
+      size="is-medium" show-value
+    >
+      <p> {{ progressMessage }} </p>
+    </b-progress>
+
+    <div class="toggle-allowance">
+      <b-switch id="switch" v-model="enableAllowance" :rounded="false">
+        <p
+          id="allowance-status"
+          v-bind:class = "{enabled: enableAllowance}"
+        >
+          {{ allowanceStatus }}
+        </p>
+      </b-switch>
+    </div>
+
+    <!-- <p> {{ blocks }} <p/> -->
   </div>
 </template>
 
@@ -45,6 +92,11 @@
     RULE_TYPE: TaskRule.RULE_TYPE,
 
     data: () => ({
+      dailyAllowance: 30,
+      maxAllowance: 210,
+      enableAllowance: false,
+
+      isDestroyed: false,
       ruleSavable: false,
       ruleValid: false,
 
@@ -61,8 +113,44 @@
         return this.ruleSavable || this.baseSavable
       },
 
+      blocks () {
+        return JSON.stringify(this.$store.getters.blockAllowances)
+      },
+
+      progressPercentage () {
+        if (this.rule === null) { return 0 }
+
+        const ruleID = this.rule.ruleID
+        const getters = this.$store.getters
+        const allowanceLeft = getters.getAllowanceLeft(ruleID)
+        return 100 * allowanceLeft / this.maxAllowance
+      },
+
+      progressMessage () {
+        if (this.rule === null) { return 'loading...' }
+
+        const ruleID = this.rule.ruleID
+        const getters = this.$store.getters
+        const allowanceLeft = getters.getAllowanceLeft(ruleID)
+        return `${allowanceLeft}`
+      },
+
+      allowanceStatus () {
+        if (this.enableAllowance) {
+          return 'Allowance enabled'
+        } else {
+          return 'Allowance disabled'
+        }
+      },
+
       inputInvalid () {
         return !this.validDuration()
+      },
+      dailyInvalid () {
+        return !this.validDuration(this.dailyAllowance)
+      },
+      maxInvalid () {
+        return !this.validDuration(this.maxAllowance)
       },
 
       nameInputValid () {
@@ -99,8 +187,12 @@
         return test
       },
 
-      validDuration () {
-        const match = String(this.blockDuration).match(/^[0-9]+$/)
+      validDuration (value) {
+        if (value === undefined) {
+          value = this.blockDuration
+        }
+
+        const match = String(value).match(/^[0-9]+$/)
         return match !== null
       },
 
@@ -129,6 +221,10 @@
         this.programMode = rule.programType
         this.blockDuration = rule.blockDuration
 
+        this.dailyAllowance = rule.dailyAllowance
+        this.maxAllowance = rule.maxAllowance
+        this.enableAllowance = rule.enableAllowance
+
         this.$refs.nameEdit.$forceUpdate()
         this.$refs.programEdit.$forceUpdate()
       },
@@ -137,6 +233,10 @@
         this.rule.setName(this.name, this.nameMode)
         this.rule.setProgram(this.programName, this.programMode)
         this.rule.setBlockDuration(this.blockDuration)
+
+        this.rule.setEnableAllowance(this.enableAllowance)
+        this.rule.setDailyAllowance(this.dailyAllowance)
+        this.rule.setMaxAllowance(this.maxAllowance)
         this.updateSavable()
       },
 
@@ -151,10 +251,14 @@
             nameType: self.nameMode,
             programName: self.programName,
             programType: self.programMode,
-            blockDuration: parseInt(self.blockDuration)
+            blockDuration: parseInt(self.blockDuration),
+
+            enableAllowance: self.enableAllowance,
+            dailyAllowance: parseInt(self.dailyAllowance),
+            maxAllowance: parseInt(self.maxAllowance)
           }
 
-          // console.log('RINFO', newRuleInfo)
+          console.log('RINFO', newRuleInfo)
           hasChanged = self.rule.hasChanged(newRuleInfo)
         }
 
@@ -176,15 +280,12 @@
         this.updateSavable()
       },
 
-      name () {
-        this.updateSavable()
-      },
-      programName () {
-        this.updateSavable()
-      },
-      blockDuration () {
-        this.updateSavable()
-      }
+      name () { this.updateSavable() },
+      programName () { this.updateSavable() },
+      blockDuration () { this.updateSavable() },
+      enableAllowance () { this.updateSavable() },
+      dailyAllowance () { this.updateSavable() },
+      maxAllowance () { this.updateSavable() }
     },
 
     mounted () {
@@ -216,6 +317,56 @@ div.rule-detail {
   max-width: 17rem;
 }
 
+input.text-input {
+  border-radius: 0px;
+  border: 0px;
+  border-bottom: 2px solid #dcdfe6;
+  font-size: 1rem;
+  font-family: 'Abel';
+  padding: 0.2rem;
+  width: 100%;
+
+  &:focus, &:focus, &:focus{
+    outline: none;
+  }
+
+  &.invalid {
+    border-bottom: 2px solid $warning;
+  }
+}
+
+p.input-label {
+  margin-left: 0.2rem;
+}
+
+div.toggle-allowance {
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 0rem;
+  width: fit-content;
+
+  & p#allowance-status {
+    font-family: "Staatliches";
+
+    &:not(.enabled) {
+      color: #AAA;
+    }
+  }
+}
+
+#progress {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+
+  & p {
+    font-family: "Staatliches";
+  }
+}
+
+div.allowance-wrapper {
+  margin-top: 0rem;
+}
+
 div.task-edit {
   & #program {
     margin-bottom: 0.3rem;
@@ -226,22 +377,8 @@ div.task-edit {
   }
 
   & #duration {
-    border-radius: 0px;
     margin-top: 1rem !important;
-    border: 0px;
-    border-bottom: 2px solid #dcdfe6;
-    font-size: 1rem;
-    font-family: 'Abel';
-    padding: 0.2rem;
-    width: 100%;
 
-    &:focus, &:focus, &:focus{
-      outline: none;
-    }
-
-    &.invalid {
-      border-bottom: 2px solid $warning;
-    }
   }
 }
 
