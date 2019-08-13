@@ -38,7 +38,7 @@
           enabled: enableAllowance
         }"
       />
-      <p class="input-label">Cummulative allowance (seconds)</p>
+      <p class="input-label">Max cummulative allowance (seconds)</p>
 
       <input
         id="allowance-input"
@@ -57,7 +57,7 @@
       id="progress" :value="progressPercentage"
       size="is-medium" show-value
     >
-      <p> {{ progressMessage }} </p>
+      <span> {{ progressMessage }} </span>
     </b-progress>
 
     <div class="toggle-allowance">
@@ -71,7 +71,10 @@
       </b-switch>
     </div>
 
-    <!-- <p> {{ blocks }} <p/> -->
+    <!--
+    <p> {{ blocks }} <p/> 
+    <p> {{ progressMessage }} </p>
+    -->
   </div>
 </template>
 
@@ -92,9 +95,11 @@
     RULE_TYPE: TaskRule.RULE_TYPE,
 
     data: () => ({
-      dailyAllowance: 30,
-      maxAllowance: 210,
+      dailyAllowance: 600,
+      maxAllowance: 7200,
       enableAllowance: false,
+
+      allowanceLeft: 0,
 
       isDestroyed: false,
       ruleSavable: false,
@@ -120,19 +125,16 @@
       progressPercentage () {
         if (this.rule === null) { return 0 }
 
-        const ruleID = this.rule.ruleID
-        const getters = this.$store.getters
-        const allowanceLeft = getters.getAllowanceLeft(ruleID)
-        return 100 * allowanceLeft / this.maxAllowance
+        const maxAllowance = this.rule.maxAllowance
+        return 100 * this.allowanceLeft / maxAllowance
       },
 
       progressMessage () {
         if (this.rule === null) { return 'loading...' }
-
-        const ruleID = this.rule.ruleID
-        const getters = this.$store.getters
-        const allowanceLeft = getters.getAllowanceLeft(ruleID)
-        return `${allowanceLeft}`
+        const allowanceLeft = Number.parseInt(this.allowanceLeft)
+        const maxAllowance = this.rule.maxAllowance
+        console.log('MAX ALLOWANCE', maxAllowance)
+        return `${allowanceLeft} / ${maxAllowance}`
       },
 
       allowanceStatus () {
@@ -166,6 +168,19 @@
     },
 
     created () {},
+
+    mounted () {
+      const self = this
+      self.loadRule(self.rule);
+
+      (async () => {
+        while (!self.isDestroyed) {
+          const ruleID = self.rule.getID()
+          self.allowanceLeft = self.$store.getters.getAllowanceLeft(ruleID)
+          await Misc.sleepAsync(250)
+        }
+      })()
+    },
 
     methods: {
       inputValid (value, mode) {
@@ -230,6 +245,19 @@
       },
 
       async saveRule () {
+        const changedAllowance = this.rule.hasChanged({
+          dailyAllowance: this.dailyAllowance,
+          enableAllowance: this.enableAllowance,
+          maxAllowance: this.maxAllowance
+        })
+
+        console.log('CHANGED ALLOWANCE', changedAllowance)
+
+        if (changedAllowance) {
+          console.log('RESET ALLOWANCE', this.rule.getID())
+          this.$store.commit('resetAllowance', this.rule)
+        }
+
         this.rule.setName(this.name, this.nameMode)
         this.rule.setProgram(this.programName, this.programMode)
         this.rule.setBlockDuration(this.blockDuration)
@@ -286,10 +314,6 @@
       enableAllowance () { this.updateSavable() },
       dailyAllowance () { this.updateSavable() },
       maxAllowance () { this.updateSavable() }
-    },
-
-    mounted () {
-      this.loadRule(this.rule)
     },
 
     components: {
@@ -358,8 +382,9 @@ div.toggle-allowance {
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
 
-  & p {
-    font-family: "Staatliches";
+  & span {
+    font-family: "Inconsolata";
+    display: table-cell;
   }
 }
 

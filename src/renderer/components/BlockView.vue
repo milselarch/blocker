@@ -455,6 +455,8 @@
           const [prompt, maxPomodoroWait, blockingPomodoros] = (
             await self.$store.dispatch('checkPomodoroBlocked')
           )
+
+          self.$store.commit('updateLastTime', true)
           self.blockingPomodoros = blockingPomodoros
 
           if (prompt !== self.pomodoroPrompt) {

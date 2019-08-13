@@ -3,6 +3,7 @@ import RuleMaker from '@/components/rules/RuleMaker.js'
 import PomodoroRule from '@/components/rules/PomodoroRule.js'
 import TaskRule from '@/components/rules/TaskRule.js'
 import TimeRule from '@/components/rules/TimeRule.js'
+import assert from '@/assert.js'
 import Misc from '@/misc.js'
 import Vue from 'vue'
 
@@ -158,55 +159,61 @@ const mutations = {
     }
   },
 
-  updateLastTime: (state, curentDate) => {
-    state.lastTimeUpdated = curentDate.getTime()
+  updateLastTime: (state, currentDate) => {
+    if (currentDate === true) { currentDate = new Date() }
+    state.lastTimeUpdated = currentDate.getTime()
   },
 
-  addAllowance: (state, rule) => {
-    Misc.assert(rule instanceof TaskRule)
+  addAllowance: (state, payload) => {
+    const rule = payload.rule
+    const timePassed = payload.timePassed
+    assert(rule instanceof TaskRule)
     const ruleID = rule.getID()
     console.log('ADD START')
 
-    if (!state.blockAllowances.hasOwnProperty(ruleID)) {
-      Vue.set(state.blockAllowances, ruleID, 0)
-    }
+    assert(state.blockAllowances.hasOwnProperty(ruleID))
+    const allowanceGained = (
+      rule.dailyAllowance * timePassed / (24 * 3600)
+    )
 
-    Misc.assert(typeof state.blockAllowances[ruleID] === 'number')
-    Misc.assert(state.blockAllowances[ruleID] !== null)
-    Misc.assert(!Number.isNaN(state.blockAllowances[ruleID]))
-    Vue.set(state.blockAllowances, ruleID, Math.max(
-      state.blockAllowances[ruleID] + rule.dailyAllowance,
+    assert(typeof state.blockAllowances[ruleID] === 'number')
+    assert(state.blockAllowances[ruleID] !== null)
+    assert(!Number.isNaN(state.blockAllowances[ruleID]))
+    console.log('MM', state.blockAllowances[ruleID], rule.maxAllowance)
+
+    Vue.set(state.blockAllowances, ruleID, Math.min(
+      state.blockAllowances[ruleID] + allowanceGained,
       rule.maxAllowance
     ))
 
     console.log('ADD ENDS')
-    Misc.assert(typeof state.blockAllowances[ruleID] === 'number')
-    Misc.assert(state.blockAllowances[ruleID] !== null)
-    Misc.assert(!Number.isNaN(state.blockAllowances[ruleID]))
+    assert(typeof state.blockAllowances[ruleID] === 'number')
+    assert(state.blockAllowances[ruleID] !== null)
+    assert(!Number.isNaN(state.blockAllowances[ruleID]))
   },
 
   subtractAllowance: (state, payload) => {
     const rule = payload.rule
     const timePassed = payload.timePassed
-    Misc.assert(rule instanceof TaskRule)
-    Misc.assert(typeof timePassed === 'number')
+    assert(rule instanceof TaskRule)
+    assert(typeof timePassed === 'number')
     const ruleID = rule.getID()
 
     if (!state.blockAllowances.hasOwnProperty(ruleID)) {
       Vue.set(state.blockAllowances, ruleID, 0)
     }
 
-    Misc.assert(typeof state.blockAllowances[ruleID] === 'number')
-    Misc.assert(state.blockAllowances[ruleID] !== null)
-    Misc.assert(!Number.isNaN(state.blockAllowances[ruleID]))
+    assert(typeof state.blockAllowances[ruleID] === 'number')
+    assert(state.blockAllowances[ruleID] !== null)
+    assert(!Number.isNaN(state.blockAllowances[ruleID]))
     Vue.set(state.blockAllowances, ruleID, Math.max(
       state.blockAllowances[ruleID] - timePassed, 0
     ))
 
     console.log('SUB ENDS', state.blockAllowances[ruleID])
-    Misc.assert(typeof state.blockAllowances[ruleID] === 'number')
-    Misc.assert(state.blockAllowances[ruleID] !== null)
-    Misc.assert(!Number.isNaN(state.blockAllowances[ruleID]))
+    assert(typeof state.blockAllowances[ruleID] === 'number')
+    assert(state.blockAllowances[ruleID] !== null)
+    assert(!Number.isNaN(state.blockAllowances[ruleID]))
   },
 
   clearUnusedAllowances: (state) => {
@@ -218,6 +225,13 @@ const mutations = {
         Vue.delete(blockAllowances, ruleID)
       }
     }
+  },
+
+  resetAllowance: (state, rule) => {
+    const ruleID = rule.getID()
+    const blockAllowances = state.blockAllowances
+    const allowance = Math.min(rule.dailyAllowance, rule.maxAllowance)
+    Vue.set(blockAllowances, ruleID, allowance)
   }
 }
 
@@ -293,6 +307,13 @@ const actions = {
   reset: async (context) => {
     context.commit('emptyRules')
     return true
+  },
+
+  safeGetRuleByID: async (context, ID) => {
+    const state = context.state
+    const jsonRule = state.rules.filter(rule => rule.ID === ID)[0]
+    if (jsonRule === undefined) { return null }
+    return RuleMaker(jsonRule)
   },
 
   getRuleByID: async (context, ID) => {
@@ -403,15 +424,17 @@ const actions = {
     const state = context.state
     const curentDate = new Date()
     const lastUpdateDate = new Date(state.lastTimeUpdated)
+    const timePassed = Math.max((curentDate - lastUpdateDate) / 1000, 0)
+
+    /*
     const lastDaysFromEpoch = Misc.getDaysFromEpoch(lastUpdateDate)
     const daysFromEpoch = Misc.getDaysFromEpoch(curentDate)
-    const timePassed = Math.max((curentDate - lastUpdateDate) / 1000, 0)
-    let isNewDay = false
 
+    let isNewDay = false
     if (daysFromEpoch > lastDaysFromEpoch) {
-      context.commit('updateLastTime', curentDate)
       isNewDay = true
     }
+    */
 
     let maxWait = 1
     const blockedTasks = []
@@ -425,13 +448,14 @@ const actions = {
       if (!rule.saved) { return false }
 
       console.log('TEST RULE', ruleID, timePassed)
-      Misc.assert(typeof timePassed === 'number')
-      if (!state.blockAllowances.hasOwnProperty(ruleID)) {
-        console.log(`TASK RUKE BKOCK ${ruleID}`)
-        context.commit('addAllowance', rule)
-      } else if (isNewDay) {
+      assert(typeof timePassed === 'number')
+
+      if (rule.enableAllowance) {
+        assert(state.blockAllowances.hasOwnProperty(ruleID))
         // increase allowance for program block rule
-        context.commit('addAllowance', rule)
+        context.commit('addAllowance', {
+          rule: rule, timePassed: timePassed
+        })
       }
 
       let allowanceValid = false

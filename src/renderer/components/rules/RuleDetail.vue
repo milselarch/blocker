@@ -197,12 +197,14 @@
           }
 
           if (currentID !== null) {
-            const rule = await self.$store.dispatch(
-              'getRuleByID', currentID
+            // console.log('GET CURRENT RULE BY ID')
+            const latestRule = await self.$store.dispatch(
+              'safeGetRuleByID', currentID
             )
 
-            if (self.rule !== null) {
-              if (self.rule.locked && !rule.locked) {
+            if ((self.rule !== null) && latestRule !== null) {
+              // ensure rule has not been deleted
+              if (self.rule.locked && !latestRule.locked) {
                 self.rule.unlock()
                 self.unlocking = false
                 self.locked = false
