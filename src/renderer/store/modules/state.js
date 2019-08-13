@@ -169,7 +169,7 @@ const mutations = {
     const timePassed = payload.timePassed
     assert(rule instanceof TaskRule)
     const ruleID = rule.getID()
-    console.log('ADD START')
+    // console.log('ADD START')
 
     assert(state.blockAllowances.hasOwnProperty(ruleID))
     const allowanceGained = (
@@ -179,14 +179,14 @@ const mutations = {
     assert(typeof state.blockAllowances[ruleID] === 'number')
     assert(state.blockAllowances[ruleID] !== null)
     assert(!Number.isNaN(state.blockAllowances[ruleID]))
-    console.log('MM', state.blockAllowances[ruleID], rule.maxAllowance)
+    // console.log('MM', state.blockAllowances[ruleID], rule.maxAllowance)
 
     Vue.set(state.blockAllowances, ruleID, Math.min(
       state.blockAllowances[ruleID] + allowanceGained,
       rule.maxAllowance
     ))
 
-    console.log('ADD ENDS')
+    // console.log('ADD ENDS')
     assert(typeof state.blockAllowances[ruleID] === 'number')
     assert(state.blockAllowances[ruleID] !== null)
     assert(!Number.isNaN(state.blockAllowances[ruleID]))
@@ -447,7 +447,7 @@ const actions = {
       if (!(rule instanceof TaskRule)) { return false }
       if (!rule.saved) { return false }
 
-      console.log('TEST RULE', ruleID, timePassed)
+      // console.log('TEST RULE', ruleID, timePassed)
       assert(typeof timePassed === 'number')
 
       if (rule.enableAllowance) {

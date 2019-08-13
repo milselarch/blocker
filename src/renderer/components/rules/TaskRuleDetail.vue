@@ -133,7 +133,7 @@
         if (this.rule === null) { return 'loading...' }
         const allowanceLeft = Number.parseInt(this.allowanceLeft)
         const maxAllowance = this.rule.maxAllowance
-        console.log('MAX ALLOWANCE', maxAllowance)
+        // console.log('MAX ALLOWANCE', maxAllowance)
         return `${allowanceLeft} / ${maxAllowance}`
       },
 
