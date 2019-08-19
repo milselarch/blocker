@@ -210,7 +210,7 @@ const mutations = {
       state.blockAllowances[ruleID] - timePassed, 0
     ))
 
-    console.log('SUB ENDS', state.blockAllowances[ruleID])
+    // console.log('SUB ENDS', state.blockAllowances[ruleID])
     assert(typeof state.blockAllowances[ruleID] === 'number')
     assert(state.blockAllowances[ruleID] !== null)
     assert(!Number.isNaN(state.blockAllowances[ruleID]))
@@ -466,7 +466,7 @@ const actions = {
       })
 
       if (blocked) {
-        console.log(`TASK RUKE BKOCK ${ruleID}`)
+        // console.log(`TASK RUKE BKOCK ${ruleID}`)
         if (rule.enableAllowance) {
           const prevBlocked = rule.test({
             dateTime: new Date(),
@@ -475,14 +475,14 @@ const actions = {
           })[0]
 
           if (prevBlocked) {
-            console.log(`MINUS ALLOWANCE ${ruleID} ${timePassed}`)
+            // console.log(`MINUS ALLOWANCE ${ruleID} ${timePassed}`)
             context.commit('subtractAllowance', {
               rule: rule, timePassed: timePassed
             })
           }
 
           allowanceValid = state.blockAllowances[ruleID] > 0
-          console.log(`ALLOWANCE VALID ${ruleID} ${allowanceValid}`)
+          // console.log(`ALLOWANCE VALID ${ruleID} ${allowanceValid}`)
         }
 
         maxWait = Math.max(maxWait, rule.blockDuration)

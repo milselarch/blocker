@@ -467,8 +467,12 @@
               if (blockingPomodoros.length > 0) {
                 console.log('PLAY-NOW-POMODO', blockingPomodoros)
                 self.alarmOn = true
+                window.webContents.focus()
+                window.focus()
               }
             } else {
+              window.webContents.focus()
+              window.focus()
               self.alarmOn = false
             }
           }

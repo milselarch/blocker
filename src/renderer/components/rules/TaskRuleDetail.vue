@@ -148,11 +148,25 @@
       inputInvalid () {
         return !this.validDuration()
       },
+
+      allowanceInvalid () {
+        return (
+          this.dailyAllowance > this.maxAllowance
+        )
+      },
       dailyInvalid () {
-        return !this.validDuration(this.dailyAllowance)
+        return (
+          !this.validDuration(this.dailyAllowance) ||
+          this.dailyAllowance <= 0 ||
+          this.allowanceInvalid
+        )
       },
       maxInvalid () {
-        return !this.validDuration(this.maxAllowance)
+        return (
+          !this.validDuration(this.maxAllowance) ||
+          this.maxAllowance <= 0 ||
+          this.allowanceInvalid
+        )
       },
 
       nameInputValid () {
@@ -239,6 +253,7 @@
         this.dailyAllowance = rule.dailyAllowance
         this.maxAllowance = rule.maxAllowance
         this.enableAllowance = rule.enableAllowance
+        this.rule = rule
 
         this.$refs.nameEdit.$forceUpdate()
         this.$refs.programEdit.$forceUpdate()
@@ -251,21 +266,24 @@
           maxAllowance: this.maxAllowance
         })
 
+        // we have to check if the allowance has been changed
+        // BEFORE saving the allowance, otherwise, changeAllowance
+        // will always return false
+
         console.log('CHANGED ALLOWANCE', changedAllowance)
-
-        if (changedAllowance) {
-          console.log('RESET ALLOWANCE', this.rule.getID())
-          this.$store.commit('resetAllowance', this.rule)
-        }
-
         this.rule.setName(this.name, this.nameMode)
         this.rule.setProgram(this.programName, this.programMode)
         this.rule.setBlockDuration(this.blockDuration)
 
         this.rule.setEnableAllowance(this.enableAllowance)
-        this.rule.setDailyAllowance(this.dailyAllowance)
-        this.rule.setMaxAllowance(this.maxAllowance)
+        this.rule.setDailyAllowance(parseInt(this.dailyAllowance))
+        this.rule.setMaxAllowance(parseInt(this.maxAllowance))
         this.updateSavable()
+
+        if (changedAllowance) {
+          console.log('RESET ALLOWANCE', this.rule.getID())
+          this.$store.commit('resetAllowance', this.rule)
+        }
       },
 
       updateSavable () {

@@ -57,9 +57,13 @@ class Rule extends BaseRule {
     }
 
     self.setDailyAllowance = (dailyAllowance) => {
+      assert(typeof (dailyAllowance) === 'number')
+      assert(dailyAllowance > 0)
       self.dailyAllowance = dailyAllowance
     }
     self.setMaxAllowance = (maxAllowance) => {
+      assert(typeof (maxAllowance) === 'number')
+      assert(maxAllowance > 0)
       self.maxAllowance = maxAllowance
     }
     self.setEnableAllowance = (enable) => {
