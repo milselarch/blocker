@@ -440,7 +440,7 @@
           }
 
           self.$store.commit('updateLastUsage')
-          console.log('LAST USAGE', event)
+          // console.log('LAST USAGE', event)
         })
 
         ioHook.start()

@@ -565,7 +565,7 @@ const getters = {
   },
 
   hasOptinPomodoros: (state) => {
-    for (let prop in state.optInPomodoros) {
+    for (let ID in state.optInPomodoros) {
       return true
     }
 
