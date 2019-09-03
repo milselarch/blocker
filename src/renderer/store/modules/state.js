@@ -18,6 +18,8 @@ const state = {
 
   lastTimeUpdated: -1,
   blockAllowances: {},
+  optInPomodoros: {},
+  lastUsage: false,
 
   // list of blocking rules
   rules: [],
@@ -31,6 +33,26 @@ const state = {
 }
 
 const mutations = {
+  removeOptinPomodoros: (state) => {
+    for (const ID in state.optInPomodoros) {
+      Vue.delete(state.optInPomodoros, ID)
+    }
+  },
+
+  updateLastUsage: (state) => {
+    state.lastUsage = (new Date()).getTime()
+  },
+
+  addOptInPomodoro: (state, rule) => {
+    assert(rule instanceof PomodoroRule)
+    const ID = rule.getID()
+
+    if (!state.optInPomodoros.hasOwnProperty(ID)) {
+      Vue.set(state.optInPomodoros, ID, true)
+      // console.log('OPTIN', state.optInPomodoros)
+    }
+  },
+
   // mutations must be synchronous
   startPomodoro: (state, pomodoroTitle) => {
     state.pomodoroTitle = pomodoroTitle
@@ -105,6 +127,10 @@ const mutations = {
   removeRule: (state, targetRule) => {
     state.rules = state.rules.filter(rule => {
       if (rule.ID !== targetRule.ID) {
+        if (state.optInPomodoros.hasOwnProperty(rule.ID)) {
+          Vue.delete(state.optInPomodoros, rule.ID)
+        }
+
         return true
       }
     })
@@ -128,6 +154,7 @@ const mutations = {
     state.rules = []
     state.unlockWaits = {}
     state.unlockWaitTimes = {}
+    state.optInPomodoros = {}
 
     const timestamp = (new Date()).getTime()
 
@@ -137,6 +164,7 @@ const mutations = {
     state.prevTaskTimestamp = timestamp
 
     state.blockAllowances = {}
+    state.lastUsage = false
   },
 
   saveRule: (state, rule) => {
@@ -367,19 +395,29 @@ const actions = {
       if (!(rule instanceof PomodoroRule)) { return false }
       if (!rule.saved) { return false }
 
+      let optIn = true
+      const ruleID = rule.getID()
+      // console.log('RULE OPTIN', [rule.optIn])
+      if (rule.optIn) {
+        if (!state.optInPomodoros.hasOwnProperty(ruleID)) {
+          return false
+        }
+      }
+
       const pomodoroState = rule.test({
         start: state.pomodoroStart,
         pomodoroNo: state.pomodoroNo,
         timeNow: dateNow
       })
 
-      if (
+      if (optIn && (
         (pomodoroState === PomodoroRule.STATES.break) ||
         (pomodoroState === PomodoroRule.STATES.prompt)
-      ) {
+      )) {
         maxWait = Math.max(maxWait, rule.blockDuration)
         blockingRules.push(rule)
       }
+
       if (pomodoroState !== PomodoroRule.STATES.prompt) {
         allowPrompt = false
       }
@@ -422,13 +460,16 @@ const actions = {
     const timeSinceStart = await context.dispatch('timeSinceStart')
 
     const state = context.state
-    const curentDate = new Date()
+    const currentDate = new Date()
     const lastUpdateDate = new Date(state.lastTimeUpdated)
-    const timePassed = Math.max((curentDate - lastUpdateDate) / 1000, 0)
+    const lastUsageDate = new Date(state.lastUsage)
+    const millisPassed = currentDate - lastUpdateDate
+    const timePassed = Math.max(millisPassed / 1000, 0)
+    const timeSinceLastUpdate = (currentDate - lastUsageDate) / 1000
 
     /*
     const lastDaysFromEpoch = Misc.getDaysFromEpoch(lastUpdateDate)
-    const daysFromEpoch = Misc.getDaysFromEpoch(curentDate)
+    const daysFromEpoch = Misc.getDaysFromEpoch(currentDate)
 
     let isNewDay = false
     if (daysFromEpoch > lastDaysFromEpoch) {
@@ -474,7 +515,12 @@ const actions = {
             tasks: state.tasks
           })[0]
 
-          if (prevBlocked) {
+          const canSubtractAllowance = (
+            (rule.onlyActiveUsage && timeSinceLastUpdate < 5) ||
+            !rule.onlyActiveUsage
+          )
+
+          if (prevBlocked && canSubtractAllowance) {
             // console.log(`MINUS ALLOWANCE ${ruleID} ${timePassed}`)
             context.commit('subtractAllowance', {
               rule: rule, timePassed: timePassed
@@ -513,6 +559,25 @@ const getters = {
       }
     }
   },
+
+  getOptIns: (state) => {
+    return state.optInPomodoros
+  },
+
+  hasOptinPomodoros: (state) => {
+    for (let prop in state.optInPomodoros) {
+      return true
+    }
+
+    return false
+  },
+
+  getTimeSinceLastUpdate: (state) => {
+    const lastUsageDate = new Date(state.lastUsage)
+    const currentDate = new Date(state.lastTimeUpdated)
+    return (currentDate - lastUsageDate) / 1000
+  },
+
   blockAllowances: (state) => {
     return state.blockAllowances
   },

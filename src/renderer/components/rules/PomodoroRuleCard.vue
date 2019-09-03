@@ -8,6 +8,10 @@
     <p>
       <span id="duration">{{ duration }}</span>
       <span id="time-left">{{ timeLeftMsg }}</span>
+      <button 
+        @click="start" id="start"
+        v-bind:class="{disabled: started}"
+      >start</button>
     </p>
     <p class="break-times">
       <span>{{ shortBreak }}m × 3</span>
@@ -44,6 +48,15 @@
       longBreak () {
         if (this.ruledata === undefined) { return 'meh' }
         return `${this.ruledata.longBreak}`
+      },
+
+      started () {
+        if (this.ruledata === undefined) { return false }
+        const ID = this.ruledata.getID()
+
+        return this.ruledata.optIn && (
+          this.$store.getters.getOptIns.hasOwnProperty(ID)
+        )
       }
     },
 
@@ -63,6 +76,12 @@
     },
 
     methods: {
+      start () {
+        if (this.ruledata === undefined) { return }
+        this.$store.commit('addOptInPomodoro', this.ruledata)
+        console.log('ADDED POMODORO')
+      },
+
       getTimeLeft () {
         if (this.ruledata === undefined) { return '' }
         const pomodoroStart = this.$store.getters.pomodoroStart
@@ -104,6 +123,20 @@ div.names {
       float: right;
       color: $light-blue;
       margin-right: 0.5rem;
+    }
+
+    & button#start {
+      border: 0;
+      cursor: pointer;
+      outline: none;
+      color: $warning;
+      background-color: white;
+      font-family: 'Staatliches';
+      
+      &:hover {
+        color: $danger;
+        background-color: white;
+      }
     }
   }
 

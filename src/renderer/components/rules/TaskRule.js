@@ -27,6 +27,7 @@ class Rule extends BaseRule {
     programName = '',
     programType = 'text',
 
+    onlyActiveUsage = false,
     enableAllowance = false,
     dailyAllowance = 1800,
     maxAllowance = 3600
@@ -54,6 +55,11 @@ class Rule extends BaseRule {
       assert(Rule.programTypes.includes(programType))
       self.programName = programName
       self.programType = programType
+    }
+
+    self.setOnlyActiveUsage = (onlyActiveUsage) => {
+      assert(typeof (onlyActiveUsage) === 'boolean')
+      self.onlyActiveUsage = onlyActiveUsage
     }
 
     self.setDailyAllowance = (dailyAllowance) => {
@@ -86,6 +92,7 @@ class Rule extends BaseRule {
     }
 
     self.setName(name, nameType)
+    self.setOnlyActiveUsage(onlyActiveUsage)
     self.setEnableAllowance(enableAllowance)
     self.setDailyAllowance(dailyAllowance)
     self.setMaxAllowance(maxAllowance)
@@ -106,6 +113,7 @@ class Rule extends BaseRule {
     timestamp = null,
     saved = null,
 
+    onlyActiveUsage = null,
     enableAllowance = null,
     dailyAllowance = null,
     maxAllowance = null
@@ -116,6 +124,7 @@ class Rule extends BaseRule {
     if (programType === null) { programType = this.programType }
     if (enableAllowance === null) { enableAllowance = this.enableAllowance }
     if (dailyAllowance === null) { dailyAllowance = this.dailyAllowance }
+    if (onlyActiveUsage === null) { onlyActiveUsage = this.onlyActiveUsage }
     if (maxAllowance === null) { maxAllowance = this.maxAllowance }
 
     return super._hasChanged({
@@ -130,6 +139,7 @@ class Rule extends BaseRule {
       nameType !== this.nameType ||
       programName !== this.programName ||
       programType !== this.programType ||
+      onlyActiveUsage !== this.onlyActiveUsage ||
       enableAllowance !== this.enableAllowance ||
       dailyAllowance !== this.dailyAllowance ||
       maxAllowance !== this.maxAllowance
@@ -143,6 +153,7 @@ class Rule extends BaseRule {
       nameType: this.nameType,
       programName: this.programName,
       programType: this.programType,
+      onlyActiveUsage: this.onlyActiveUsage,
       enableAllowance: this.enableAllowance,
       dailyAllowance: this.dailyAllowance,
       maxAllowance: this.maxAllowance

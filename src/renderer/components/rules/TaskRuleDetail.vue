@@ -53,6 +53,23 @@
       <p class="input-label">Daily allowance (seconds) </p>
     </div>
 
+    <b-checkbox-button
+      v-model="checkboxGroup"
+      :value="trackActiveUsage"
+      :disabled="!enableAllowance"
+      native-value="trackActiveUsage"
+      @input="changeCheckbox"
+      id="usage-checkbox"
+      type="is-info"
+    >
+      <span 
+        v-bind:class = "{ selected: trackActive }"
+        class="label"
+      >
+        Only track active usage
+      </span>
+    </b-checkbox-button>
+
     <b-progress
       id="progress" :value="progressPercentage"
       size="is-medium" show-value
@@ -61,7 +78,10 @@
     </b-progress>
 
     <div class="toggle-allowance">
-      <b-switch id="switch" v-model="enableAllowance" :rounded="false">
+      <b-switch
+        id="switch" v-model="enableAllowance"
+        :rounded="false" @input="onEnableAllowanceChange"
+      >
         <p
           id="allowance-status"
           v-bind:class = "{enabled: enableAllowance}"
@@ -86,6 +106,8 @@
   import TaskRule from './TaskRule'
   import { setTimeout } from 'timers'
 
+  const ACTIVE_USAGE = 'trackActiveUsage'
+
   setTimeout(() => {
     console.log(Misc)
   })
@@ -98,7 +120,9 @@
       dailyAllowance: 600,
       maxAllowance: 7200,
       enableAllowance: false,
+      trackActiveUsage: false,
 
+      checkboxGroup: [],
       allowanceLeft: 0,
 
       isDestroyed: false,
@@ -116,6 +140,10 @@
     computed: {
       savable () {
         return this.ruleSavable || this.baseSavable
+      },
+
+      trackActive () {
+        return this.checkboxGroup.indexOf(ACTIVE_USAGE) > -1
       },
 
       blocks () {
@@ -197,6 +225,12 @@
     },
 
     methods: {
+      onEnableAllowanceChange (value) {
+        if (!value) {
+          this.checkboxGroup = []
+        }
+      },
+
       inputValid (value, mode) {
         let test = true
 
@@ -214,6 +248,10 @@
         }
 
         return test
+      },
+
+      changeCheckbox (value) {
+        this.updateSavable()
       },
 
       validDuration (value) {
@@ -250,10 +288,16 @@
         this.programMode = rule.programType
         this.blockDuration = rule.blockDuration
 
+        this.trackActiveUsage = rule.onlyActiveUsage
         this.dailyAllowance = rule.dailyAllowance
         this.maxAllowance = rule.maxAllowance
         this.enableAllowance = rule.enableAllowance
         this.rule = rule
+
+        this.checkboxGroup = []
+        if (this.trackActiveUsage) {
+          this.checkboxGroup.push(ACTIVE_USAGE)
+        }
 
         this.$refs.nameEdit.$forceUpdate()
         this.$refs.programEdit.$forceUpdate()
@@ -275,6 +319,7 @@
         this.rule.setProgram(this.programName, this.programMode)
         this.rule.setBlockDuration(this.blockDuration)
 
+        this.rule.setOnlyActiveUsage(this.trackActive)
         this.rule.setEnableAllowance(this.enableAllowance)
         this.rule.setDailyAllowance(parseInt(this.dailyAllowance))
         this.rule.setMaxAllowance(parseInt(this.maxAllowance))
@@ -299,6 +344,7 @@
             programType: self.programMode,
             blockDuration: parseInt(self.blockDuration),
 
+            onlyActiveUsage: self.trackActive,
             enableAllowance: self.enableAllowance,
             dailyAllowance: parseInt(self.dailyAllowance),
             maxAllowance: parseInt(self.maxAllowance)
@@ -397,7 +443,7 @@ div.toggle-allowance {
 }
 
 #progress {
-  margin-top: 1.5rem;
+  margin-top: 0.5rem;
   margin-bottom: 0.5rem;
 
   & span {
@@ -408,6 +454,29 @@ div.toggle-allowance {
 
 div.allowance-wrapper {
   margin-top: 0rem;
+}
+
+#usage-checkbox {
+  font-family: "Inconsolata";
+  font-size: 1rem;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+
+  & .label {
+    color: #555;
+    margin-top: auto;
+    margin-bottom: auto;
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+
+    &.selected {
+      color: white;
+    }
+  }
 }
 
 div.task-edit {
@@ -500,6 +569,5 @@ div.detail-icons {
   div#padding {
     width: -webkit-fill-available;
   };
-
 }
 </style>

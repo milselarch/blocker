@@ -8,7 +8,7 @@
         invalid: !isValidInt(duration)
       }"
     />
-    <p id="duration-label">Pomodoro duration (min)</p>
+    <p class="header" id="duration-label">Pomodoro duration (min)</p>
 
     <input
       id="Short Break Duration"
@@ -18,7 +18,7 @@
         invalid: !isValidInt(shortBreak)
       }"
     />
-    <p id="duration-label">Short break duration (min)</p>
+    <p class="header" id="duration-label">Short break duration (min)</p>
 
     <input
       id="Long Break Duration"
@@ -28,7 +28,7 @@
         invalid: !isValidInt(longBreak)
       }"
     />
-    <p id="duration-label">Long break duration (min)</p>
+    <p class="header" id="duration-label">Long break duration (min)</p>
 
     <input
       id="duration"
@@ -38,7 +38,20 @@
         invalid: !isValidInt(blockDuration)
       }"
     />
-    <p id="duration-label">Block duration (sec)</p>
+    <p class="header" id="duration-label">Block duration (sec)</p>
+
+    <b-checkbox
+      v-model="checkboxGroup"
+      :value="optIn"
+      native-value="optIn"
+      @input="onOptInChange"
+      id="usage-checkbox"
+      type="is-info"
+    >
+      <span class="label">
+        Make Pomodoros opt-in
+      </span>
+    </b-checkbox>
   </div>
 </template>
 
@@ -61,6 +74,8 @@
     data: () => ({
       ruleSavable: false,
       ruleValid: false,
+      checkboxGroup: [],
+      optIn: false,
 
       duration: 25,
       shortBreak: 6,
@@ -75,6 +90,10 @@
 
       blockDurationInvalid () {
         return !this.isValidInt(this.blockDuration)
+      },
+
+      isOptedIn () {
+        return this.checkboxGroup.length > 0
       }
     },
 
@@ -85,6 +104,10 @@
     created () {},
 
     methods: {
+      onOptInChange (value) {
+        this.updateSavable()
+      },
+
       inputValid (value, mode) {
         let test = true
 
@@ -117,12 +140,14 @@
 
         // console.log('LOAD RULE', rule)
 
+        this.checkboxGroup = ['optIn']
         this.duration = rule.duration
         this.shortBreak = rule.shortBreak
         this.longBreak = rule.longBreak
       },
 
       async saveRule () {
+        this.rule.setOptIn(this.isOptedIn)
         this.rule.setDuration(parseInt(this.duration))
         this.rule.setShortBreak(parseInt(this.shortBreak))
         this.rule.setLongBreak(parseInt(this.longBreak))
@@ -136,6 +161,7 @@
         if (self.rule instanceof PomodoroRule) {
           // console.log('SELFRULE', self.rule)
           const newRuleInfo = {
+            optIn: self.isOptedIn,
             duration: parseInt(self.duration),
             shortBreak: parseInt(self.shortBreak),
             longBreak: parseInt(self.longBreak),
@@ -211,7 +237,7 @@ div.rule-detail {
 div.task-edit {
   & input.num-input {
     border-radius: 0px;
-    margin-top: 0.2rem;
+    margin-top: 0rem;
     border: 0px;
     border-bottom: 2px solid #dcdfe6;
     font-size: 1rem;
@@ -227,6 +253,41 @@ div.task-edit {
       border-bottom: 2px solid $warning;
     }
   }
+}
+
+#usage-checkbox {
+  margin-right: auto;
+  margin-top: 1.2rem;
+  margin-left: 0.3rem;
+  display: flex;
+  justify-content: left;
+
+  & .label {
+    color: #555;
+    margin-top: auto;
+    margin-bottom: auto;
+    margin-right: auto;
+    display: flex;
+
+    font-family: "Abel";
+    font-size: 1rem;
+  }
+}
+
+#start-button {
+  margin-left: 0.3rem;
+  margin-top: 0.2rem;
+  font-family: "Staatliches";
+  font-size: 1rem;
+
+  & p#text {
+    font-family: "Staatliches";
+    font-size: 1rem;
+  }
+}
+
+p.header {
+  margin-left: 0.2rem;
 }
 
 @keyframes unlocking {

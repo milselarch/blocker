@@ -23,6 +23,7 @@ class PomodoroRule extends BaseRule {
     ID = null,
     saved = false,
 
+    optIn = false,
     duration = 25,
     shortBreak = 5,
     longBreak = 15
@@ -43,6 +44,12 @@ class PomodoroRule extends BaseRule {
     self.setDuration(duration)
     self.setShortBreak(shortBreak)
     self.setLongBreak(longBreak)
+    self.setOptIn(optIn)
+  }
+
+  setOptIn = (optIn) => this._setOptIn(optIn)
+  _setOptIn (optIn) {
+    this.optIn = optIn
   }
 
   setLongBreak = (longBreak) => this._setLongBreak(longBreak)
@@ -65,6 +72,7 @@ class PomodoroRule extends BaseRule {
     duration = null,
     shortBreak = null,
     longBreak = null,
+    optIn = null,
 
     platform = null,
     blockDuration = null,
@@ -76,6 +84,7 @@ class PomodoroRule extends BaseRule {
     if (duration === null) { duration = this.duration }
     if (shortBreak === null) { shortBreak = this.shortBreak }
     if (longBreak === null) { longBreak = this.longBreak }
+    if (optIn === null) { optIn = this.optIn }
 
     /*
     console.log(
@@ -95,7 +104,8 @@ class PomodoroRule extends BaseRule {
     }) || (
       duration !== this.duration ||
       shortBreak !== this.shortBreak ||
-      longBreak !== this.longBreak
+      longBreak !== this.longBreak ||
+      optIn !== this.optIn
     )
   }
 
@@ -104,7 +114,8 @@ class PomodoroRule extends BaseRule {
     const ruleJson = {
       duration: this.duration,
       shortBreak: this.shortBreak,
-      longBreak: this.longBreak
+      longBreak: this.longBreak,
+      optIn: this.optIn
     }
 
     return super._jsonify(ruleJson)

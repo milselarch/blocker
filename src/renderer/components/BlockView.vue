@@ -67,6 +67,15 @@
         >
         </textarea>
 
+        <br/>
+        <button 
+          id="remove-optins" @click="removeOptins" type="is-info"
+          v-show="hasOptinPomodoros && pomodoroPrompt"
+          :disabled="alarmOn" class="button is-info"
+        >
+          Remove Opt-in Pomodoros
+        </button>
+
         <b-table
           class="block-table" :data="blockingPomodoros"
           v-if="!pomodoroPrompt"
@@ -237,6 +246,10 @@
         return wordCount >= 10
       },
 
+      hasOptinPomodoros () {
+        return this.$store.getters.hasOptinPomodoros
+      },
+
       pomodoroButtonText () {
         if (this.alarmOn) {
           return 'Stop alarm'
@@ -311,6 +324,10 @@
     },
 
     methods: {
+      removeOptins () {
+        this.$store.commit('removeOptinPomodoros')
+      },
+
       getTimeLeft (
         pomodoroDurationMins, breakDurationMins,
         isLongbreak, dateNow
@@ -422,7 +439,8 @@
             }
           }
 
-          // console.log(event)
+          self.$store.commit('updateLastUsage')
+          console.log('LAST USAGE', event)
         })
 
         ioHook.start()
@@ -608,6 +626,15 @@ div#wrapper {
       font-size: 1.2rem;
       resize: none;
       width: 30rem;
+    }
+
+    & button#remove-optins {
+      font-family: "Staatliches";
+      margin-left: auto;
+      margin-right: auto;
+      width: calc(100% - 0.5rem);
+      display: flex;
+      /* padding-left: 3rem; */
     }
   }
 
