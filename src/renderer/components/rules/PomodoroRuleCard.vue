@@ -10,7 +10,7 @@
       <span id="time-left">{{ timeLeftMsg }}</span>
       <button 
         @click="start" id="start"
-        v-bind:class="{disabled: started}"
+        v-bind:class="{disabled: disabled}"
       >start</button>
     </p>
     <p class="break-times">
@@ -50,11 +50,11 @@
         return `${this.ruledata.longBreak}`
       },
 
-      started () {
-        if (this.ruledata === undefined) { return false }
+      disabled () {
+        if (this.ruledata === undefined) { return true }
         const ID = this.ruledata.getID()
 
-        return this.ruledata.optIn && (
+        return !this.ruledata.optIn || (
           this.$store.getters.getOptIns.hasOwnProperty(ID)
         )
       }

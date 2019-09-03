@@ -140,7 +140,12 @@
 
         // console.log('LOAD RULE', rule)
 
-        this.checkboxGroup = ['optIn']
+        if (rule.optIn) {
+          this.checkboxGroup = ['optIn']
+        } else {
+          this.checkboxGroup = []
+        }
+
         this.duration = rule.duration
         this.shortBreak = rule.shortBreak
         this.longBreak = rule.longBreak
