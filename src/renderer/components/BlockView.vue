@@ -460,10 +460,17 @@
         })
 
         while (!this.isDestroyed) {
+          // console.log('POLLING BLOCKIER')
           self.dateNow = new Date()
+          const buildUpAllowance = !(
+            self.state === BLOCK_STATES.blocked ||
+            self.state === BLOCK_STATES.allowing
+          )
 
           const [taskMaxWait, blockedTasks] = (
-            await self.$store.dispatch('checkBlockedTasks')
+            await self.$store.dispatch(
+              'checkBlockedTasks', buildUpAllowance
+            )
           )
           self.blockedTasks = blockedTasks
           const [isTimeBlocked, timeMaxWait, timeBlocks] = (

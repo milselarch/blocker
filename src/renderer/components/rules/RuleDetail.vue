@@ -50,14 +50,20 @@
     </div>
 
     <!-- {{ [baseSavable, ruleSavable] }} -->
-  
-    <component
-      :is="ruleContentDetail"
-      v-bind:rule="rule"
-      v-bind:baseSavable="baseSavable"
-      v-on:savableUpdate="onSavableUpdate"
-      ref="ruleContentDetail"
-    ></component>
+
+    <div id="rule-content">
+      <div
+        v-bind:class="{on: isLocked}"
+        id="lock-cover"
+      ></div>
+      <component
+        :is="ruleContentDetail"
+        v-bind:rule="rule"
+        v-bind:baseSavable="baseSavable"
+        v-on:savableUpdate="onSavableUpdate"
+        ref="ruleContentDetail"
+      ></component>
+    </div>
   </div>
 </template>
 
@@ -171,48 +177,38 @@
 
     created () {
       const self = this
-      let ID = self.getRuleID()
-      const unlockWaits = self.$store.getters.unlockWaits
-      let wasUnlocking = unlockWaits.hasOwnProperty(ID);
+      console.log('MEH', self.isDestroyed);
 
       (async () => {
         while (!self.isDestroyed) {
-          const currentID = self.getRuleID()
-          const unlockWaits = self.$store.getters.unlockWaits
-
-          if (currentID !== ID) {
-            ID = currentID
-            wasUnlocking = unlockWaits.hasOwnProperty(ID)
-          }
-
-          const isUnlocking = unlockWaits.hasOwnProperty(ID)
-
-          if (
-            !isUnlocking &&
-            wasUnlocking &&
-            self.locked
-          ) {
+          await Misc.sleepAsync(100)
+          if (self.rule === null) { continue }
+          // console.log('UNLOCK WAITPRE', self.rule)
+          const ruleID = self.rule.getID()
+          // console.log('UNLOCK WAIT_GET', ruleID)
+          const unlockWait = self.$store.getters.getUnlockWait(ruleID)
+          if (unlockWait >= self.rule.lockTime) {
+            // console.log('UNLOCK RULE #1')
             self.rule.unlock()
-            self.locked = false
           }
 
-          if (currentID !== null) {
-            // console.log('GET CURRENT RULE BY ID')
-            const latestRule = await self.$store.dispatch(
-              'safeGetRuleByID', currentID
-            )
+          // console.log('GET CURRENT RULE BY ID')
+          // console.log('LATEST RULE_GET')
+          const latestRule = await self.$store.dispatch(
+            'safeGetRuleByID', ruleID
+          )
 
-            if ((self.rule !== null) && latestRule !== null) {
-              // ensure rule has not been deleted
-              if (self.rule.locked && !latestRule.locked) {
-                self.rule.unlock()
-                self.unlocking = false
-                self.locked = false
-              }
+          if ((self.rule !== null) && latestRule !== null) {
+            // ensure rule has not been deleted
+            if (self.rule.locked && !latestRule.locked) {
+              // console.log('UNLOCK RULE #2')
+              self.rule.unlock()
+              self.unlocking = false
+              self.locked = false
             }
           }
 
-          await Misc.sleepAsync(200)
+          await Misc.sleepAsync(100)
         }
       })()
     },
@@ -362,6 +358,28 @@
 div.rule-detail {
   width: 17rem;
   max-width: 17rem;
+}
+
+div#rule-content {
+  position: relative;
+
+  & > div#lock-cover {
+    &.on {
+      position: absolute;
+      display: table-row;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color:rgba(255, 255, 255, 0.5);
+      z-index: 9999;
+      color: white;
+    }
+
+    &:not(.on) {
+      display: none
+    }
+  }
 }
 
 @keyframes unlocking {

@@ -9,7 +9,7 @@ class BaseRule {
     ruleType = null,
     platform = null,
     blockDuration = 300,
-    lockTime = 300,
+    lockTime = 600,
     locked = false,
     timestamp = null,
 

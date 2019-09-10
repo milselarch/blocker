@@ -165,7 +165,7 @@
 
     created () {
       this.loadRules()
-      console.log('RULES', this.rules, this.activerule)
+      console.log('RULES', this.rules.length, this.activerule)
       const self = this;
       (async () => {
         while (!self.isDestroyed) {

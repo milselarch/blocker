@@ -85,21 +85,23 @@ const mutations = {
 
   unlock: (state, targetRule) => {
     const ID = targetRule.ID
+    const timeNow = Misc.getTimePassed()
+
     if (!state.unlockWaits.hasOwnProperty(ID)) {
       console.log('UNLOCK IS NEW', ID)
       Vue.set(state.unlockWaits, ID, 0)
-      Vue.set(state.unlockWaitTimes, ID, Misc.getTimePassed())
+      Vue.set(state.unlockWaitTimes, ID, timeNow)
     } else {
       let timePassed = 0
       if (state.unlockWaitTimes.hasOwnProperty(ID)) {
-        timePassed = Misc.getTimePassed() - state.unlockWaitTimes[ID]
+        timePassed = timeNow - state.unlockWaitTimes[ID]
         if (process.env.NODE_ENV === 'development') {
           timePassed *= 10
         }
       }
 
       const newUnlockWait = state.unlockWaits[ID] + timePassed
-      Vue.set(state.unlockWaitTimes, ID, Misc.getTimePassed())
+      Vue.set(state.unlockWaitTimes, ID, timeNow)
       Vue.set(state.unlockWaits, ID, newUnlockWait)
     }
   },
@@ -125,6 +127,7 @@ const mutations = {
   },
 
   removeRule: (state, targetRule) => {
+    Misc.assert(targetRule !== null)
     state.rules = state.rules.filter(rule => {
       if (rule.ID !== targetRule.ID) {
         if (state.optInPomodoros.hasOwnProperty(rule.ID)) {
@@ -455,7 +458,7 @@ const actions = {
     return [blocked, maxWait, blockingRules]
   },
 
-  checkBlockedTasks: async (context) => {
+  checkBlockedTasks: async (context, buildup) => {
     context.commit('clearUnusedAllowances')
     const timeSinceStart = await context.dispatch('timeSinceStart')
 
@@ -491,7 +494,7 @@ const actions = {
       // console.log('TEST RULE', ruleID, timePassed)
       assert(typeof timePassed === 'number')
 
-      if (rule.enableAllowance) {
+      if (buildup && rule.enableAllowance) {
         assert(state.blockAllowances.hasOwnProperty(ruleID))
         // increase allowance for program block rule
         context.commit('addAllowance', {
@@ -598,6 +601,16 @@ const getters = {
     console.log('GET UNLOCK WAITS')
     return state.unlockWaits
   },
+  getUnlockWait: (state) => {
+    return (ruleID) => {
+      if (state.unlockWaits.hasOwnProperty(ruleID)) {
+        return state.unlockWaits[ruleID]
+      }
+
+      return 0
+    }
+  },
+
   pomodoroTitle: (state) => {
     return state.pomodoroTitle
   },
