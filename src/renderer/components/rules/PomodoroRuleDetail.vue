@@ -51,7 +51,10 @@
       <span class="label">
         Make Pomodoros opt-in
       </span>
+      
     </b-checkbox>
+  
+    <p class="header" id="pomodoro-title"> {{ pomodoroTitle }} </p>
   </div>
 </template>
 
@@ -84,6 +87,10 @@
     }),
 
     computed: {
+      pomodoroTitle () {
+        return this.$store.getters.pomodoroTitle
+      },
+
       savable () {
         return this.ruleSavable || this.baseSavable
       },
@@ -233,6 +240,16 @@
 
 <style lang="scss" scoped>
 @import "@/assets/scss/vars.scss";
+
+#pomodoro-title {
+  margin-top: 2rem;
+  font-size: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;  /* number of lines to show */
+}
 
 div.rule-detail {
   width: 17rem;

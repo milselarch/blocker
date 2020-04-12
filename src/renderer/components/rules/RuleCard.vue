@@ -21,6 +21,7 @@
   import Misc from '@/misc.js'
   import EditInline from './EditInline'
   import PomodoroRuleCard from './PomodoroRuleCard'
+  import RemoteRuleCard from './RemoteRuleCard'
   import TaskRuleCard from './TaskRuleCard'
   import TimeRuleCard from './TimeRuleCard'
   import { setTimeout } from 'timers'
@@ -44,6 +45,8 @@
           componentName = Misc.getVarStringName({TimeRuleCard})
         } else if (ruleType === 'POMODORO') {
           componentName = Misc.getVarStringName({PomodoroRuleCard})
+        } else if (ruleType === 'REMOTE') {
+          componentName = Misc.getVarStringName({RemoteRuleCard})
         } else {
           throw new Error(`RULE TYPE UNKNOWN ${ruleType}`)
         }
@@ -86,6 +89,7 @@
 
     components: {
       PomodoroRuleCard,
+      RemoteRuleCard,
       TaskRuleCard,
       TimeRuleCard,
       EditInline

@@ -2,18 +2,20 @@ import Misc from '@/misc.js'
 import Enum from '@/Enum.js'
 import assert from '@/assert.js'
 import BaseRule from './BaseRule'
+
+const _ = require('lodash')
 // import Misc from '@/misc.js'
 // import { program } from 'babel-types'
 
 const ALLOWED_TYPES = Enum('text', 'wildcard', 'regex')
 
-class TaskRule extends BaseRule {
+class RemoteRule extends BaseRule {
   static nameTypes = ALLOWED_TYPES;
   static programTypes = ALLOWED_TYPES;
-  static RULE_TYPE = 'TASK'
+  static RULE_TYPE = 'REMOTE'
 
   constructor ({
-    ruleType = TaskRule.RULE_TYPE,
+    ruleType = RemoteRule.RULE_TYPE,
     platform = null,
     blockDuration = 300,
     lockTime = 300,
@@ -22,15 +24,12 @@ class TaskRule extends BaseRule {
     ID = null,
     saved = false,
 
-    name = '',
-    nameType = 'text',
-    programName = '',
-    programType = 'text',
+    programs = [],
 
     onlyActiveUsage = false,
     enableAllowance = false,
-    dailyAllowance = 1800,
-    maxAllowance = 3600
+    dailyAllowance = 0,
+    maxAllowance = 3600 * 24
   }) {
     // console.log('R-CONSTRUCT', Object.keys(arguments[0]))
     super({
@@ -46,15 +45,15 @@ class TaskRule extends BaseRule {
 
     const self = this
 
-    self.setName = (name, nameType) => {
-      assert(TaskRule.nameTypes.includes(nameType))
-      self.name = name
-      self.nameType = nameType
-    }
-    self.setProgram = (programName, programType) => {
-      assert(TaskRule.programTypes.includes(programType))
-      self.programName = programName
-      self.programType = programType
+    self.setPrograms = (programs) => {
+      for (let i = 0; i < programs.length; i++) {
+        Misc.assert(Array.isArray(programs[i]))
+        const [program, windowName] = programs[i]
+        Misc.assert(typeof program === 'string')
+        Misc.assert(typeof windowName === 'string')
+      }
+
+      self.programs = programs
     }
 
     self.setOnlyActiveUsage = (onlyActiveUsage) => {
@@ -76,35 +75,21 @@ class TaskRule extends BaseRule {
       self.enableAllowance = enable
     }
 
-    self.testValue = (value, pattern, patternType) => {
-      if (patternType === ALLOWED_TYPES.text) {
-        value = value.replace(/\?.*$/, '')
-        return value === pattern
-      } else if (patternType === ALLOWED_TYPES.wildcard) {
-        pattern = Misc.wildcardToRegExp(pattern)
-        return value.match(pattern) !== null
-      } else if (patternType === ALLOWED_TYPES.regex) {
-        pattern = new RegExp(pattern)
-        return value.match(pattern) !== null
-      } else {
-        throw new Error(`BAD PATTERN TYPE ${patternType}`)
-      }
+    self.testValue = (value, pattern) => {
+      pattern = new RegExp(pattern)
+      return value.match(pattern) !== null
     }
 
-    self.setName(name, nameType)
     self.setOnlyActiveUsage(onlyActiveUsage)
     self.setEnableAllowance(enableAllowance)
     self.setDailyAllowance(dailyAllowance)
     self.setMaxAllowance(maxAllowance)
-    self.setProgram(programName, programType)
+    self.setPrograms(programs)
   }
 
   hasChanged = (data) => this._hasChanged(data)
   _hasChanged ({
-    name = null,
-    nameType = null,
-    programName = null,
-    programType = null,
+    programs = null,
     blockDuration = null,
 
     platform = null,
@@ -118,10 +103,8 @@ class TaskRule extends BaseRule {
     dailyAllowance = null,
     maxAllowance = null
   }) {
-    if (name === null) { name = this.name }
-    if (nameType === null) { nameType = this.nameType }
-    if (programName === null) { programName = this.programName }
-    if (programType === null) { programType = this.programType }
+    const self = this
+    if (programs === null) { programs = this.programs }
     if (enableAllowance === null) { enableAllowance = this.enableAllowance }
     if (dailyAllowance === null) { dailyAllowance = this.dailyAllowance }
     if (onlyActiveUsage === null) { onlyActiveUsage = this.onlyActiveUsage }
@@ -135,10 +118,7 @@ class TaskRule extends BaseRule {
       timestamp,
       saved
     }) || (
-      name !== this.name ||
-      nameType !== this.nameType ||
-      programName !== this.programName ||
-      programType !== this.programType ||
+      _.isEqual(programs, self.programs) ||
       onlyActiveUsage !== this.onlyActiveUsage ||
       enableAllowance !== this.enableAllowance ||
       dailyAllowance !== this.dailyAllowance ||
@@ -181,15 +161,17 @@ class TaskRule extends BaseRule {
       return false
     }
 
-    const nameMatch = self.testValue(
-      task.name, self.name, self.nameType
-    )
-    const programMatch = self.testValue(
-      task.program, self.programName, self.programType
-    )
+    for (let i = 0; i < self.programs.length; i++) {
+      const [program, windowName] = self.programs[i]
+      const nameMatch = self.testValue(task.name, windowName)
+      const programMatch = self.testValue(task.program, program)
+      if (nameMatch && programMatch) {
+        return true
+      }
+    }
 
-    return nameMatch && programMatch
+    return false
   }
 }
 
-export default TaskRule
+export default RemoteRule

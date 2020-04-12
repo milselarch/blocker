@@ -25,7 +25,9 @@
         invalid: inputInvalid
       }"
     />
-    <p id="duration-label">Block duration (seconds)</p>
+    <p id="duration-label">
+      Block duration (seconds)
+    </p>
 
     <div class="allowance-wrapper">
       <input
@@ -38,7 +40,9 @@
           enabled: enableAllowance
         }"
       />
-      <p class="input-label">Max cummulative allowance (seconds)</p>
+      <p class="input-label">
+        Max cummulative allowance (seconds)
+      </p>
 
       <input
         id="allowance-input"
@@ -50,7 +54,9 @@
           enabled: enableAllowance
         }"
       />
-      <p class="input-label">Daily allowance (seconds) </p>
+      <p class="input-label">
+        Daily allowance (seconds)
+      </p>
     </div>
 
     <b-checkbox-button

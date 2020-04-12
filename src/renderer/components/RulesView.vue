@@ -35,6 +35,7 @@
         <b-dropdown-item value="TASK" class="dropdown-option" aria-role="listitem">Block Program</b-dropdown-item>
         <b-dropdown-item value="TIME-OF-DAY" class="dropdown-option" aria-role="listitem">Time-of-day access</b-dropdown-item>
         <b-dropdown-item value="POMODORO" class="dropdown-option" aria-role="listitem">Pomodoro</b-dropdown-item>
+        <b-dropdown-item value="REMOTE" class="dropdown-option" aria-role="listitem">Remote allowance</b-dropdown-item>
       </b-dropdown>
     </div>
 
@@ -52,6 +53,7 @@
   import Misc from '@/misc.js'
   import RuleDetail from './rules/RuleDetail'
   import RuleCard from './rules/RuleCard.vue'
+  import RemoteRule from './rules/RemoteRule.js'
   import PomodoroRule from './rules/PomodoroRule.js'
   import TaskRule from './rules/TaskRule.js'
   import TimeRule from './rules/TimeRule.js'
@@ -115,6 +117,8 @@
           newRule = new TimeRule({})
         } else if (ruleType === PomodoroRule.RULE_TYPE) {
           newRule = new PomodoroRule({})
+        } else if (ruleType === RemoteRule.RULE_TYPE) {
+          newRule = new RemoteRule({})
         } else {
           throw new Error(`RULE TYPE UNKNOWN ${ruleType}`)
         }

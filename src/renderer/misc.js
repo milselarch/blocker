@@ -17,6 +17,24 @@ class Misc {
     return string.trim().split(/\s+/).length
   }
 
+  stopAndRemoveTrack (mediaStream) {
+    return (track) => {
+      track.stop()
+      mediaStream.removeTrack(track)
+    }
+  }
+
+  stopMediaStream (mediaStream) {
+    if (!mediaStream) {
+      return
+    }
+
+    mediaStream.getTracks().forEach((track) => {
+      track.stop()
+      mediaStream.removeTrack(track)
+    })
+  }
+
   getDaysFromEpoch (date) {
     if (date === undefined) {
       date = new Date()

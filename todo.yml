@@ -1,4 +1,7 @@
 bugs:
+  - crashes after running a long time
+  - beep sound goes on forever
+  - beep sound triggers even with other blocks
 
 resolved:
   - / stop self-blocking program rules for child PIDs

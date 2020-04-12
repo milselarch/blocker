@@ -72,6 +72,8 @@
   import PomodoroRuleDetail from './PomodoroRuleDetail.vue'
   import TaskRuleDetail from './TaskRuleDetail.vue'
   import TimeRuleDetail from './TimeRuleDetail.vue'
+  import RemoteRuleDetail from './RemoteRuleDetail'
+
   // require styles
   import Misc from '@/misc.js'
   import assert from '@/assert.js'
@@ -113,6 +115,8 @@
           return 'clock'
         } else if (ruleType === PomodoroRuleDetail.RULE_TYPE) {
           return 'stopwatch'
+        } else if (ruleType === RemoteRuleDetail.RULE_TYPE) {
+          return 'wifi'
         } else {
           return 'question'
         }
@@ -131,6 +135,8 @@
           componentName = Misc.getVarStringName({TimeRuleDetail})
         } else if (ruleType === PomodoroRuleDetail.RULE_TYPE) {
           componentName = Misc.getVarStringName({PomodoroRuleDetail})
+        } else if (ruleType === RemoteRuleDetail.RULE_TYPE) {
+          componentName = Misc.getVarStringName({RemoteRuleDetail})
         } else {
           throw new Error(`RULE TYPE UNKNOWN ${ruleType}`)
         }
@@ -340,7 +346,8 @@
     components: {
       PomodoroRuleDetail,
       TaskRuleDetail,
-      TimeRuleDetail
+      TimeRuleDetail,
+      RemoteRuleDetail
     },
 
     props: {
