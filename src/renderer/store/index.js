@@ -13,5 +13,6 @@ export default new Vuex.Store({
     createPersistedState()
     // createSharedMutations()
   ],
+  paths: ['state'],
   strict: process.env.NODE_ENV !== 'production'
 })

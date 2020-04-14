@@ -1,4 +1,3 @@
-import TaskGrabber from '@/components/TaskGrabber.js'
 import RuleMaker from '@/components/rules/RuleMaker.js'
 import PomodoroRule from '@/components/rules/PomodoroRule.js'
 import RemoteRule from '@/components/rules/RemoteRule.js'
@@ -12,11 +11,6 @@ import Vue from 'vue'
 
 const state = {
   // list of running system processes / tasks
-  tasks: [],
-  taskTimestamp: 0,
-  prevTasks: [],
-  prevTaskTimestamp: 0,
-
   lastTimeUpdated: -1,
   blockAllowances: {},
   qrcodeTimestamps: {},
@@ -27,7 +21,7 @@ const state = {
   rules: [],
   unlockWaitTimes: {},
   unlockWaits: {},
-  firstOpened: -1,
+  firstOpened: null,
   pomodoroNo: -1,
   pomodoroStart: 0,
   pomodoroTitle: '',
@@ -70,13 +64,6 @@ const mutations = {
     state.pomodoroTitle = pomodoroTitle
     state.pomodoroNo = (state.pomodoroNo + 1) % 4
     state.pomodoroStart = (new Date()).getTime()
-  },
-
-  setNewTasks: (state, newTasks) => {
-    state.prevTasks = state.tasks
-    state.prevTaskTimestamp = state.taskTimestamp
-    state.tasks = newTasks
-    state.taskTimestamp = (new Date()).getTime()
   },
 
   resetUnlockWaits: (state) => {
@@ -308,11 +295,15 @@ const mutations = {
 }
 
 const actions = {
-  updater: async (context) => {
-    const newTasks = await TaskGrabber.getAll()
-    // console.log('GRABBED TASKS', newTasks)
-    context.commit('setNewTasks', newTasks)
-    return newTasks
+  timeSinceStart: async (context) => {
+    let firstOpened = context.state.firstOpened
+    if (firstOpened === null) {
+      firstOpened = 0
+    }
+
+    return (
+      (new Date()).getTime() - firstOpened
+    ) / 1000
   },
 
   relockRule: async (context, rule) => {
@@ -409,17 +400,6 @@ const actions = {
   saveRule: async (context, rule) => {
     context.commit('saveRule', rule)
     return true
-  },
-
-  timeSinceStart: async (context) => {
-    let firstOpened = context.state.firstOpened
-    if (firstOpened === null) {
-      firstOpened = 0
-    }
-
-    return (
-      (new Date()).getTime() - firstOpened
-    ) / 1000
   },
 
   startPomodoro: async (context, pomodoroTitle) => {
@@ -656,7 +636,6 @@ const actions = {
 }
 
 const getters = {
-  test: () => 234,
   getAllowanceLeft: (state) => {
     return (ruleID) => {
       if (state.blockAllowances.hasOwnProperty(ruleID)) {
@@ -692,9 +671,6 @@ const getters = {
     let firstOpened = state.firstOpened
     if (firstOpened === null) { firstOpened = new Date() }
     return new Date(firstOpened)
-  },
-  tasks: (state) => {
-    return Object.freeze(state.tasks)
   },
   rules: (state) => {
     return state.rules.map(jsonRule => {
