@@ -22,9 +22,9 @@ class TaskRule extends BaseRule {
     ID = null,
     saved = false,
 
-    name = '',
+    name = 'test-name',
     nameType = 'text',
-    programName = '',
+    programName = 'test-program',
     programType = 'text',
 
     onlyActiveUsage = false,
@@ -146,8 +146,8 @@ class TaskRule extends BaseRule {
     )
   }
 
-  jsonify = () => this._jsonify()
-  _jsonify () {
+  jsonify = (json) => this._jsonify(json)
+  _jsonify (extraRuleJson = {}) {
     const ruleJson = {
       name: this.name,
       nameType: this.nameType,
@@ -157,6 +157,14 @@ class TaskRule extends BaseRule {
       enableAllowance: this.enableAllowance,
       dailyAllowance: this.dailyAllowance,
       maxAllowance: this.maxAllowance
+    }
+
+    for (let prop in extraRuleJson) {
+      // ensure extraRuleJson and ruleJson don't have
+      // overlapping properties
+      if (!extraRuleJson.hasOwnProperty(prop)) { continue }
+      assert(!ruleJson.hasOwnProperty(prop))
+      ruleJson[prop] = extraRuleJson[prop]
     }
 
     return super._jsonify(ruleJson)

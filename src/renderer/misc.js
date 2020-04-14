@@ -1,4 +1,5 @@
 import assertFunc from '@/assert.js'
+const crypto = require('crypto')
 
 function getCounterTime () {
   return performance.now() / 1000
@@ -15,6 +16,18 @@ class Misc {
 
   countWords (string) {
     return string.trim().split(/\s+/).length
+  }
+
+  makeHash (string) {
+    const hasher = crypto.createHash('sha256')
+    hasher.update(string)
+    const passhash = hasher.digest('hex')
+    return passhash
+  }
+
+  makeSecret (length) {
+    if (length === undefined) { length = 5 }
+    return crypto.randomBytes(length).toString('hex')
   }
 
   stopAndRemoveTrack (mediaStream) {

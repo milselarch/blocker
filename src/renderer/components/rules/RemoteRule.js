@@ -1,17 +1,15 @@
 import Misc from '@/misc.js'
-import Enum from '@/Enum.js'
-import assert from '@/assert.js'
-import BaseRule from './BaseRule'
+// import Enum from '@/Enum.js'
+// import assert from '@/assert.js'
+// import BaseRule from './BaseRule'
+import TaskRule from './TaskRule'
 
-const _ = require('lodash')
+// const _ = require('lodash')
 // import Misc from '@/misc.js'
 // import { program } from 'babel-types'
 
-const ALLOWED_TYPES = Enum('text', 'wildcard', 'regex')
-
-class RemoteRule extends BaseRule {
-  static nameTypes = ALLOWED_TYPES;
-  static programTypes = ALLOWED_TYPES;
+class RemoteRule extends TaskRule {
+  static DEFAULT_SECRET_LENGTH = 2
   static RULE_TYPE = 'REMOTE'
 
   constructor ({
@@ -24,12 +22,17 @@ class RemoteRule extends BaseRule {
     ID = null,
     saved = false,
 
-    programs = [],
+    name = 'test-name',
+    nameType = 'text',
+    programName = 'test-program',
+    programType = 'text',
 
     onlyActiveUsage = false,
-    enableAllowance = false,
+    enableAllowance = true,
     dailyAllowance = 0,
-    maxAllowance = 3600 * 24
+    maxAllowance = 3600 * 24,
+
+    secret = true
   }) {
     // console.log('R-CONSTRUCT', Object.keys(arguments[0]))
     super({
@@ -40,56 +43,45 @@ class RemoteRule extends BaseRule {
       locked,
       timestamp,
       ID,
-      saved
+      saved,
+
+      name,
+      nameType,
+      programName,
+      programType,
+
+      onlyActiveUsage,
+      enableAllowance,
+      dailyAllowance,
+      maxAllowance
     })
 
     const self = this
 
-    self.setPrograms = (programs) => {
-      for (let i = 0; i < programs.length; i++) {
-        Misc.assert(Array.isArray(programs[i]))
-        const [program, windowName] = programs[i]
-        Misc.assert(typeof program === 'string')
-        Misc.assert(typeof windowName === 'string')
+    self.setSecretCode = (secret) => {
+      if (secret === true) {
+        secret = self.makeSecret()
       }
 
-      self.programs = programs
+      Misc.assert(secret !== undefined)
+      self.secret = secret
     }
 
-    self.setOnlyActiveUsage = (onlyActiveUsage) => {
-      assert(typeof (onlyActiveUsage) === 'boolean')
-      self.onlyActiveUsage = onlyActiveUsage
-    }
+    self.setSecretCode(secret)
+  }
 
-    self.setDailyAllowance = (dailyAllowance) => {
-      assert(typeof (dailyAllowance) === 'number')
-      assert(dailyAllowance >= 0)
-      self.dailyAllowance = dailyAllowance
-    }
-    self.setMaxAllowance = (maxAllowance) => {
-      assert(typeof (maxAllowance) === 'number')
-      assert(maxAllowance >= 0)
-      self.maxAllowance = maxAllowance
-    }
-    self.setEnableAllowance = (enable) => {
-      self.enableAllowance = enable
-    }
-
-    self.testValue = (value, pattern) => {
-      pattern = new RegExp(pattern)
-      return value.match(pattern) !== null
-    }
-
-    self.setOnlyActiveUsage(onlyActiveUsage)
-    self.setEnableAllowance(enableAllowance)
-    self.setDailyAllowance(dailyAllowance)
-    self.setMaxAllowance(maxAllowance)
-    self.setPrograms(programs)
+  makeSecret = () => {
+    return Misc.makeSecret(
+      RemoteRule.DEFAULT_SECRET_LENGTH
+    )
   }
 
   hasChanged = (data) => this._hasChanged(data)
   _hasChanged ({
-    programs = null,
+    name = null,
+    nameType = null,
+    programName = null,
+    programType = null,
     blockDuration = null,
 
     platform = null,
@@ -101,76 +93,45 @@ class RemoteRule extends BaseRule {
     onlyActiveUsage = null,
     enableAllowance = null,
     dailyAllowance = null,
-    maxAllowance = null
+    maxAllowance = null,
+
+    secret = null
   }) {
-    const self = this
-    if (programs === null) { programs = this.programs }
     if (enableAllowance === null) { enableAllowance = this.enableAllowance }
     if (dailyAllowance === null) { dailyAllowance = this.dailyAllowance }
     if (onlyActiveUsage === null) { onlyActiveUsage = this.onlyActiveUsage }
     if (maxAllowance === null) { maxAllowance = this.maxAllowance }
+    if (secret === null) { secret = this.secret }
 
     return super._hasChanged({
-      platform,
+      name,
+      nameType,
+      programName,
+      programType,
       blockDuration,
+
+      platform,
       lockTime,
       locked,
       timestamp,
-      saved
+      saved,
+
+      onlyActiveUsage,
+      enableAllowance,
+      dailyAllowance,
+      maxAllowance
     }) || (
-      _.isEqual(programs, self.programs) ||
-      onlyActiveUsage !== this.onlyActiveUsage ||
-      enableAllowance !== this.enableAllowance ||
-      dailyAllowance !== this.dailyAllowance ||
-      maxAllowance !== this.maxAllowance
+      secret !== this.secret
     )
   }
 
   jsonify = () => this._jsonify()
   _jsonify () {
     const ruleJson = {
-      name: this.name,
-      nameType: this.nameType,
-      programName: this.programName,
-      programType: this.programType,
-      onlyActiveUsage: this.onlyActiveUsage,
-      enableAllowance: this.enableAllowance,
-      dailyAllowance: this.dailyAllowance,
-      maxAllowance: this.maxAllowance
+      secret: this.secret
     }
 
     return super._jsonify(ruleJson)
-  }
-
-  test = (data) => this._test(data)
-  _test ({ tasks = [] }) {
-    const self = this
-    const blockedTasks = tasks.filter(task => {
-      return self.testTask(task)
-    })
-
-    // console.log('BLOCKED-TASKS', blockedTasks)
-    const blocked = blockedTasks.length > 0
-    return [blocked, blockedTasks]
-  }
-
-  testTask = (task) => this._testTask(task)
-  _testTask (task) {
-    const self = this
-    if (task.platform !== self.platform) {
-      return false
-    }
-
-    for (let i = 0; i < self.programs.length; i++) {
-      const [program, windowName] = self.programs[i]
-      const nameMatch = self.testValue(task.name, windowName)
-      const programMatch = self.testValue(task.program, program)
-      if (nameMatch && programMatch) {
-        return true
-      }
-    }
-
-    return false
   }
 }
 

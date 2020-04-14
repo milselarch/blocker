@@ -118,7 +118,10 @@
         } else if (ruleType === PomodoroRule.RULE_TYPE) {
           newRule = new PomodoroRule({})
         } else if (ruleType === RemoteRule.RULE_TYPE) {
-          newRule = new RemoteRule({})
+          newRule = new RemoteRule({
+            name: 'test-name',
+            programName: 'test-program'
+          })
         } else {
           throw new Error(`RULE TYPE UNKNOWN ${ruleType}`)
         }

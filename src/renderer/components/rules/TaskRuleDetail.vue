@@ -242,7 +242,7 @@
 
         if (mode === 'regex') {
           try {
-            test = new RegExp(value)
+            value = new RegExp(value)
             console.log('VALUD OK REGEX')
           } catch (err) {
             if (err.name !== 'SyntaxError') {

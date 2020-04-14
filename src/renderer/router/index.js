@@ -9,7 +9,8 @@ export default new Router({
       path: '/',
       components: {
         Programs: require('@/components/TaskView').default,
-        Rules: require('@/components/RulesView').default
+        Rules: require('@/components/RulesView').default,
+        Settings: require('@/components/SettingsView').default
       }
     },
     {

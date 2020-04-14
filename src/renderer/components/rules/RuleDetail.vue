@@ -18,7 +18,8 @@
         icon="lock" class="lock lock-close icon alt"
         v-bind:class="{
           disabled: !locked,
-          unlocking: unlocking
+          unlocking: unlocking,
+          invisible: hideLock
         }"
       >
       </font-awesome-icon>
@@ -80,8 +81,12 @@
   import TaskRule from './TaskRule'
   import { setTimeout } from 'timers'
 
+  import electron from 'electron'
+
+  const ARGV = electron.remote.getGlobal('ARGV')
+
   setTimeout(() => {
-    console.log(Misc)
+    console.log('BLOB', Misc, ARGV)
   })
 
   export default {
@@ -105,6 +110,15 @@
     }),
 
     computed: {
+      hasPassword () {
+        return this.$store.getters.hasPassword
+      },
+
+      hideLock () {
+        console.log('PPP', this.$store.getters, this.isLocked)
+        return this.hasPassword && this.isLocked
+      },
+
       iconName () {
         if (this.rule === null) { return 'question' }
         const ruleType = this.rule.constructor.RULE_TYPE
@@ -379,7 +393,7 @@ div#rule-content {
       right: 0;
       bottom: 0;
       background-color:rgba(255, 255, 255, 0.5);
-      z-index: 9999;
+      z-index: 99;
       color: white;
     }
 
@@ -453,6 +467,7 @@ div.detail-icons {
 
       &:hover { color: $light-blue; }
       &:active { color: $primary; }
+      &.invisible { display: none; }
     }
 
     &:not(:last-child) {

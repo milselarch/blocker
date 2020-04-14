@@ -104,7 +104,8 @@
   
   const TABS = {
     Programs: {icon: 'window-restore'},
-    Rules: {icon: 'shield-alt'}
+    Rules: {icon: 'shield-alt'},
+    Settings: {icon: 'cog'}
   }
 
   const TAB_NAMES = Object.keys(TABS)
@@ -198,6 +199,17 @@
 
   html {
     overflow-y: auto !important;
+  }
+
+  .dropdown {
+    & > .background {
+      z-index: 400;
+    }
+    & > .dropdown-menu {
+      &, & * {
+        z-index: 500 !important;
+      }
+    }
   }
 
   .timepicker {

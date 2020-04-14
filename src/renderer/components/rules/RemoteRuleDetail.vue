@@ -11,13 +11,15 @@
       >
         Go Back
       </b-button>
+
+      <p id="scanstamp">{{ scanstamp }}</p> 
+      <p id="status">{{ scanStatus }}</p> 
     </div>
 
     <div
       id="obscurer"
       v-bind:class="{visible: cameraOn}"
-    >
-    </div>
+    ></div>
 
     <EditInlineMode 
       id="program"
@@ -40,6 +42,7 @@
     <button
       id="barcode-wrapper"
       v-on:click="turnOnCamera()"
+      v-bind:class="{visible: !cameraOn}"
     >
       <VueBarcode
         :value="barcodeValue" :display-value="false"
@@ -80,6 +83,13 @@
     />
     <p id="duration-label">Block duration (seconds)</p>
 
+    <b-progress
+      id="progress" :value="progressPercentage"
+      size="is-medium" show-value
+    >
+      <span> {{ progressMessage }} </span>
+    </b-progress>
+
     <b-checkbox-button
       v-model="checkboxGroup"
       :value="trackActiveUsage"
@@ -96,28 +106,6 @@
         Only track active usage
       </span>
     </b-checkbox-button>
-
-    <b-progress
-      id="progress" :value="progressPercentage"
-      size="is-medium" show-value
-    >
-      <span> {{ progressMessage }} </span>
-    </b-progress>
-
-    <div class="toggle-allowance">
-      <b-switch
-        id="switch" v-model="enableAllowance"
-        :rounded="false" @input="onEnableAllowanceChange"
-      >
-        <p
-          id="allowance-status"
-          v-bind:class = "{enabled: enableAllowance}"
-        >
-          {{ allowanceStatus }}
-        </p>
-      </b-switch>
-    </div>
-
   </div>
 </template>
 
@@ -127,17 +115,15 @@
   // require styles
   import Misc from '@/misc.js'
   import RemoteRule from './RemoteRule'
-  import { setTimeout } from 'timers'
+  // import { setTimeout } from 'timers'
   import VueBarcode from 'vue-barcode'
+  import moment from 'moment'
 
+  const UrlParse = require('url-parse')
   const Instascan = require('instascan')
 
   const ACTIVE_USAGE = 'trackActiveUsage'
   let CAMERA
-
-  setTimeout(() => {
-    console.log(Misc)
-  })
 
   export default {
     name: 'task-rule-detail',
@@ -160,6 +146,9 @@
       isDestroyed: false,
       ruleSavable: false,
       ruleValid: false,
+
+      scanStatus: '',
+      scanstamp: '',
 
       name: '',
       nameMode: RemoteRule.nameTypes.text,
@@ -259,8 +248,45 @@
         video: self.$refs.camera
       })
 
-      self.scanner.addListener('scan', (content) => {
-        console.log('CAMERA CONTEN', content)
+      self.scanner.addListener('scan', async (content) => {
+        // pathname "/1586837506"
+        // query: "?A=60"
+        self.setScanStamp()
+
+        const parseResult = UrlParse(content)
+        const stamp = Number(parseResult.pathname.slice(1))
+        const query = parseResult.query.slice(1)
+        const queryArgs = query.split('&')
+        let allowance = NaN
+
+        for (let arg of queryArgs) {
+          const [name, value] = arg.split('=')
+          console.log('NAME VAL', [name, value])
+          if (name === 'A') { allowance = Number(value) }
+        }
+
+        if (isNaN(allowance) || (allowance === 0)) {
+          self.scanStatus = `BAD ALLOWANCE ${allowance}`
+        } else if (isNaN(stamp)) {
+          self.scanStatus = `BAD STAMP ${stamp}`
+        } else if (!(self.rule instanceof RemoteRule)) {
+          self.scanStatus = `BAD RULE ${self.rule.getID()}`
+        } else if (!self.rule.saved) {
+          self.scanStatus = `RULE NOT SAVED ${self.rule.getID()}`
+        } else {
+          console.log('ADDRR', self.rule, self.rule.ruleID)
+          const result = await self.$store.dispatch(
+            'addRemoteAllowance', {
+              amount: allowance * 60,
+              timestamp: stamp,
+              rule: self.rule
+            }
+          )
+
+          const [valid, reason] = result
+          self.scanStatus = reason
+          console.log('VALID', valid)
+        }
       })
     },
 
@@ -269,6 +295,14 @@
         this.$refs.camera.srcObject = null
         this.cameraOn = false
         CAMERA.stop()
+      },
+
+      setScanStamp () {
+        const self = this
+        const date = new Date()
+        self.scanstamp = moment(date).format(
+          'YYYY-MM-DD HH:mm:ss'
+        )
       },
 
       turnOnCamera () {
@@ -295,8 +329,8 @@
 
         if (mode === 'regex') {
           try {
-            test = new RegExp(value)
-            console.log('VALUD OK REGEX')
+            value = new RegExp(value)
+            // console.log('VALUD OK REGEX')
           } catch (err) {
             if (err.name !== 'SyntaxError') {
               throw err
@@ -353,6 +387,12 @@
         this.enableAllowance = rule.enableAllowance
         this.rule = rule
 
+        if (rule.secret === null) {
+          this.barcodeValue = rule.makeSecret()
+        } else {
+          this.barcodeValue = rule.secret
+        }
+
         this.checkboxGroup = []
         if (this.trackActiveUsage) {
           this.checkboxGroup.push(ACTIVE_USAGE)
@@ -373,7 +413,7 @@
         // BEFORE saving the allowance, otherwise, changeAllowance
         // will always return false
 
-        console.log('CHANGED ALLOWANCE', changedAllowance)
+        // console.log('CHANGED ALLOWANCE', changedAllowance)
         this.rule.setName(this.name, this.nameMode)
         this.rule.setProgram(this.programName, this.programMode)
         this.rule.setBlockDuration(this.blockDuration)
@@ -382,10 +422,14 @@
         this.rule.setEnableAllowance(this.enableAllowance)
         this.rule.setDailyAllowance(parseInt(this.dailyAllowance))
         this.rule.setMaxAllowance(parseInt(this.maxAllowance))
+        this.rule.setSecretCode(this.barcodeValue)
         this.updateSavable()
 
         if (changedAllowance) {
           console.log('RESET ALLOWANCE', this.rule.getID())
+          this.$store.commit('resetAllowance', this.rule)
+        } else if (!this.rule.saved) {
+          console.log('REGGG ALLOWANCE', this.rule.getID())
           this.$store.commit('resetAllowance', this.rule)
         }
       },
@@ -406,10 +450,12 @@
             onlyActiveUsage: self.trackActive,
             enableAllowance: self.enableAllowance,
             dailyAllowance: parseInt(self.dailyAllowance),
-            maxAllowance: parseInt(self.maxAllowance)
+            maxAllowance: parseInt(self.maxAllowance),
+
+            secret: self.barcodeValue
           }
 
-          console.log('RINFO', newRuleInfo)
+          // console.log('RINFO', newRuleInfo)
           hasChanged = self.rule.hasChanged(newRuleInfo)
         }
 
@@ -420,13 +466,14 @@
         )
 
         self.ruleSavable = hasChanged && self.ruleValid
+        Misc.assert(typeof self.ruleSavable === 'boolean')
         this.$emit('savableUpdate', self.ruleSavable, self.ruleValid)
       }
     },
 
     watch: {
       rule (newRule, oldRule) {
-        console.log('RDETAIL', newRule)
+        // console.log('RDETAIL', newRule)
         this.loadRule(newRule)
         this.updateSavable()
       },
@@ -457,164 +504,188 @@
   }
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 @import "@/assets/scss/vars.scss";
 
-div#obscurer {
-  width: 100%;
-  height: 100%;
-  opacity: 0.8;
-  position: absolute;
-  z-index: 100;
-  background-color: white;
-
-  &:not(.visible) {
-    display: none;
-  }
-}
-
-div#cam-view {
-  width: 100%;
-  height: 100%;
-  opacity: 1;
-  position: absolute;
-  z-index: 101;
-  
-  & video#camera {
-    transform: scaleX(1);
-  }
-
-  &:not(.visible) {
-    display: none;
-  }
-
-  & > .go-back {
+div.remote-edit {
+  & > div#obscurer {
     width: 100%;
-    font-weight: 700;
-    font-family: 'Inconsolata';
-  }
-}
+    height: 100%;
+    opacity: 0.9;
+    position: absolute;
+    z-index: 100;
+    background-color: white;
 
-button#barcode-wrapper {
-  width: 100%;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-  margin-left: auto;
-  margin-right: auto;
-
-  background-color: white;
-  border: none;
-  color: white;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  outline: 3px solid #EEE;
-  border-radius: 6px;
-  cursor: pointer;
-
-  &:hover {
-    outline: 3px solid $twitter;
-  }
-  &:active {
-    outline: 3px solid $primary;
-  }
-}
-
-#barcode {
-  width: fit-content;
-  height: fit-content;
-  margin-left: auto;
-  margin-right: auto;
-  display: flex;
-}
-
-div.rule-detail {
-  width: 17rem;
-  max-width: 17rem;
-}
-
-input.text-input {
-  border-radius: 0px;
-  border: 0px;
-  border-bottom: 2px solid #dcdfe6;
-  font-size: 1rem;
-  font-family: 'Abel';
-  padding: 0.2rem;
-  width: 100%;
-
-  &:focus, &:focus, &:focus{
-    outline: none;
-  }
-
-  &.invalid {
-    border-bottom: 2px solid $warning;
-  }
-}
-
-p.input-label {
-  margin-left: 0.2rem;
-}
-
-div.toggle-allowance {
-  margin-left: auto;
-  margin-right: auto;
-  margin-top: 0rem;
-  width: fit-content;
-
-  & p#allowance-status {
-    font-family: "Staatliches";
-
-    &:not(.enabled) {
-      color: #AAA;
+    &:not(.visible) {
+      display: none;
     }
   }
-}
 
-#progress {
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
+  & > div#cam-view {
+    width: 100%;
+    height: 100%;
+    opacity: 1;
+    position: absolute;
 
-  & span {
-    font-family: "Inconsolata";
-    display: table-cell;
+    &, & * {
+      z-index: 102;
+    }
+    
+    & video#camera {
+      transform: scaleX(1);
+    }
+
+    &:not(.visible) {
+      display: none;
+    }
+
+    & > .go-back {
+      width: 100%;
+      font-weight: 700;
+      font-family: 'Inconsolata';
+    }
+
+    & > p {
+      width: fit-content;
+      word-wrap: break-word;
+      word-break: break-all;
+      font-weight: 700;
+      padding-top: 0.5rem;
+      text-align: center;
+      margin: auto;
+
+      &#scanstamp {
+        font-family: 'Inconsolata';
+      }
+    }
   }
-}
 
-div.allowance-wrapper {
-  margin-top: 0rem;
-  display: flex;
-  justify-content: center;
+  & button#barcode-wrapper {
+    width: 100%;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    margin-left: auto;
+    margin-right: auto;
 
-  & .tag {
-    font-family: "Inconsolata";
-    font-weight: 700;
-  } 
-}
+    background-color: white;
+    border: none;
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    outline: 3px solid #EEE;
+    border-radius: 6px;
+    cursor: pointer;
 
-#usage-checkbox {
-  font-family: "Inconsolata";
-  font-size: 1rem;
-  margin-left: auto;
-  margin-right: auto;
-  margin-top: 1rem;
-  display: flex;
-  justify-content: center;
+    &, & * {
+      z-index: 101;
+    }
 
-  & .label {
-    color: #555;
-    margin-top: auto;
-    margin-bottom: auto;
+    &:hover {
+      outline: 3px solid $twitter;
+    }
+    &:active {
+      outline: 3px solid $primary;
+    }
+    &:not(.visible) * {
+      z-index: 1;
+    }
+  }
+
+  & #barcode {
+    width: fit-content;
+    height: fit-content;
     margin-left: auto;
     margin-right: auto;
     display: flex;
+  }
 
-    &.selected {
-      color: white;
+  & div.rule-detail {
+    width: 17rem;
+    max-width: 17rem;
+  }
+
+  & input.text-input {
+    border-radius: 0px;
+    border: 0px;
+    border-bottom: 2px solid #dcdfe6;
+    font-size: 1rem;
+    font-family: 'Abel';
+    padding: 0.2rem;
+    width: 100%;
+
+    &:focus, &:focus, &:focus{
+      outline: none;
+    }
+
+    &.invalid {
+      border-bottom: 2px solid $warning;
     }
   }
-}
 
-div.remote-edit {
+  & p.input-label {
+    margin-left: 0.2rem;
+  }
+
+  & div.toggle-allowance {
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 0rem;
+    width: fit-content;
+
+    & p#allowance-status {
+      font-family: "Staatliches";
+
+      &:not(.enabled) {
+        color: #AAA;
+      }
+    }
+  }
+
+  & #progress {
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+
+    & span {
+      font-family: "Inconsolata";
+      display: table-cell;
+    }
+  }
+
+  & div.allowance-wrapper {
+    margin-top: 0rem;
+    display: flex;
+    justify-content: center;
+
+    & .tag {
+      font-family: "Inconsolata";
+      font-weight: 700;
+    } 
+  }
+
+  & #usage-checkbox {
+    font-family: "Inconsolata";
+    font-size: 1rem;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 0.5rem;
+    display: flex;
+    justify-content: center;
+
+    & .label {
+      color: #555;
+      margin-top: auto;
+      margin-bottom: auto;
+      margin-left: auto;
+      margin-right: auto;
+      display: flex;
+
+      &.selected {
+        color: white;
+      }
+    }
+  }
+
   & #program {
     margin-bottom: 0.3rem;
   }
@@ -627,82 +698,82 @@ div.remote-edit {
     margin-top: 1rem !important;
 
   }
-}
 
-@keyframes unlocking {
-  0% {
-    color: $twitter;
-  }
-  50% {
-    color: $primary;
-  }
-  100% {
-    color: $twitter;
-  }
-}
-
-div.detail-icons {
-  border-bottom: 2px solid grey;
-
-  display: flex;
-  padding-left: 0rem;
-  padding-right: 0rem;
-  margin-bottom: 1rem;
-  flex-direction: row;
-  align-items: center;
-
-  & .icon {
-    &.rule-icon {
-      &.muted {
-        color: #dcdfe6;
-      }
+  @keyframes unlocking {
+    0% {
+      color: $twitter;
     }
+    50% {
+      color: $primary;
+    }
+    100% {
+      color: $twitter;
+    }
+  }
 
-    &.save-icon {
-      &:not(.savable) {
-        color: #dcdfe6;
+  & div.detail-icons {
+    border-bottom: 2px solid grey;
+
+    display: flex;
+    padding-left: 0rem;
+    padding-right: 0rem;
+    margin-bottom: 1rem;
+    flex-direction: row;
+    align-items: center;
+
+    & .icon {
+      &.rule-icon {
+        &.muted {
+          color: #dcdfe6;
+        }
       }
-      &.savable {
+
+      &.save-icon {
+        &:not(.savable) {
+          color: #dcdfe6;
+        }
+        &.savable {
+          cursor: pointer;
+          &:hover { color: $twitter; }
+          &:active { color: $primary; }
+        }
+      }
+
+      &.delete-icon {
         cursor: pointer;
-        &:hover { color: $twitter; }
+
+        &:not(.deletable) {
+          color: $disabled;
+        }
+        &.deletable {
+          &:hover { color: $delete-hover; }
+          &:active { color: $delete-active; }
+        }
+      }
+
+      &.lock {
+        cursor: pointer;
+        &.unlocking {
+          animation-name: unlocking;
+          animation-duration: 1s;
+          animation-iteration-count: infinite;
+        }
+
+        &:hover { color: $light-blue; }
         &:active { color: $primary; }
       }
-    }
 
-    &.delete-icon {
-      cursor: pointer;
-
-      &:not(.deletable) {
-        color: $disabled;
+      &:not(:last-child) {
+        margin-right: 0.4rem;
       }
-      &.deletable {
-        &:hover { color: $delete-hover; }
-        &:active { color: $delete-active; }
+      &.large {
+        width: 1.3rem;
       }
     }
 
-    &.lock {
-      cursor: pointer;
-      &.unlocking {
-        animation-name: unlocking;
-        animation-duration: 1s;
-        animation-iteration-count: infinite;
-      }
-
-      &:hover { color: $light-blue; }
-      &:active { color: $primary; }
-    }
-
-    &:not(:last-child) {
-      margin-right: 0.4rem;
-    }
-    &.large {
-      width: 1.3rem;
-    }
+    div#padding {
+      width: -webkit-fill-available;
+    };
   }
-
-  div#padding {
-    width: -webkit-fill-available;
-  };
 }
 </style>

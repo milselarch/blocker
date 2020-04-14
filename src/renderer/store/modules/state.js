@@ -1,6 +1,7 @@
 import TaskGrabber from '@/components/TaskGrabber.js'
 import RuleMaker from '@/components/rules/RuleMaker.js'
 import PomodoroRule from '@/components/rules/PomodoroRule.js'
+import RemoteRule from '@/components/rules/RemoteRule.js'
 import TaskRule from '@/components/rules/TaskRule.js'
 import TimeRule from '@/components/rules/TimeRule.js'
 import assert from '@/assert.js'
@@ -18,6 +19,7 @@ const state = {
 
   lastTimeUpdated: -1,
   blockAllowances: {},
+  qrcodeTimestamps: {},
   optInPomodoros: {},
   lastUsage: false,
 
@@ -29,10 +31,20 @@ const state = {
   pomodoroNo: -1,
   pomodoroStart: 0,
   pomodoroTitle: '',
-  version7: false
+  version7: false,
+
+  passhash: false
 }
 
 const mutations = {
+  setPassword: (state, password) => {
+    state.passhash = Misc.makeHash(password)
+  },
+
+  unsetPassword: (state) => {
+    state.passhash = false
+  },
+
   removeOptinPomodoros: (state) => {
     for (const ID in state.optInPomodoros) {
       Vue.delete(state.optInPomodoros, ID)
@@ -195,17 +207,46 @@ const mutations = {
     state.lastTimeUpdated = currentDate.getTime()
   },
 
+  setRemoteTimestamp: (state, payload) => {
+    const ruleID = payload.ruleID
+    const newTimestamp = payload.timestamp
+    Misc.assert(typeof newTimestamp === 'number')
+
+    let currentTimestamp = -1
+    if (state.qrcodeTimestamps.hasOwnProperty(ruleID)) {
+      currentTimestamp = state.qrcodeTimestamps[ruleID]
+    }
+
+    Misc.assert(newTimestamp > currentTimestamp)
+    Vue.set(
+      state.qrcodeTimestamps, ruleID, newTimestamp
+    )
+  },
+
   addAllowance: (state, payload) => {
     const rule = payload.rule
     const timePassed = payload.timePassed
-    assert(rule instanceof TaskRule)
-    const ruleID = rule.getID()
-    // console.log('ADD START')
+    let adjust = payload.adjust
+    let allowanceGained
+    let ruleID
 
+    if (typeof rule === 'number') {
+      ruleID = rule
+    } else {
+      assert(rule instanceof TaskRule)
+      ruleID = rule.getID()
+    }
+
+    // console.log('ADD START')
     assert(state.blockAllowances.hasOwnProperty(ruleID))
-    const allowanceGained = (
-      rule.dailyAllowance * timePassed / (24 * 3600)
-    )
+
+    if (adjust === false) {
+      allowanceGained = timePassed
+    } else {
+      allowanceGained = (
+        rule.dailyAllowance * timePassed / (24 * 3600)
+      )
+    }
 
     assert(typeof state.blockAllowances[ruleID] === 'number')
     assert(state.blockAllowances[ruleID] !== null)
@@ -548,6 +589,69 @@ const actions = {
 
     // console.log('BLOCKTAAAAASKS', blockedTasks)
     return [maxWait, blockedTasks]
+  },
+
+  addRemoteAllowance: async (context, payload) => {
+    const amount = payload.amount
+    const rule = payload.rule
+    const ruleID = rule.getID()
+    const timestamp = payload.timestamp
+    Misc.assert(rule instanceof RemoteRule)
+    let reason = false
+    let valid = true
+
+    if (typeof amount !== 'number') { valid = false }
+    if (typeof timestamp !== 'number') { valid = false }
+    if (valid === false) {
+      console.log('SCANR', payload, amount, ruleID, timestamp)
+      reason = 'QR code malformed'
+      return [valid, reason]
+    }
+
+    const now = new Date()
+    const secondsFromEpoch = Math.round(now.getTime() / 1000)
+    const ALLOWED_OFFSET = 60 * 5
+    const maxFromEpoch = secondsFromEpoch + ALLOWED_OFFSET
+
+    if (timestamp > maxFromEpoch) {
+      valid = false
+      reason = 'Timestamp too new'
+      return [valid, reason]
+    }
+
+    const stampNow = context.getters.getQrcodeTimestamp(ruleID)
+    const state = context.state
+    const blob = state.qrcodeTimestamps
+
+    console.log(
+      'STAMP-CMP', stampNow, timestamp,
+      blob, ruleID, state.rules
+    )
+
+    if (timestamp > stampNow) {
+      context.commit('setRemoteTimestamp', {
+        ruleID: ruleID, timestamp: timestamp
+      })
+      context.commit('addAllowance', {
+        rule: rule, timePassed: amount, adjust: false
+      })
+
+      const minutes = Math.round(amount / 60.0)
+      reason = `added ${minutes}m @ ${timestamp}`
+      return [valid, reason]
+    } else {
+      valid = false
+      reason = 'Timestamp too old'
+      return [valid, reason]
+    }
+  },
+
+  setPassword: async (context, password) => {
+    context.commit('setPassword', password)
+  },
+
+  unsetPassword: async (context) => {
+    context.commit('unsetPassword')
   }
 }
 
@@ -611,6 +715,17 @@ const getters = {
     }
   },
 
+  getQrcodeTimestamp: (state) => {
+    return (ruleID) => {
+      const stamps = state.qrcodeTimestamps
+      if (stamps.hasOwnProperty(ruleID)) {
+        return stamps[ruleID]
+      }
+
+      return -1
+    }
+  },
+
   pomodoroTitle: (state) => {
     return state.pomodoroTitle
   },
@@ -619,6 +734,18 @@ const getters = {
   },
   pomodoroNo: (state) => {
     return state.pomodoroNo
+  },
+
+  passhash: (state) => {
+    return state.passhash
+  },
+  hasPassword: (state) => {
+    return state.passhash !== false
+  },
+  isValidPassword: (state) => {
+    return (password) => {
+      return Misc.makeHash(password) === state.passhash
+    }
   }
 }
 
