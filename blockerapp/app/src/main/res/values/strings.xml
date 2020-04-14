@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Blockerapp</string>
+    <string name="qr_code">QR Code</string>
+    <string name="generate">Generate</string>
+</resources>
