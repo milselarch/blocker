@@ -252,9 +252,13 @@
         // pathname "/1586837506"
         // query: "?A=60"
         self.setScanStamp()
-
         const parseResult = UrlParse(content)
-        const stamp = Number(parseResult.pathname.slice(1))
+        let stamp = NaN
+
+        const expr = /^([0-9]+)\?.+/
+        const groups = content.match(expr)
+        if (groups !== null) { stamp = Number(groups[1]) }
+
         const query = parseResult.query.slice(1)
         const queryArgs = query.split('&')
         let allowance = NaN
