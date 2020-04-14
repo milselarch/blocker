@@ -130,7 +130,7 @@
         } else if (ruleType === PomodoroRuleDetail.RULE_TYPE) {
           return 'stopwatch'
         } else if (ruleType === RemoteRuleDetail.RULE_TYPE) {
-          return 'wifi'
+          return 'qrcode'
         } else {
           return 'question'
         }

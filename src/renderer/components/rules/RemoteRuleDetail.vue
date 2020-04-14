@@ -123,13 +123,13 @@
   const Instascan = require('instascan')
 
   const ACTIVE_USAGE = 'trackActiveUsage'
-  let CAMERA
 
   export default {
     name: 'task-rule-detail',
     RULE_TYPE: RemoteRule.RULE_TYPE,
 
     data: () => ({
+      CAMERA: null,
       barcodeWidth: 3,
       cameraOn: false,
       scanner: null,
@@ -228,6 +228,9 @@
 
     beforeDestroy () {
       this.isDestroyed = true
+      if (this.CAMERA === null) {
+        this.CAMERA.stop()
+      }
     },
 
     created () {},
@@ -298,7 +301,7 @@
       backPress () {
         this.$refs.camera.srcObject = null
         this.cameraOn = false
-        CAMERA.stop()
+        this.CAMERA.stop()
       },
 
       setScanStamp () {
@@ -310,13 +313,12 @@
       },
 
       turnOnCamera () {
-        // console.log('CAMERA ON', this.$refs.camera)
         const self = this
         self.cameraOn = true
 
         Instascan.Camera.getCameras().then((cameras) => {
           if (cameras.length > 0) {
-            CAMERA = cameras[0]
+            self.CAMERA = cameras[0]
             self.scanner.start(cameras[0])
           }
         })

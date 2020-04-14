@@ -172,6 +172,7 @@ class TaskRule extends BaseRule {
 
   test = (data) => this._test(data)
   _test ({ tasks = [] }) {
+    // console.log('TDASKS', tasks)
     const self = this
     const blockedTasks = tasks.filter(task => {
       return self.testTask(task)
@@ -186,6 +187,7 @@ class TaskRule extends BaseRule {
   _testTask (task) {
     const self = this
     if (task.platform !== self.platform) {
+      // console.log('EEXEC')
       return false
     }
 
@@ -196,6 +198,7 @@ class TaskRule extends BaseRule {
       task.program, self.programName, self.programType
     )
 
+    // console.log('TTE', task.name, self.name, self.nameType)
     return nameMatch && programMatch
   }
 }

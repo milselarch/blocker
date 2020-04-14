@@ -504,6 +504,9 @@ const actions = {
     let maxWait = 1
     const blockedTasks = []
     const blockedTaskPids = []
+    const tasks = context.getters.tasks
+    // console.log('BIGTASKS', tasks)
+
     state.rules.map(jsonRule => {
       if (jsonRule === undefined) { return false }
       const rule = RuleMaker(jsonRule)
@@ -512,7 +515,7 @@ const actions = {
       if (!(rule instanceof TaskRule)) { return false }
       if (!rule.saved) { return false }
 
-      // console.log('TEST RULE', ruleID, timePassed)
+      // console.log('TEST RULE', ruleID, timePassed, rule.test)
       assert(typeof timePassed === 'number')
 
       if (buildup && rule.enableAllowance) {
@@ -527,7 +530,7 @@ const actions = {
       const [blocked, ruleBlockedTasks] = rule.test({
         dateTime: new Date(),
         timeSinceStart: timeSinceStart,
-        tasks: state.tasks
+        tasks: tasks
       })
 
       if (blocked) {
@@ -536,7 +539,7 @@ const actions = {
           const prevBlocked = rule.test({
             dateTime: new Date(),
             timeSinceStart: timeSinceStart,
-            tasks: state.tasks
+            tasks: tasks
           })[0]
 
           const canSubtractAllowance = (
@@ -589,24 +592,23 @@ const actions = {
     }
 
     const now = new Date()
-    const secondsFromEpoch = Math.round(now.getTime() / 1000)
     const ALLOWED_OFFSET = 60 * 5
+    const secondsFromEpoch = Math.round(now.getTime() / 1000)
     const maxFromEpoch = secondsFromEpoch + ALLOWED_OFFSET
+    const minFromEpoch = secondsFromEpoch - ALLOWED_OFFSET
 
-    if (timestamp > maxFromEpoch) {
+    if (minFromEpoch > timestamp) {
+      valid = false
+      reason = 'Timestamp too old'
+      return [valid, reason]
+    } else if (timestamp > maxFromEpoch) {
       valid = false
       reason = 'Timestamp too new'
       return [valid, reason]
     }
 
-    const stampNow = context.getters.getQrcodeTimestamp(ruleID)
-    const state = context.state
-    const blob = state.qrcodeTimestamps
-
-    console.log(
-      'STAMP-CMP', stampNow, timestamp,
-      blob, ruleID, state.rules
-    )
+    const getter = context.getters
+    const stampNow = getter.getQrcodeTimestamp(ruleID)
 
     if (timestamp > stampNow) {
       context.commit('setRemoteTimestamp', {
@@ -621,7 +623,7 @@ const actions = {
       return [valid, reason]
     } else {
       valid = false
-      reason = 'Timestamp too old'
+      reason = 'Timestamp replay error'
       return [valid, reason]
     }
   },
