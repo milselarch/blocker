@@ -187,7 +187,7 @@ class TaskRule extends BaseRule {
   _testTask (task) {
     const self = this
     if (task.platform !== self.platform) {
-      // console.log('EEXEC')
+      // console.log('EEXEC', task.platform, self.platform)
       return false
     }
 

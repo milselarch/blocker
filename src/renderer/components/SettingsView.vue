@@ -47,7 +47,7 @@
       hash () {
         const passhash = this.$store.getters.passhash
         if (passhash === false) {
-          return 'not set yet'
+          return 'Version 0.1.1'
         } else {
           return passhash
         }

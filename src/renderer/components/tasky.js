@@ -28,6 +28,10 @@ class Task {
     this.CPU = CPU
   }
 
+  get platform () {
+    return Task.platform
+  }
+
   setName (name) { this.name = name }
   setProgram (program) { this.program = program }
   setCPU (CPU) { this.CPU = CPU }

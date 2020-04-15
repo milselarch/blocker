@@ -505,7 +505,7 @@ const actions = {
     const blockedTasks = []
     const blockedTaskPids = []
     const tasks = context.getters.tasks
-    // console.log('BIGTASKS', tasks)
+    // console.log('BIGTASKS', tasks.map(task => task.name))
 
     state.rules.map(jsonRule => {
       if (jsonRule === undefined) { return false }
@@ -533,8 +533,10 @@ const actions = {
         tasks: tasks
       })
 
+      // console.log('TEAST RES', blocked, tasks.map(task => task.name))
+
       if (blocked) {
-        // console.log(`TASK RUKE BKOCK ${ruleID}`)
+        console.log(`TASK RUKE BKOCK ${ruleID}`)
         if (rule.enableAllowance) {
           const prevBlocked = rule.test({
             dateTime: new Date(),
@@ -543,12 +545,12 @@ const actions = {
           })[0]
 
           const canSubtractAllowance = (
-            (rule.onlyActiveUsage && timeSinceLastUpdate < 5) ||
+            (rule.onlyActiveUsage && timeSinceLastUpdate < 9) ||
             !rule.onlyActiveUsage
           )
 
           if (prevBlocked && canSubtractAllowance) {
-            // console.log(`MINUS ALLOWANCE ${ruleID} ${timePassed}`)
+            console.log(`MINUS ALLOWANCE ${ruleID} ${timePassed}`)
             context.commit('subtractAllowance', {
               rule: rule, timePassed: timePassed
             })
