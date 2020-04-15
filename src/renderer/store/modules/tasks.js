@@ -11,8 +11,9 @@ const state = {
 
 const mutations = {
   setNewTasks: (state, newTasks) => {
-    state.prevTasks = state.tasks
+    state.prevTasks = [] // dont need this anymore
     state.prevTaskTimestamp = state.taskTimestamp
+    state.tasks = []
     state.tasks = newTasks
     state.taskTimestamp = (new Date()).getTime()
   }
@@ -29,7 +30,7 @@ const actions = {
 
 const getters = {
   tasks: (state) => {
-    return Object.freeze(state.tasks)
+    return state.tasks
   }
 }
 

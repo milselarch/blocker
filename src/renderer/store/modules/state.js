@@ -619,7 +619,7 @@ const actions = {
       })
 
       const minutes = Math.round(amount / 60.0)
-      reason = `added ${minutes}m @ ${timestamp}`
+      reason = `added ${minutes}m at ${timestamp}`
       return [valid, reason]
     } else {
       valid = false

@@ -1,6 +1,7 @@
-import tasky from './tasky'
+import Tasky from './tasky'
+const tasky = new Tasky()
+
 const OS = require('os')
-const psList = require('ps-list')
 // const getPpid = require('parent-process-pid')
 // const electron = require('electron')
 
@@ -12,87 +13,42 @@ const BLOCKED_PIDS = [
 
 console.log(`BLOCKED_PIDS ${BLOCKED_PIDS}`)
 
-class Task {
-  constructor (pid, name, program, CPU) {
-    this.pid = pid
-    this.platform = platform
-
-    this.name = name
-    this.program = program
-    this.CPU = CPU
-  }
-}
-
 class TaskGrabber {
   async getWindowsTasks () {
     return (
-      await tasky()
+      await tasky.getWindowsTasks()
     ).filter(task => {
       if (task === undefined) { return true }
-      return task.windowTitle !== 'N/A'
-    }).map(task => {
-      /*
-      const keys = Object.keys(task)
-      for (let key in keys) {
-        if (typeof task[key] === 'string') {
-          task[key] = utf8.encode(task[key])
-        }
-      }
-      */
-
-      return new Task(
-        task.pid,
-        task.windowTitle,
-        task.imageName,
-        task.cpuTime
-      )
+      return task.name !== 'N/A'
     })
   }
 
   async getUnixTasks () {
-    /*
-    { pid: 1860,
-    name: '(sd-pam)',
-    cmd: '(sd-pam)',
-    ppid: 1852,
-    uid: 1000,
-    cpu: 0,
-    memory: 0 },
-    */
-
     return (
-      await psList()
+      await tasky.getUnixTasks()
     ).filter(task => {
-      const cmd = task.cmd
-      const wrapChars = cmd[0] + cmd[cmd.length - 1]
-      if (wrapChars === '[]' || wrapChars === '()') {
-        return false
-      }
-
+      const program = task.program
+      const wrapChars = program[0] + program[program.length - 1]
+      if (wrapChars === '[]' || wrapChars === '()') { return false }
       return true
-    }).map(task => {
-      return new Task(
-        task.pid,
-        task.name,
-        task.cmd,
-        task.cpu
-      )
     })
   }
 
   getUniqueTasks (tasks) {
     const uniqueTasks = []
+    const taskMapping = {}
 
     tasks.map(currentTask => {
       let isUnique = true
-      for (let i = 0; i < uniqueTasks.length; i++) {
-        if (
-          (uniqueTasks[i].name === currentTask.name) &&
-          (uniqueTasks[i].program === currentTask.program)
-        ) {
-          isUnique = false
-          break
-        }
+      const name = currentTask.name
+      const program = currentTask.program
+
+      if (taskMapping[name] === undefined) {
+        taskMapping[name] = {}
+      } else if (taskMapping[name][program] === undefined) {
+        taskMapping[name][program] = true
+      } else {
+        isUnique = false
       }
 
       if (isUnique && currentTask.CPU > 0) {
@@ -145,6 +101,7 @@ class TaskGrabber {
 
       return true
     })
+
     const uniqueTasks = this.getUniqueTasks(tasks)
     return uniqueTasks
   }

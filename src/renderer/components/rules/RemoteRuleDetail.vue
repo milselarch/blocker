@@ -118,8 +118,6 @@
   // import { setTimeout } from 'timers'
   import VueBarcode from 'vue-barcode'
   import moment from 'moment'
-
-  const UrlParse = require('url-parse')
   const Instascan = require('instascan')
 
   const ACTIVE_USAGE = 'trackActiveUsage'
@@ -255,21 +253,33 @@
         // pathname "/1586837506"
         // query: "?A=60"
         self.setScanStamp()
-        const parseResult = UrlParse(content)
-        let stamp = NaN
 
-        const expr = /^([0-9]+)\?.+/
-        const groups = content.match(expr)
-        if (groups !== null) { stamp = Number(groups[1]) }
+        const spliiter = /([0-9]+)\?(.+)/
+        const argtest = /^([a-zA-Z]+=[^&=]+&)*([a-zA-Z]+=[^&=]+)$/g
+        const result = spliiter.exec(content)
+        if (result === null) {
+          self.scanStatus = `MALFORMED QR CODE ${content}`
+          return
+        }
 
-        const query = parseResult.query.slice(1)
-        const queryArgs = query.split('&')
         let allowance = NaN
+        Misc.assert(result.length === 3)
+        const stamp = Number(result[1])
+        const queryArgs = result[2]
+        Misc.assert(typeof stamp === 'number')
+        Misc.assert(typeof queryArgs === 'string')
 
-        for (let arg of queryArgs) {
+        if (argtest.exec(queryArgs) === null) {
+          self.scanStatus = `MALFORMED QR ARGS ${content} ${queryArgs}`
+          return
+        }
+
+        const stringArgs = queryArgs.split('&')
+        for (const arg of stringArgs) {
           const [name, value] = arg.split('=')
-          console.log('NAME VAL', [name, value])
-          if (name === 'A') { allowance = Number(value) }
+          if (name === 'A') {
+            allowance = Number(value)
+          }
         }
 
         if (isNaN(allowance) || (allowance === 0)) {
