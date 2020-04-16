@@ -25,7 +25,7 @@ class TaskGrabber {
 
   async getUnixTasks () {
     return (
-      await tasky.getUnixTasks()
+      await tasky.getUnixTasks({all: false})
     ).filter(task => {
       const program = task.program
       const wrapChars = program[0] + program[program.length - 1]

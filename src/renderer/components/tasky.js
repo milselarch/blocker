@@ -97,6 +97,7 @@ class Tasky {
   async getUnixTasks (options = {}, callback = () => {}) {
     const headers = ['comm', 'args', '%cpu']
     const flags = (options.all === false ? '' : 'a') + 'wwxo'
+    // console.log('FLAGS', flags)
     const ret = {}
     const tasks = []
 
