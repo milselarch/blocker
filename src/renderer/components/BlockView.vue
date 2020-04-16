@@ -216,6 +216,7 @@
 
     data: () => ({
       loading: false,
+      audioStart: null,
       drainMultiplier: 1,
       BLOCK_STATES: BLOCK_STATES,
       state: BLOCK_STATES.unblocked,
@@ -503,8 +504,18 @@
           }
 
           if (self.alarmOn) {
+            const scale = 0.5
+
             if (!audio.playing()) {
+              self.audioStart = Misc.getTimePassed()
+              audio.volume(scale)
               audio.play()
+            } else {
+              const timeNow = Misc.getTimePassed()
+              const timePassed = Math.max(timeNow - self.audioStart, 0)
+              const progress = Math.min(1, 8 / timePassed)
+              // console.log('SCALE', progress, timePassed)
+              audio.volume(scale * progress)
             }
           } else {
             audio.pause()

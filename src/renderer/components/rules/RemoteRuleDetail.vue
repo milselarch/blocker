@@ -226,8 +226,8 @@
 
     beforeDestroy () {
       this.isDestroyed = true
-      if (this.CAMERA === null) {
-        this.CAMERA.stop()
+      if (this.scanner !== null) {
+        this.scanner.stop()
       }
     },
 
@@ -311,7 +311,7 @@
       backPress () {
         this.$refs.camera.srcObject = null
         this.cameraOn = false
-        this.CAMERA.stop()
+        this.scanner.stop()
       },
 
       setScanStamp () {
@@ -329,7 +329,7 @@
         Instascan.Camera.getCameras().then((cameras) => {
           if (cameras.length > 0) {
             self.CAMERA = cameras[0]
-            self.scanner.start(cameras[0])
+            self.scanner.start(self.CAMERA)
           }
         })
       },
