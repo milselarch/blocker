@@ -419,31 +419,32 @@
 
     created () {
       const self = this
+      const platform = OS.platform()
       console.log('BLOCKERVIEW INITIALISED')
+
+      const handler = event => {
+        if (!self.pomodoroPrompt && !(
+          (self.state === BLOCK_STATES.unblocked) ||
+          (self.state === BLOCK_STATES.allowing)
+        )) {
+          if (__LIVE__ === false) {
+            // console.log('LOCK')
+            return true
+          } else if (platform === 'win32') {
+            exec('rundll32.exe user32.dll,LockWorkStation')
+          } else {
+            exec('gnome-screensaver-command --lock')
+          }
+        }
+
+        self.$store.commit('updateLastUsage')
+        // console.log('LAST USAGE', event)
+      }
 
       if (!IOHOOKED) {
         IOHOOKED = true
-        ioHook.on('keydown', event => {
-          if (!self.pomodoroPrompt && !(
-            (self.state === BLOCK_STATES.unblocked) ||
-            (self.state === BLOCK_STATES.allowing)
-          )) {
-            const platform = OS.platform()
-
-            if (__LIVE__ === false) {
-              // console.log('LOCK')
-              return true
-            } else if (platform === 'win32') {
-              exec('rundll32.exe user32.dll,LockWorkStation')
-            } else {
-              exec('gnome-screensaver-command --lock')
-            }
-          }
-
-          self.$store.commit('updateLastUsage')
-          // console.log('LAST USAGE', event)
-        })
-
+        ioHook.on('keydown', handler)
+        ioHook.on('mouseclick', handler)
         ioHook.start()
       }
     },
