@@ -128,8 +128,14 @@
       tabNames: TAB_NAMES,
       tabViewName: TAB_NAMES[0],
       tabIndex: 0,
-      tabs: TABS
+      tabs: TABS,
+
+      isDestroyed: false
     }),
+
+    beforeDestroy () {
+      this.isDestroyed = true
+    },
 
     async created () {
       const self = this

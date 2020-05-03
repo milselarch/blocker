@@ -545,7 +545,7 @@ const actions = {
           })[0]
 
           const canSubtractAllowance = (
-            (rule.onlyActiveUsage && timeSinceLastUpdate < 5) ||
+            (rule.onlyActiveUsage && timeSinceLastUpdate < 11) ||
             !rule.onlyActiveUsage
           )
 
