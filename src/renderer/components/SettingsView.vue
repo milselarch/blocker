@@ -29,6 +29,12 @@
       </b-button>
 
       <p id="hash">{{ hash }}</p>
+
+      <div id="checkbox-box">
+        <b-checkbox v-model="kill_multi_monitor">
+          Auto close when there's multiple monitors
+        </b-checkbox>
+      </div>
     </div>
   </div>
 </template>
@@ -40,7 +46,8 @@
     name: 'settingsview',
 
     data: () => ({
-      password: ''
+      password: '',
+      kill_multi_monitor: false
     }),
 
     computed: {
@@ -118,6 +125,10 @@ div#holder {
     font-family: 'Inconsolata';
     font-weight: 700;
     word-break: break-all;
+  }
+
+  & > div#checkbox-box {
+    margin-top: 2rem;
   }
 }
 </style>
