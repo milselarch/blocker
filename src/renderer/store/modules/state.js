@@ -27,10 +27,15 @@ const state = {
   pomodoroTitle: '',
   version7: false,
 
-  passhash: false
+  passhash: false,
+  killMultiMonitor: false
 }
 
 const mutations = {
+  setMultipleMonitorKill: (state, kill) => {
+    state.killMultiMonitor = kill
+  },
+
   setPassword: (state, password) => {
     state.passhash = Misc.makeHash(password)
   },
@@ -726,6 +731,10 @@ const getters = {
     return (password) => {
       return Misc.makeHash(password) === state.passhash
     }
+  },
+
+  killMultiMonitor: (state) => {
+    return state.killMultiMonitor
   }
 }
 

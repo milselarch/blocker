@@ -31,8 +31,12 @@
       <p id="hash">{{ hash }}</p>
 
       <div id="checkbox-box">
-        <b-checkbox v-model="kill_multi_monitor">
+        <b-checkbox 
+          v-model="killMultiMonitor"
+          :disabled="isPasswordSet"
+        >
           Auto close when there's multiple monitors
+          {{ killMultiMonitor }}
         </b-checkbox>
       </div>
     </div>
@@ -47,7 +51,7 @@
 
     data: () => ({
       password: '',
-      kill_multi_monitor: false
+      killMultiMonitor: false
     }),
 
     computed: {
@@ -68,10 +72,18 @@
       isValidPassword () {
         const passhash = this.$store.getters.passhash
         return passhash === Misc.makeHash(this.password)
+      },
+
+      isPasswordSet () {
+        return this.$store.getters.hasPassword
       }
     },
 
-    created () {},
+    created () {
+      const kill = this.$store.getters.killMultiMonitor
+      this.killMultiMonitor = kill
+      console.log('LOADED', kill)
+    },
 
     methods: {
       setPassword () {
@@ -91,6 +103,17 @@
             position: 'is-bottom',
             type: 'is-warning'
           })
+        }
+      }
+    },
+
+    watch: {
+      killMultiMonitor: function (newKill) {
+        const kill = this.$store.getters.kill_multi_monitor
+
+        if (kill !== newKill) {
+          this.$store.commit('setMultipleMonitorKill', newKill)
+          console.log('SET', newKill)
         }
       }
     },
