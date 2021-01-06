@@ -1,14 +1,14 @@
-'use strict';
+'use strict'
 const OS = require('os')
-const util = require('util');
-const path = require('path');
-const childProcess = require('child_process');
+const util = require('util')
+const path = require('path')
+const childProcess = require('child_process')
 
-const TEN_MEGABYTES = 1000 * 1000 * 10;
-const execFile = util.promisify(childProcess.execFile);
-const psFields = 'pid,ppid,uid,%cpu,%mem,comm,args';
+const TEN_MEGABYTES = 1000 * 1000 * 10
+const execFile = util.promisify(childProcess.execFile)
+const psFields = 'pid,ppid,uid,%cpu,%mem,comm,args'
 const psOutputRegex = /^[ \t]*(?<pid>\d+)[ \t]+(?<ppid>\d+)[ \t]+(?<uid>\d+)[ \t]+(?<cpu>\d+\.\d+)[ \t]+(?<memory>\d+\.\d+)[ \t](?<comm>\d+)[ \t]+(?<args>\d+)[ \t]+/
-const ERROR_MESSAGE_PARSING_FAILED = 'ps output parsing failed';
+const ERROR_MESSAGE_PARSING_FAILED = 'ps output parsing failed'
 const platform = OS.platform()
 
 class Task {
@@ -49,27 +49,27 @@ const assert = (condition) => {
 
 const nonWindowsMultipleCalls = async (options = {}) => {
   const headers = ['comm', 'args', '%cpu']
-	const flags = (options.all === false ? '' : 'a') + 'wwxo';
-	const ret = {};
+  const flags = (options.all === false ? '' : 'a') + 'wwxo'
+  const ret = {}
   const tasks = []
 
-	await Promise.all(headers.map(async cmd => {
-		const {stdout} = await execFile(
+  await Promise.all(headers.map(async cmd => {
+    const {stdout} = await execFile(
       'ps', [flags, `pid,${cmd}`], {maxBuffer: TEN_MEGABYTES}
-    );
-    
-		for (let line of stdout.trim().split('\n').slice(1)) {
-			line = line.trim();
-			const [pid] = line.split(' ', 1);
-      const value = line.slice(pid.length + 1).trim();
+    )
+
+    for (let line of stdout.trim().split('\n').slice(1)) {
+      line = line.trim()
+      const [pid] = line.split(' ', 1)
+      const value = line.slice(pid.length + 1).trim()
       console.log('VALWW', value)
 
       if (value === undefined) {
         throw new Error('WTF')
       } else if (ret[pid] === undefined) {
-				ret[pid] = new Task(pid);
+        ret[pid] = new Task(pid)
       }
-      
+
       if (cmd === 'comm') {
         ret[pid].setName(path.basename(value))
       } else if (cmd === '%cpu') {
@@ -84,12 +84,12 @@ const nonWindowsMultipleCalls = async (options = {}) => {
         tasks.push(ret[pid])
       }
     }
-  }));
+  }))
 
   for (const task of tasks) {
     task.print()
   }
   console.log(tasks.length)
-};
+}
 
 nonWindowsMultipleCalls()

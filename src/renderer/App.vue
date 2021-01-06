@@ -266,7 +266,7 @@
     & > div#progress {
       height: $progBarHeight;
       background-color:#dcdfe6;
-      position: absolute;
+      position: fixed;
       bottom: 0px;
       float: bottom;
 

@@ -16,6 +16,16 @@
       -->
 
       <h2 id="title">Blocked</h2>
+      <h2 
+        id="auto-close"
+        v-bind:class="{
+          invisible: displayCount === 1
+        }"
+      > 
+        ━━━━&nbsp;&nbsp;
+        AUTO CLOSING IN {{monitorTimeLeft}}
+        &nbsp;&nbsp;━━━━
+      </h2> 
 
       <template>
         <section class='buttons'>
@@ -184,15 +194,25 @@
   import BLOCK_STATES from './blockStates'
   import Misc from '@/misc.js'
   import assert from '@/assert.js'
+  import si from 'systeminformation'
   import { setTimeout } from 'timers'
   import { Toast } from 'buefy/dist/components/toast'
   import { Howl } from 'howler'
+
   const { remote } = require('electron')
   const PS = require('ps-node')
   // const path = require('path')
   const ioHook = require('iohook')
   // const sys = require('sys')
   const OS = require('os')
+  
+  try {
+    console.log('test')
+  } catch (e) {
+    console.log('nop')
+  }
+
+  console.log(si)
 
   const __LIVE__ = process.env.NODE_ENV === 'production'
   let IOHOOKED = false
@@ -225,6 +245,12 @@
       maxWait: 1,
       isDestroyed: false,
       blockFace: 'icon-border.svg',
+
+      blockStart: -1,
+      multiMonitorStart: -1,
+      displayCount: 1,
+      monitorTimeLeft: -1,
+      monitorWait: 10,
 
       dateNow: new Date(),
       isTimeBlocked: false,
@@ -269,7 +295,7 @@
 
       pomodoroPlaceholder () {
         const pomodoroPlaceholder = this.$store.getters.pomodoroTitle
-        console.log('PTITLE', pomodoroPlaceholder)
+        // console.log('PTITLE', pomodoroPlaceholder)
         if (String.trim(pomodoroPlaceholder) === '') {
           return 'Type what this pomodoro is for'
         }
@@ -325,8 +351,56 @@
     },
 
     methods: {
+      runMonitorLoop () {
+        const self = this
+
+        return (async () => {
+          while (!self.isDestroyed) {
+            if (self.displayCount === 1) {
+              self.monitorTimeLeft = -1
+            } else {
+              const timePassed = self.multiMonitorTimePassed()
+              // console.log('MM PASSED', timePassed)
+              let timeLeft = self.monitorWait - timePassed
+              timeLeft = Math.ceil(Math.max(timeLeft, 0))
+              self.monitorTimeLeft = timeLeft
+            }
+
+            await Misc.sleepAsync(250)
+          }
+        })()
+      },
+
       removeOptins () {
         this.$store.commit('removeOptinPomodoros')
+      },
+
+      multiMonitorTimePassed () {
+        const self = this
+        const timeNow = Misc.getTimePassed()
+
+        if (self.displayCount <= 1) {
+          return -1
+        }
+
+        const start = Math.max(
+          self.blockStart, self.multiMonitorStart
+        )
+
+        if (start === -1) {
+          return -1
+        } else {
+          const duration = timeNow - start
+          return duration
+        }
+      },
+
+      getDisplayCount () {
+        return new Promise((resolve, reject) => {
+          si.graphics((data) => {
+            resolve(data.displays.length)
+          })
+        })
       },
 
       getTimeLeft (
@@ -386,10 +460,10 @@
       clickAllow () {
         this.lastUpdate = Misc.getTimePassed()
         if (this.state === BLOCK_STATES.blocked) {
-          this.state = BLOCK_STATES.waiting
+          self.setBlockState(BLOCK_STATES.waiting)
           this.lastUpdate = Misc.getTimePassed()
         } else if (this.state === BLOCK_STATES.waited) {
-          this.state = BLOCK_STATES.allowing
+          self.setBlockState(BLOCK_STATES.allowing)
           this.lastUpdate = Misc.getTimePassed()
         } else {
           throw new Error(`INVALID STATE ${this.state}`)
@@ -414,6 +488,18 @@
 
         await self.$store.dispatch('updater')
         self.loading = false
+      },
+
+      setBlockState (state) {
+        const self = this
+        Misc.assert(BLOCK_STATES.includes(state))
+        self.state = state
+
+        if (state === BLOCK_STATES.blocked) {
+          self.blockStart = Misc.getTimePassed()
+        } else if (state === BLOCK_STATES.unblocked) {
+          self.blockStart = -1
+        }
       }
     },
 
@@ -461,7 +547,7 @@
           volume: 0.5
         })
 
-        while (!this.isDestroyed) {
+        while (!self.isDestroyed) {
           // console.log('POLLING BLOCKIER')
           self.dateNow = new Date()
           const buildUpAllowance = !(
@@ -528,7 +614,7 @@
           )
 
           if (!self.needsBlocking) {
-            self.state = BLOCK_STATES.unblocked
+            self.setBlockState(BLOCK_STATES.unblocked)
           }
 
           if (self.state === BLOCK_STATES.unblocked) {
@@ -541,7 +627,7 @@
             self.lastUpdate = -1
 
             if (self.needsBlocking) {
-              self.state = BLOCK_STATES.blocked
+              self.setBlockState(BLOCK_STATES.blocked)
             }
           } else if (self.state === BLOCK_STATES.allowing) {
             fullscreen = false
@@ -572,16 +658,32 @@
               // console.log('WAIT', self.state)
               if (self.timeWaited >= self.maxWait) {
                 self.lastUpdate = -1
-                self.state = BLOCK_STATES.waited
+                self.setBlockState(BLOCK_STATES.waited)
               }
             } else if (self.state === BLOCK_STATES.allowing) {
               self.timeWaited -= wait * self.drainMultiplier
               if (self.timeWaited < 0) {
                 self.lastUpdate = -1
-                self.state = BLOCK_STATES.blocked
+                self.setBlockState(BLOCK_STATES.blocked)
                 self.drainMultiplier *= 1.2
               }
             }
+          }
+
+          const displays = await self.getDisplayCount()
+
+          if (displays !== self.displayCount) {
+            self.displayCount = displays
+
+            if (displays === 1) {
+              self.multiMonitorStart = -1
+            } else {
+              self.multiMonitorStart = Misc.getTimePassed()
+            }
+          }
+
+          if (self.monitorTimeLeft === 0) {
+            await self.removeTasks()
           }
 
           this.$emit('on-state', self.state)
@@ -590,6 +692,8 @@
           await Misc.sleepAsync(250)
         }
       })()
+
+      self.runMonitorLoop()
     },
 
     props: {
@@ -610,6 +714,7 @@
   width: 20rem;
   margin-left: auto;
   margin-right: auto;
+  padding-top: 1rem;
 }
 
 div#wrapper {
@@ -667,7 +772,24 @@ div#wrapper {
   & h2#title {
     font-family: "Staatliches";
     margin-top: 2rem;
+    margin-bottom: 1rem;
     font-size: 5rem;
+    flex-shrink: 0;
+  }
+
+  & h2#auto-close {
+    font-family: "Staatliches";
+    margin-bottom: 2rem;
+    font-size: 2rem;
+    flex-shrink: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    width: fit-content;
+    height: fit-content;
+
+    &.invisible {
+      display: none
+    }
   }
 
   &.hidden {

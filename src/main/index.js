@@ -36,7 +36,14 @@ function createWindow () {
 
   setTimeout(() => {
     if (DEBUG) {
-      mainWindow.webContents.openDevTools({mode: 'detach'})
+      // mainWindow.webContents.openDevTools({mode: 'detach'})
+
+      // Open dev tools initially when in development mode
+      if (process.env.NODE_ENV === 'development') {
+        mainWindow.webContents.once('dom-ready', () => {
+          return mainWindow.webContents.openDevTools()
+        })
+      }
     }
   }, 1000)
 
