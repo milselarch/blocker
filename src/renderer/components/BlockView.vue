@@ -19,7 +19,9 @@
       <h2 
         id="auto-close"
         v-bind:class="{
-          invisible: displayCount === 1
+          invisible: (
+            (displayCount === 1) | !killMultiMonitor
+          )
         }"
       > 
         ━━━━&nbsp;&nbsp;
@@ -229,7 +231,7 @@
   })
 
   console.log('BLOCS', BLOCK_STATES.unblocked)
-  const exec = require('child_process').exec
+  // const exec = require('child_process').exec
 
   export default {
     name: 'blockview',
@@ -275,6 +277,10 @@
 
       hasOptinPomodoros () {
         return this.$store.getters.hasOptinPomodoros
+      },
+
+      killMultiMonitor () {
+        return this.$store.getters.killMultiMonitor
       },
 
       pomodoroButtonText () {
@@ -356,7 +362,7 @@
 
         return (async () => {
           while (!self.isDestroyed) {
-            if (self.displayCount === 1) {
+            if (!self.killMultiMonitor | (self.displayCount === 1)) {
               self.monitorTimeLeft = -1
             } else {
               const timePassed = self.multiMonitorTimePassed()
@@ -517,9 +523,9 @@
             // console.log('LOCK')
             return true
           } else if (platform === 'win32') {
-            exec('rundll32.exe user32.dll,LockWorkStation')
+            // exec('rundll32.exe user32.dll,LockWorkStation')
           } else {
-            exec('gnome-screensaver-command --lock')
+            // exec('gnome-screensaver-command --lock')
           }
         }
 

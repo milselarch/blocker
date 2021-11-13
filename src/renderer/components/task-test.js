@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 'use strict'
 const OS = require('os')
 const util = require('util')

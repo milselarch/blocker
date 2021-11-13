@@ -1,3 +1,7 @@
+/* eslint-disable no-cond-assign */
+/* eslint-disable one-var */
+/* eslint no-cond-assign: "error" */
+
 /*! Regex Colorizer v0.3.1
  * (c) 2010-2012 Steven Levithan <http://stevenlevithan.com/regex/colorizer/>
  * MIT license

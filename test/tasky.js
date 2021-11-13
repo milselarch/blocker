@@ -1,3 +1,4 @@
+/* eslint-disable handle-callback-err */
 /*
 Adapted from tasklist, but with proper UTF-8
 encoding
@@ -7,7 +8,7 @@ encoding
 const childProcess = require('child_process')
 const pify = require('pify')
 const neatCsv = require('neat-csv')
-const utf8 = require('utf8')
+// const utf8 = require('utf8')
 const sec = require('sec')
 
 module.exports = (options = {}) => {
@@ -53,7 +54,7 @@ module.exports = (options = {}) => {
   const headers = options.verbose ? verboseHeaders : defaultHeaders
 
   const cmd = '@chcp 65001 >nul & tasklist /v /nh /fo csv'
-  const callback = (err, stdout, stderr) => stdout
+  // const callback = (err, stdout, stderr) => stdout
   // childProcess.exec(cmd, {encoding: "UTF-8"}, callback);
 
   // @chcp 65001 >nul ensures output is UTF-6
