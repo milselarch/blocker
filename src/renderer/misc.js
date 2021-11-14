@@ -27,7 +27,7 @@ class Misc {
       uniqueWords.splice(index, 1)
     }
 
-    console.log('UWORDS', uniqueWords)
+    // console.log('UWORDS', uniqueWords)
     return uniqueWords.length
   }
 

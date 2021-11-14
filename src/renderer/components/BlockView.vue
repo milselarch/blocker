@@ -425,14 +425,22 @@
 
     methods: {
       pomodoroDone (pomodoroNo) {
-        if (pomodoroNo > this.$store.getters.pomodoroNo) {
+        let pomodoroNow = this.$store.getters.pomodoroNo
+        if (this.pomodoroPrompt) {
+          pomodoroNow = (pomodoroNow + 1) % 4
+        }
+        if (pomodoroNo > pomodoroNow) {
           return true
         }
         return false
       },
 
       isCurrentPomodoro (pomodoroNo) {
-        if (pomodoroNo === this.$store.getters.pomodoroNo) {
+        let pomodoroNow = this.$store.getters.pomodoroNo
+        if (this.pomodoroPrompt) {
+          pomodoroNow = (pomodoroNow + 1) % 4
+        }
+        if (pomodoroNo === pomodoroNow) {
           return true
         }
         return false
