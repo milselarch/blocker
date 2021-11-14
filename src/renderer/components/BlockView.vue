@@ -34,7 +34,10 @@
           <button
             v-on:click="startPomodoro"
             class="button is-info"
-            :disabled="!alarmOn && (!pomodoroPrompt || !pomodoroTitleValid)"
+            :disabled="
+              !alarmOn && 
+              (!pomodoroPrompt || !pomodoroTitleValid)
+            "
             v-show="blockList.indexOf(true) === 2"
           >
             {{ pomodoroButtonText }}
@@ -59,6 +62,18 @@
           >
             {{ allowText }}
           </button>
+
+          <button
+            class="button wait-button is-info"
+            v-bind:class="{invisible: !pomodoroResettable}"
+            v-on:click="resetPomodoros"
+          >
+            <font-awesome-icon
+              :icon="'history'"
+              class="rule-icon large icon alt"
+            >
+            </font-awesome-icon>
+          </button>
         </section>
       </template>
 
@@ -80,6 +95,7 @@
         </textarea>
 
         <br/>
+
         <button 
           id="remove-optins" @click="removeOptins" type="is-info"
           v-show="hasOptinPomodoros && pomodoroPrompt"
@@ -87,6 +103,17 @@
         >
           Remove Opt-in Pomodoros
         </button>
+
+        <div id="PomodoroTracker">
+          <div 
+            v-for="k in Array(4).keys()" v-bind:key="k"
+            v-bind:class="{
+              off: pomodoroDone(k), 
+              current: isCurrentPomodoro(k)
+            }"
+            class="pomodoro-bar"
+          ></div>
+        </div>
 
         <b-table
           class="block-table" :data="blockingPomodoros"
@@ -248,6 +275,9 @@
       isDestroyed: false,
       blockFace: 'icon-border.svg',
 
+      longestPomodoroBreak: 0,
+      longestPomodoroDuration: 0,
+
       blockStart: -1,
       multiMonitorStart: -1,
       displayCount: 1,
@@ -270,8 +300,41 @@
     },
 
     computed: {
+      pomodoroResettable () {
+        const self = this
+        const longestPomodoroBreak = self.longestPomodoroBreak
+        const duration = self.longestPomodoroDuration
+        const pomodoroNo = self.$store.getters.pomodoroNo
+        if (longestPomodoroBreak === 0) {
+          return false
+        }
+
+        const timeNow = self.dateNow.getTime()
+        const pomodoroStart = this.$store.getters.pomodoroStart
+        const breakStart = pomodoroStart + duration * 60 * 1000
+        const maxSecondsLeft = Misc.getSecondsLeft(
+          breakStart, longestPomodoroBreak * 60, timeNow
+        )
+        /*
+        console.log('P-START', pomodoroStart)
+        console.log('B-START', breakStart)
+        console.log('MAX SECS LEFT', maxSecondsLeft)
+        console.log('MAX POMODORO WAIT', longestPomodoroBreak * 60)
+        console.log('PROMPT', self.pomodoroPrompt)
+        console.log('DURATION', duration)
+        console.log('P-NO', pomodoroNo)
+        */
+        if (!self.pomodoroPrompt || (pomodoroNo === 0)) {
+          return false
+        } else if (maxSecondsLeft <= 0) {
+          return true
+        }
+
+        return false
+      },
+
       pomodoroTitleValid () {
-        const wordCount = Misc.countWords(this.pomodoroTitle)
+        const wordCount = Misc.countUniqueWords(this.pomodoroTitle)
         return wordCount >= 10
       },
 
@@ -284,15 +347,19 @@
       },
 
       pomodoroButtonText () {
+        const self = this
+        const wordCount = Misc.countUniqueWords(self.pomodoroTitle)
+        const length = 10
+
         if (this.alarmOn) {
           return 'Stop alarm'
         }
 
         if (this.pomodoroPrompt) {
-          if (this.pomodoroTitleValid) {
+          if (wordCount >= 10) {
             return 'Start pomodoro'
           } else {
-            return 'Pomodoro needs 10-word explanation'
+            return `${wordCount}/${length} word description`
           }
         } else {
           return 'Taking a break'
@@ -357,12 +424,26 @@
     },
 
     methods: {
+      pomodoroDone (pomodoroNo) {
+        if (pomodoroNo > this.$store.getters.pomodoroNo) {
+          return true
+        }
+        return false
+      },
+
+      isCurrentPomodoro (pomodoroNo) {
+        if (pomodoroNo === this.$store.getters.pomodoroNo) {
+          return true
+        }
+        return false
+      },
+
       runMonitorLoop () {
         const self = this
 
         return (async () => {
           while (!self.isDestroyed) {
-            if (!self.killMultiMonitor | (self.displayCount === 1)) {
+            if (!self.killMultiMonitor || (self.displayCount === 1)) {
               self.monitorTimeLeft = -1
             } else {
               const timePassed = self.multiMonitorTimePassed()
@@ -435,6 +516,10 @@
         return `${mins}m${secs}s / ${breakDurationMins}m`
       },
 
+      async resetPomodoros () {
+        await this.$store.commit('resetPomodoros')
+      },
+
       async startPomodoro () {
         const self = this
         self.loading = true
@@ -464,15 +549,17 @@
       },
 
       clickAllow () {
-        this.lastUpdate = Misc.getTimePassed()
-        if (this.state === BLOCK_STATES.blocked) {
+        const self = this
+        self.lastUpdate = Misc.getTimePassed()
+
+        if (self.state === BLOCK_STATES.blocked) {
           self.setBlockState(BLOCK_STATES.waiting)
-          this.lastUpdate = Misc.getTimePassed()
-        } else if (this.state === BLOCK_STATES.waited) {
+          self.lastUpdate = Misc.getTimePassed()
+        } else if (self.state === BLOCK_STATES.waited) {
           self.setBlockState(BLOCK_STATES.allowing)
-          this.lastUpdate = Misc.getTimePassed()
+          self.lastUpdate = Misc.getTimePassed()
         } else {
-          throw new Error(`INVALID STATE ${this.state}`)
+          throw new Error(`INVALID STATE ${self.state}`)
         }
       },
 
@@ -575,8 +662,22 @@
             await self.$store.dispatch('checkPomodoroBlocked')
           )
 
+          let longestBreak = 0
+          let longestDuration = 0
+          for (let k = 0; k < blockingPomodoros.length; k++) {
+            const pomodoro = blockingPomodoros[k]
+            longestBreak = Math.max(longestBreak, pomodoro.longBreak)
+            longestDuration = Math.max(
+              longestDuration, pomodoro.duration
+            )
+            // console.log('POMO', pomodoro)
+          }
+
+          self.longestPomodoroBreak = longestBreak
+          self.longestPomodoroDuration = longestDuration
           self.$store.commit('updateLastTime', true)
           self.blockingPomodoros = blockingPomodoros
+          // self.maxPomodoroWait = maxPomodoroWait
 
           if (prompt !== self.pomodoroPrompt) {
             self.pomodoroPrompt = prompt
@@ -590,6 +691,8 @@
                 window.focus()
               }
             } else {
+              // self.asd
+              // console.log('POMDORO BREAK START')
               window.webContents.focus()
               window.focus()
               self.alarmOn = false
@@ -716,6 +819,10 @@
 @import "~buefy/src/scss/buefy";
 @import "@/assets/scss/vars.scss";
 
+.invisible {
+  display: none
+}
+
 .block-table {
   width: 20rem;
   margin-left: auto;
@@ -736,6 +843,36 @@ div#wrapper {
   z-index: 200;
   background-color: white;
   opacity: 0.95;
+
+  & div#PomodoroTracker {
+    width: 70%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 1.2rem;
+    height: 0.3rem;
+    // background: red;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    display: flex;
+
+    & div.pomodoro-bar {
+      background: $light-blue;
+      flex-grow: 1;
+      width: auto;
+      margin-right: 0.5rem;
+
+      &.off {
+        background: #b6b6b6;
+      }
+      &.current {
+        background: $primary;
+      }
+      &:last-child {
+        margin-right: 0px;
+      }
+    }
+  }
 
   & div#blockedPomodoros {
     & p.pomodoro-reason {

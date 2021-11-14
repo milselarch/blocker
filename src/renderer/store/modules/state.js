@@ -71,6 +71,10 @@ const mutations = {
     state.pomodoroStart = (new Date()).getTime()
   },
 
+  resetPomodoros: (state) => {
+    state.pomodoroNo = 0
+  },
+
   resetUnlockWaits: (state) => {
     state.unlockWaitTimes = {}
   },

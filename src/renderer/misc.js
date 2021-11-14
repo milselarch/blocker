@@ -15,7 +15,20 @@ class Misc {
   assert (cond) { return assertFunc(cond) }
 
   countWords (string) {
-    return string.trim().split(/\s+/).length
+    let words = string.trim().split(/\s+/)
+    return words.length
+  }
+
+  countUniqueWords (string) {
+    const words = string.trim().split(/\s+/)
+    const uniqueWords = [...new Set(words)]
+    const index = uniqueWords.indexOf('')
+    if (index !== -1) {
+      uniqueWords.splice(index, 1)
+    }
+
+    console.log('UWORDS', uniqueWords)
+    return uniqueWords.length
   }
 
   makeHash (string) {
