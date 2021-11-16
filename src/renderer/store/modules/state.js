@@ -72,7 +72,7 @@ const mutations = {
   },
 
   resetPomodoros: (state) => {
-    state.pomodoroNo = 0
+    state.pomodoroNo = -1
   },
 
   resetUnlockWaits: (state) => {

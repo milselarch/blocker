@@ -300,11 +300,19 @@
     },
 
     computed: {
+      pomodoroNow () {
+        let pomodoroNow = this.$store.getters.pomodoroNo
+        if (this.pomodoroPrompt) {
+          pomodoroNow = (pomodoroNow + 1) % 4
+        }
+
+        return pomodoroNow
+      },
       pomodoroResettable () {
         const self = this
         const longestPomodoroBreak = self.longestPomodoroBreak
         const duration = self.longestPomodoroDuration
-        const pomodoroNo = self.$store.getters.pomodoroNo
+        // const pomodoroNo = self.$store.getters.pomodoroNo
         if (longestPomodoroBreak === 0) {
           return false
         }
@@ -324,7 +332,7 @@
         console.log('DURATION', duration)
         console.log('P-NO', pomodoroNo)
         */
-        if (!self.pomodoroPrompt || (pomodoroNo === 0)) {
+        if (!self.pomodoroPrompt || (self.pomodoroNow === 0)) {
           return false
         } else if (maxSecondsLeft <= 0) {
           return true
@@ -425,22 +433,14 @@
 
     methods: {
       pomodoroDone (pomodoroNo) {
-        let pomodoroNow = this.$store.getters.pomodoroNo
-        if (this.pomodoroPrompt) {
-          pomodoroNow = (pomodoroNow + 1) % 4
-        }
-        if (pomodoroNo > pomodoroNow) {
+        if (pomodoroNo > this.pomodoroNow) {
           return true
         }
         return false
       },
 
       isCurrentPomodoro (pomodoroNo) {
-        let pomodoroNow = this.$store.getters.pomodoroNo
-        if (this.pomodoroPrompt) {
-          pomodoroNow = (pomodoroNow + 1) % 4
-        }
-        if (pomodoroNo === pomodoroNow) {
+        if (pomodoroNo === this.pomodoroNow) {
           return true
         }
         return false
