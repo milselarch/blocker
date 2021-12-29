@@ -106,7 +106,8 @@
 
         <div id="PomodoroTracker">
           <div 
-            v-for="k in Array(4).keys()" v-bind:key="k"
+            v-for="k in Array.from(Array(4).keys())" 
+            v-bind:key="k"
             v-bind:class="{
               off: pomodoroDone(k), 
               current: isCurrentPomodoro(k)
@@ -638,7 +639,25 @@
 
     mounted () {
       const self = this
-      let fullscreen = false;
+      let fullscreen = false
+      let taskCheckCounter = 0
+      let taskData = [0, []];
+
+      (async () => {
+        while (!self.isDestroyed) {
+          const buildUpAllowance = !(
+            self.state === BLOCK_STATES.blocked ||
+            self.state === BLOCK_STATES.allowing
+          )
+          taskData = (
+            await self.$store.dispatch(
+              'checkBlockedTasks', buildUpAllowance
+            )
+          )
+          taskCheckCounter++
+          await Misc.sleepAsync(250)
+        }
+      })();
 
       (async () => {
         const audio = new Howl({
@@ -648,20 +667,20 @@
           volume: 0.5
         })
 
+        let prevTaskCheckCounter = 0
+
         while (!self.isDestroyed) {
           // console.log('POLLING BLOCKIER')
           self.dateNow = new Date()
-          const buildUpAllowance = !(
-            self.state === BLOCK_STATES.blocked ||
-            self.state === BLOCK_STATES.allowing
-          )
+          const [taskMaxWait, blockedTasks] = taskData
 
-          const [taskMaxWait, blockedTasks] = (
-            await self.$store.dispatch(
-              'checkBlockedTasks', buildUpAllowance
-            )
-          )
-          self.blockedTasks = blockedTasks
+          if (prevTaskCheckCounter !== taskCheckCounter) {
+            prevTaskCheckCounter = taskCheckCounter
+            // const [taskMaxWait, blockedTasks] = taskData
+            // const blockedTasks = taskData[1]
+            self.blockedTasks = blockedTasks
+          }
+
           const [isTimeBlocked, timeMaxWait, timeBlocks] = (
             await self.$store.dispatch('checkTimeBlocked')
           )
