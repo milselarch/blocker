@@ -1,6 +1,10 @@
-# blocker
+# desktop blocker
 
-> An electron-vue project
+> Desktop productivity app with features like pomodoro timer + application bans and / or time limits. Made using electron-vue.
+
+![Screenshot from 2022-05-04 02-01-00](https://user-images.githubusercontent.com/11241733/166514823-abc4d95b-7d35-4c76-87fa-b0e7abae106b.png)
+
+![Screenshot from 2022-05-04 02-01-29](https://user-images.githubusercontent.com/11241733/166514840-c702841b-9e1e-4007-8987-4d8f81106b11.png)
 
 #### Build Setup
 
