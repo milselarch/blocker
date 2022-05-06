@@ -2,7 +2,7 @@
 
 > Desktop productivity app with features like pomodoro timer + application bans and / or time limits. Made using electron-vue.
 
-![Screenshot from 2022-05-04 02-01-00](https://user-images.githubusercontent.com/11241733/166514823-abc4d95b-7d35-4c76-87fa-b0e7abae106b.png)
+![166514823-abc4d95b-7d35-4c76-87fa-b0e7abae106b](https://user-images.githubusercontent.com/11241733/167194509-0a141f2a-440a-414c-a799-af1a3d8adc0e.png)
 
 ![Screenshot from 2022-05-04 02-09-09](https://user-images.githubusercontent.com/11241733/166515782-62f7d6ac-268e-4198-89c9-68488d22ed72.png)
 
