@@ -10,6 +10,7 @@
 
 ![Screenshot from 2022-05-11 23-36-57](https://user-images.githubusercontent.com/11241733/167890463-5919ea74-ca64-46e3-8b92-43e0bf96416d.png)
 
+Built and tested on node v11.10.0
 
 #### Build Setup
 

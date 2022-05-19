@@ -224,11 +224,11 @@
   import BLOCK_STATES from './blockStates'
   import Misc from '@/misc.js'
   import assert from '@/assert.js'
-  import si from 'systeminformation'
   import { setTimeout } from 'timers'
   import { Toast } from 'buefy/dist/components/toast'
   import { Howl } from 'howler'
 
+  const electron = require('electron')
   const { remote } = require('electron')
   const PS = require('ps-node')
   // const path = require('path')
@@ -241,8 +241,6 @@
   } catch (e) {
     console.log('nop')
   }
-
-  console.log(si)
 
   const __LIVE__ = process.env.NODE_ENV === 'production'
   let IOHOOKED = false
@@ -491,14 +489,6 @@
         }
       },
 
-      getDisplayCount () {
-        return new Promise((resolve, reject) => {
-          si.graphics((data) => {
-            resolve(data.displays.length)
-          })
-        })
-      },
-
       getTimeLeft (
         pomodoroDurationMins, breakDurationMins,
         isLongbreak, dateNow
@@ -684,7 +674,10 @@
           const [isTimeBlocked, timeMaxWait, timeBlocks] = (
             await self.$store.dispatch('checkTimeBlocked')
           )
+
+          await Misc.sleepAsync(1)
           self.isTimeBlocked = isTimeBlocked
+
           const [prompt, maxPomodoroWait, blockingPomodoros] = (
             await self.$store.dispatch('checkPomodoroBlocked')
           )
@@ -726,6 +719,8 @@
             }
           }
 
+          await Misc.sleepAsync(1)
+
           if (self.alarmOn) {
             const scale = 0.5
 
@@ -744,6 +739,7 @@
             audio.pause()
           }
 
+          await Misc.sleepAsync(1)
           self.timeBlocks = timeBlocks
           self.maxWait = Math.max(
             taskMaxWait, timeMaxWait, maxPomodoroWait
@@ -785,6 +781,8 @@
             }
           }
 
+          await Misc.sleepAsync(1)
+
           if (self.lastUpdate !== -1) {
             const wait = Misc.getTimePassed() - self.lastUpdate
             self.lastUpdate = Misc.getTimePassed()
@@ -806,7 +804,12 @@
             }
           }
 
-          const displays = await self.getDisplayCount()
+          await Misc.sleepAsync(1)
+          // const displays = await self.getDisplayCount()
+          const screens = electron.screen.getAllDisplays()
+          const displays = screens.length
+          // console.log('DISPLAYS', displays)
+          // const displays = 0;
 
           if (displays !== self.displayCount) {
             self.displayCount = displays
@@ -818,7 +821,9 @@
             }
           }
 
+          await Misc.sleepAsync(1)
           if (self.monitorTimeLeft === 0) {
+            console.log('REMOVE TASKS')
             await self.removeTasks()
           }
 

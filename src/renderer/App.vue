@@ -207,14 +207,13 @@
     overflow-y: auto !important;
   }
 
-  .dropdown {
+  .dropdown.is-mobile-modal > .dropdown-menu {
+    z-index: 5000 !important;
+  }
+
+  div.dropdown {
     & > .background {
       z-index: 400;
-    }
-    & > .dropdown-menu {
-      &, & * {
-        z-index: 500 !important;
-      }
     }
   }
 
