@@ -806,15 +806,15 @@
 
           await Misc.sleepAsync(1)
           // const displays = await self.getDisplayCount()
-          const screens = electron.screen.getAllDisplays()
-          const displays = screens.length
+          const displays = electron.screen.getAllDisplays()
+          const displayCount = displays.length
           // console.log('DISPLAYS', displays)
           // const displays = 0;
 
-          if (displays !== self.displayCount) {
+          if (displayCount !== self.displayCount) {
             self.displayCount = displays
 
-            if (displays === 1) {
+            if (displayCount === 1) {
               self.multiMonitorStart = -1
             } else {
               self.multiMonitorStart = Misc.getTimePassed()

@@ -69,6 +69,7 @@
     "buefy": "^0.8.2",
     "codemirror-no-newlines": "^1.0.2",
     "death": "^1.1.0",
+    "electron-packager": "^15.5.1",
     "howler": "^2.1.2",
     "instascan": "^1.0.0",
     "iohook": "^0.4.4",
