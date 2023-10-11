@@ -75,19 +75,20 @@
   import BlockView from '@/components/BlockView'
   import Misc from '@/misc.js'
   import BLOCK_STATES from '@/components/blockStates'
-  const ON_DEATH = require('death')
-  const OS = require('os')
-  const { exec } = require('child_process')
+  // const ON_DEATH = require('death')
+  // const OS = require('os')
+  // const { exec } = require('child_process')
   // const { remote } = require('electron')
-  const platform = OS.platform()
+  // const platform = OS.platform()
 
+  /*
   ON_DEATH((signal, err) => {
     if (
       (process.env.NODE_ENV === 'production') ||
       (process.env.LIVE === 'true')
     ) {
       // clean up code here
-      console.log('DEATHH')
+      // console.log('ACTIVATE SHUT DOWN')
       if (platform === 'win32') {
         exec('shutdown /s /t 0')
       } else {
@@ -95,6 +96,7 @@
       }
     }
   })
+  */
 
   const PROC = process
   const ENV = process.env.NODE_ENV

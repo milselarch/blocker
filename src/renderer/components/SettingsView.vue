@@ -36,7 +36,6 @@
           :disabled="isPasswordSet"
         >
           Auto close when there's multiple monitors
-          {{ killMultiMonitor }}
         </b-checkbox>
       </div>
     </div>

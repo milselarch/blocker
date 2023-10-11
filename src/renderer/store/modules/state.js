@@ -420,7 +420,7 @@ const actions = {
     const dateNow = new Date()
     const blockingRules = []
 
-    let allowPrompt = true
+    let activatePrompt = true
     let maxWait = 1
 
     state.rules.map(jsonRule => {
@@ -452,11 +452,14 @@ const actions = {
       }
 
       if (pomodoroState !== PomodoroRule.STATES.prompt) {
-        allowPrompt = false
+        activatePrompt = false
       }
     })
 
-    return [allowPrompt, maxWait, blockingRules]
+    /*
+    activatePrompt: whether or not to show pomodoro prompt
+    */
+    return [activatePrompt, maxWait, blockingRules]
   },
 
   checkTimeBlocked: async (context) => {

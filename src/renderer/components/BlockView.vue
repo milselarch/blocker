@@ -36,7 +36,7 @@
             class="button is-info"
             :disabled="
               !alarmOn && 
-              (!pomodoroPrompt || !pomodoroTitleValid)
+              (!pomodoroPromptActivated || !pomodoroTitleValid)
             "
             v-show="blockList.indexOf(true) === 2"
           >
@@ -81,13 +81,13 @@
         id="blockedPomodoros"
         v-show="blockList.indexOf(true) === 2"
       >
-        <p class="pomodoro-reason" v-if="!pomodoroPrompt">
+        <p class="pomodoro-reason" v-if="!pomodoroPromptActivated">
           {{ pomodoroTitle }}
         </p>
 
         <textarea
           name="" id="pomodoro-title" cols="30" rows="2"
-          v-if="pomodoroPrompt"
+          v-if="pomodoroPromptActivated"
           v-model="pomodoroTitle"
           :disabled="alarmOn"
           :placeholder="pomodoroPlaceholder"
@@ -98,7 +98,7 @@
 
         <button 
           id="remove-optins" @click="removeOptins" type="is-info"
-          v-show="hasOptinPomodoros && pomodoroPrompt"
+          v-show="hasOptinPomodoros && pomodoroPromptActivated"
           :disabled="alarmOn" class="button is-info"
         >
           Remove Opt-in Pomodoros
@@ -118,7 +118,7 @@
 
         <b-table
           class="block-table" :data="blockingPomodoros"
-          v-if="!pomodoroPrompt"
+          v-if="!pomodoroPromptActivated"
         >
           <template slot-scope="props" class="table-row">  
             <b-table-column
@@ -232,7 +232,7 @@
   const { remote } = require('electron')
   const PS = require('ps-node')
   // const path = require('path')
-  const ioHook = require('iohook')
+  // const ioHook = require('iohook')
   // const sys = require('sys')
   const OS = require('os')
   
@@ -242,8 +242,9 @@
     console.log('nop')
   }
 
+  const PLATFORM = OS.platform()
   const __LIVE__ = process.env.NODE_ENV === 'production'
-  let IOHOOKED = false
+  // let IOHOOKED = false
 
   const WAIT_DISCOUNT = (
     process.env.NODE_ENV === 'development' ? 10 : 1
@@ -257,7 +258,7 @@
   })
 
   console.log('BLOCS', BLOCK_STATES.unblocked)
-  // const exec = require('child_process').exec
+  const exec = require('child_process').exec
 
   export default {
     name: 'blockview',
@@ -286,7 +287,7 @@
       dateNow: new Date(),
       isTimeBlocked: false,
       timeBlocks: [],
-      pomodoroPrompt: true,
+      pomodoroPromptActivated: true,
       alarmOn: false,
       pomodoroTitle: '',
       blockingPomodoros: [],
@@ -301,7 +302,7 @@
     computed: {
       pomodoroNow () {
         let pomodoroNow = this.$store.getters.pomodoroNo
-        if (this.pomodoroPrompt) {
+        if (this.pomodoroPromptActivated) {
           pomodoroNow = (pomodoroNow + 1) % 4
         }
 
@@ -327,11 +328,11 @@
         console.log('B-START', breakStart)
         console.log('MAX SECS LEFT', maxSecondsLeft)
         console.log('MAX POMODORO WAIT', longestPomodoroBreak * 60)
-        console.log('PROMPT', self.pomodoroPrompt)
+        console.log('PROMPT', self.pomodoroPromptActivated)
         console.log('DURATION', duration)
         console.log('P-NO', pomodoroNo)
         */
-        if (!self.pomodoroPrompt || (self.pomodoroNow === 0)) {
+        if (!self.pomodoroPromptActivated || (self.pomodoroNow === 0)) {
           return false
         } else if (maxSecondsLeft <= 0) {
           return true
@@ -362,7 +363,7 @@
           return 'Stop alarm'
         }
 
-        if (this.pomodoroPrompt) {
+        if (this.pomodoroPromptActivated) {
           if (wordCount >= 10) {
             return 'Start pomodoro'
           } else {
@@ -562,6 +563,17 @@
         }
       },
 
+      lockScreen () {
+        if (__LIVE__ === false) {
+          console.log('LOCK')
+          return true
+        } else if (PLATFORM === 'win32') {
+          exec('rundll32.exe user32.dll,LockWorkStation')
+        } else {
+          exec('gnome-screensaver-command --lock')
+        }
+      },
+
       async removeTasks () {
         const self = this
         self.loading = true
@@ -585,23 +597,25 @@
       setBlockState (state) {
         const self = this
         Misc.assert(BLOCK_STATES.includes(state))
-        self.state = state
 
         if (state === BLOCK_STATES.blocked) {
           self.blockStart = Misc.getTimePassed()
         } else if (state === BLOCK_STATES.unblocked) {
           self.blockStart = -1
         }
+
+        self.state = state
       }
     },
 
     created () {
+      /*
       const self = this
       const platform = OS.platform()
       console.log('BLOCKERVIEW INITIALISED')
 
       const handler = event => {
-        if (!self.pomodoroPrompt && !(
+        if (!self.pomodoroPromptActivated && !(
           (self.state === BLOCK_STATES.unblocked) ||
           (self.state === BLOCK_STATES.allowing)
         )) {
@@ -625,6 +639,7 @@
         ioHook.on('mouseclick', handler)
         ioHook.start()
       }
+      */
     },
 
     mounted () {
@@ -678,7 +693,7 @@
           await Misc.sleepAsync(1)
           self.isTimeBlocked = isTimeBlocked
 
-          const [prompt, maxPomodoroWait, blockingPomodoros] = (
+          const [activatePrompt, maxPomodoroWait, blockingPomodoros] = (
             await self.$store.dispatch('checkPomodoroBlocked')
           )
 
@@ -696,13 +711,22 @@
           self.longestPomodoroBreak = longestBreak
           self.longestPomodoroDuration = longestDuration
           self.$store.commit('updateLastTime', true)
+
+          if (
+            (self.blockingPomodoros.length === 0) &&
+            (blockingPomodoros.length > 0)
+          ) {
+            // lock screen if pomodoro block has just activated
+            self.lockScreen()
+          }
+
           self.blockingPomodoros = blockingPomodoros
           // self.maxPomodoroWait = maxPomodoroWait
 
-          if (prompt !== self.pomodoroPrompt) {
-            self.pomodoroPrompt = prompt
+          if (activatePrompt !== self.pomodoroPromptActivated) {
+            self.pomodoroPromptActivated = activatePrompt
 
-            if (prompt === true) {
+            if (activatePrompt === true) {
               self.pomodoroTitle = ''
               if (blockingPomodoros.length > 0) {
                 console.log('PLAY-NOW-POMODO', blockingPomodoros)
@@ -711,7 +735,6 @@
                 window.focus()
               }
             } else {
-              // self.asd
               // console.log('POMDORO BREAK START')
               window.webContents.focus()
               window.focus()
