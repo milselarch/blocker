@@ -290,6 +290,8 @@
       pomodoroPromptActivated: true,
       alarmOn: false,
       pomodoroTitle: '',
+      activateBreak: false,
+
       blockingPomodoros: [],
       blockedTasks: [],
       excusedPids: []
@@ -693,7 +695,10 @@
           await Misc.sleepAsync(1)
           self.isTimeBlocked = isTimeBlocked
 
-          const [activatePrompt, maxPomodoroWait, blockingPomodoros] = (
+          const [
+            activatePrompt, activateBreak,
+            maxPomodoroWait, blockingPomodoros
+          ] = (
             await self.$store.dispatch('checkPomodoroBlocked')
           )
 
@@ -710,18 +715,16 @@
 
           self.longestPomodoroBreak = longestBreak
           self.longestPomodoroDuration = longestDuration
-          self.$store.commit('updateLastTime', true)
-
-          if (
-            (self.blockingPomodoros.length === 0) &&
-            (blockingPomodoros.length > 0)
-          ) {
-            // lock screen if pomodoro block has just activated
+          self.blockingPomodoros = blockingPomodoros
+          if (!self.activateBreak && activateBreak) {
+            // lock screen if pomodoro break has just activated
             self.lockScreen()
           }
 
-          self.blockingPomodoros = blockingPomodoros
+          self.activateBreak = activateBreak
+  
           // self.maxPomodoroWait = maxPomodoroWait
+          self.$store.commit('updateLastTime', true)
 
           if (activatePrompt !== self.pomodoroPromptActivated) {
             self.pomodoroPromptActivated = activatePrompt

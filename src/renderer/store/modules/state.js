@@ -420,6 +420,7 @@ const actions = {
     const dateNow = new Date()
     const blockingRules = []
 
+    let activateBreak = false
     let activatePrompt = true
     let maxWait = 1
 
@@ -428,7 +429,6 @@ const actions = {
       if (!(rule instanceof PomodoroRule)) { return false }
       if (!rule.saved) { return false }
 
-      let optIn = true
       const ruleID = rule.getID()
       // console.log('RULE OPTIN', [rule.optIn])
       if (rule.optIn) {
@@ -443,14 +443,17 @@ const actions = {
         timeNow: dateNow
       })
 
-      if (optIn && (
+      if (
         (pomodoroState === PomodoroRule.STATES.break) ||
         (pomodoroState === PomodoroRule.STATES.prompt)
-      )) {
+      ) {
         maxWait = Math.max(maxWait, rule.blockDuration)
         blockingRules.push(rule)
       }
 
+      if (pomodoroState === PomodoroRule.STATES.break) {
+        activateBreak = true
+      }
       if (pomodoroState !== PomodoroRule.STATES.prompt) {
         activatePrompt = false
       }
@@ -458,8 +461,11 @@ const actions = {
 
     /*
     activatePrompt: whether or not to show pomodoro prompt
+    activateBreak: whether or not pomodoro break is in effect
     */
-    return [activatePrompt, maxWait, blockingRules]
+    return [
+      activatePrompt, activateBreak, maxWait, blockingRules
+    ]
   },
 
   checkTimeBlocked: async (context) => {
