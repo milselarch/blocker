@@ -28,7 +28,8 @@ const state = {
   version7: false,
 
   passhash: false,
-  killMultiMonitor: false
+  killMultiMonitor: false,
+  audioLevel: 50
 }
 
 const mutations = {
@@ -42,6 +43,10 @@ const mutations = {
 
   unsetPassword: (state) => {
     state.passhash = false
+  },
+
+  setAudioLevel: (state, audioLevel) => {
+    state.audioLevel = audioLevel
   },
 
   removeOptinPomodoros: (state) => {
@@ -658,6 +663,10 @@ const actions = {
 }
 
 const getters = {
+  audioLevel: (state) => {
+    return state.audioLevel
+  },
+
   getAllowanceLeft: (state) => {
     return (ruleID) => {
       if (state.blockAllowances.hasOwnProperty(ruleID)) {

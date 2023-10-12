@@ -30,7 +30,32 @@
 
       <p id="hash">{{ hash }}</p>
 
-      <div id="checkbox-box">
+      <div id="settings-box">
+        <b-field class="audio-controls">
+          <b-button 
+            class='audio-button' type="is-primary"
+            @click="toggleAudioPlayer()"
+          >
+            <!-- volume-up -->
+            <font-awesome-icon
+              :icon="'volume-mute'"
+              class="volume-down-icon large icon alt"
+              v-if="!playAudio"
+            ></font-awesome-icon>
+            <font-awesome-icon
+              :icon="'volume-down'"
+              class="volume-down-icon large icon alt"
+              v-if="playAudio"
+            ></font-awesome-icon>
+          </b-button>
+
+          <b-slider 
+            v-model="audioLevel" :min="0" :max="100"
+            @change="onAudioLevelUpdate"
+            @dragging="onAudioLevelUpdate"
+          ></b-slider>
+        </b-field>
+
         <b-checkbox 
           v-model="killMultiMonitor"
           :disabled="isPasswordSet"
@@ -44,13 +69,16 @@
 
 <script>
   import Misc from '@/misc.js'
+  import { Howl } from 'howler'
 
   export default {
     name: 'settingsview',
 
     data: () => ({
       password: '',
-      killMultiMonitor: false
+      killMultiMonitor: false,
+      audioLevel: 0,
+      playAudio: false
     }),
 
     computed: {
@@ -79,14 +107,43 @@
     },
 
     created () {
+      const self = this
+      this.audioLevel = this.$store.getters.audioLevel
       const kill = this.$store.getters.killMultiMonitor
       this.killMultiMonitor = kill
       console.log('LOADED', kill)
+
+      const audio = new Howl({
+        src: require('@/assets/sounds/analog-watch-alarm.mp3'),
+        autoplay: false,
+        loop: true,
+        volume: 0
+      })
+
+      audio.play();
+
+      (async () => {
+        while (true) {
+          const scale = this.$store.getters.audioLevel / 100
+          // console.log('VOL', scale)
+
+          if (self.playAudio) {
+            audio.volume(scale)
+          } else {
+            audio.volume(0)
+          }
+
+          await Misc.sleepAsync(10)
+        }
+      })()
     },
 
     methods: {
+      toggleAudioPlayer () {
+        this.playAudio = !this.playAudio
+      },
+
       setPassword () {
-        console.log('SEND DISPALTCJ', this.password)
         this.$store.dispatch('setPassword', this.password)
         this.password = ''
       },
@@ -103,6 +160,11 @@
             type: 'is-warning'
           })
         }
+      },
+
+      onAudioLevelUpdate (newAudioLevel) {
+        // console.log('UPDATE', newAudioLevel)
+        this.$store.commit('setAudioLevel', newAudioLevel)
       }
     },
 
@@ -149,8 +211,14 @@ div#holder {
     word-break: break-all;
   }
 
-  & > div#checkbox-box {
+  & > div#settings-box {
     margin-top: 2rem;
+
+    & > .audio-controls {
+      & > .audio-button {
+        margin-right: 0.8rem;
+      }
+    }
   }
 }
 </style>

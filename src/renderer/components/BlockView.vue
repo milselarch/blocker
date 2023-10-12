@@ -235,7 +235,7 @@
   // const ioHook = require('iohook')
   // const sys = require('sys')
   const OS = require('os')
-  
+
   try {
     console.log('test')
   } catch (e) {
@@ -664,16 +664,16 @@
           taskCheckCounter++
           await Misc.sleepAsync(250)
         }
-      })();
+      })()
+
+      const audio = new Howl({
+        src: require('@/assets/sounds/analog-watch-alarm.mp3'),
+        autoplay: false,
+        loop: true,
+        volume: 0.5
+      });
 
       (async () => {
-        const audio = new Howl({
-          src: require('@/assets/sounds/analog-watch-alarm.mp3'),
-          autoplay: false,
-          loop: true,
-          volume: 0.5
-        })
-
         let prevTaskCheckCounter = 0
 
         while (!self.isDestroyed) {
@@ -748,7 +748,7 @@
           await Misc.sleepAsync(1)
 
           if (self.alarmOn) {
-            const scale = 0.5
+            const scale = this.$store.getters.audioLevel / 100
 
             if (!audio.playing()) {
               self.audioStart = Misc.getTimePassed()
