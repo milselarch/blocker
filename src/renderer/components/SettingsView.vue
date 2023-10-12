@@ -71,6 +71,15 @@
   import Misc from '@/misc.js'
   import { Howl } from 'howler'
 
+  const audio = new Howl({
+    src: require('@/assets/sounds/analog-watch-alarm.mp3'),
+    autoplay: false,
+    loop: true,
+    volume: 0
+  })
+
+  audio.play()
+
   export default {
     name: 'settingsview',
 
@@ -111,16 +120,7 @@
       this.audioLevel = this.$store.getters.audioLevel
       const kill = this.$store.getters.killMultiMonitor
       this.killMultiMonitor = kill
-      console.log('LOADED', kill)
-
-      const audio = new Howl({
-        src: require('@/assets/sounds/analog-watch-alarm.mp3'),
-        autoplay: false,
-        loop: true,
-        volume: 0
-      })
-
-      audio.play();
+      console.log('LOADED', kill);
 
       (async () => {
         while (true) {
